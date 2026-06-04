@@ -1,0 +1,28 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Key Bow (round part) -->
+  <circle cx="155" cy="175" r="75" fill="#FFFFFF" stroke="#2C3E50" stroke-width="3"/>
+  <circle cx="155" cy="175" r="48" fill="#ECF0F1" stroke="#2C3E50" stroke-width="2"/>
+  <!-- Key Blade -->
+  <rect x="218" y="163" width="120" height="24" rx="4" fill="#FFFFFF" stroke="#2C3E50" stroke-width="3"/>
+  <!-- Key Teeth -->
+  <rect x="274" y="187" width="16" height="18" rx="3" fill="#2C3E50"/>
+  <rect x="304" y="187" width="14" height="14" rx="3" fill="#2C3E50"/>
+  <rect x="246" y="187" width="12" height="22" rx="3" fill="#2C3E50"/>
+  <!-- Key Hole -->
+  <circle cx="155" cy="175" r="18" fill="#2C3E50"/>
+  <rect x="148" y="175" width="14" height="22" rx="2" fill="#2C3E50"/>
+  <!-- Room Tag -->
+  <rect x="90" y="280" width="100" height="60" rx="8" fill="#3498DB" stroke="#2C3E50" stroke-width="2"/>
+  <rect x="96" y="286" width="88" height="48" rx="6" fill="#3498DB"/>
+  <rect x="104" y="295" width="50" height="10" rx="5" fill="#FFFFFF" opacity="0.6"/>
+  <rect x="104" y="313" width="34" height="8" rx="4" fill="#FFFFFF" opacity="0.4"/>
+  <!-- Tag Hole -->
+  <circle cx="140" cy="280" r="6" fill="#FFFFFF" stroke="#2C3E50" stroke-width="2"/>
+  <!-- Tag String -->
+  <path d="M140 274 Q155 258 155 248" stroke="#2C3E50" stroke-width="2" stroke-dasharray="4,3" fill="none"/>
+  <!-- Stars -->
+  <polygon points="310,130 314,143 327,143 317,151 320,164 310,157 300,164 303,151 293,143 306,143" fill="#F1C40F"/>
+  <polygon points="345,155 349,165 359,165 351,172 354,182 345,176 336,182 339,172 331,165 341,165" fill="#F1C40F" opacity="0.6"/>
+  <!-- Base Line -->
+  <rect x="60" y="355" width="280" height="4" rx="2" fill="#BDC3C7"/>
+</svg>

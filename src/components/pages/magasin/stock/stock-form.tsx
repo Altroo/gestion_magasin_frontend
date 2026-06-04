@@ -1,0 +1,320 @@
+'use client';
+
+import React, { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+	Alert,
+	Box,
+	Button,
+	Card,
+	CardContent,
+	Divider,
+	InputAdornment,
+	MenuItem,
+	Stack,
+	TextField,
+	ThemeProvider,
+	Typography,
+	useMediaQuery,
+	useTheme,
+} from '@mui/material';
+import {
+	ArrowBack as ArrowBackIcon,
+	Description as DescriptionIcon,
+	Edit as EditIcon,
+	Inventory2 as InventoryIcon,
+	Numbers as NumbersIcon,
+	Save as SaveIcon,
+	Warning as WarningIcon,
+} from '@mui/icons-material';
+import { useFormik } from 'formik';
+import { toFormikValidationSchema } from 'zod-formik-adapter';
+import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
+import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
+import CustomTextInput from '@/components/formikElements/customTextInput/customTextInput';
+import PrimaryLoadingButton from '@/components/htmlElements/buttons/primaryLoadingButton/primaryLoadingButton';
+import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
+import { Protected } from '@/components/layouts/protected/protected';
+import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
+import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
+import { useInitAccessToken } from '@/contexts/InitContext';
+import {
+	useAdjustStockMutation,
+	useGetProductsQuery,
+	useGetStockBalanceQuery,
+	useUpdateStockThresholdMutation,
+} from '@/store/services/magasin';
+import { STOCK_LIST, STOCK_VIEW } from '@/utils/routes';
+import { customDropdownTheme, textInputTheme } from '@/utils/themes';
+import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
+import { stockAdjustmentSchema, stockThresholdSchema } from '@/utils/formValidationSchemas';
+import { useLanguage, useToast } from '@/utils/hooks';
+import Styles from '@/styles/dashboard/dashboard.module.sass';
+import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '@/types/_initTypes';
+import type { StockAdjustmentFormValues } from '@/types/gestionMagasinTypes';
+
+const inputTheme = textInputTheme();
+const dropdownTheme = customDropdownTheme();
+
+type Props = SessionProps & {
+	id?: number;
+	storeId?: number;
+};
+
+const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
+	const token = useInitAccessToken(session);
+	const { t } = useLanguage();
+	const { onSuccess, onError } = useToast();
+	const router = useRouter();
+	const theme = useTheme();
+	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+	const isEditMode = id !== undefined;
+	const { defaultStore } = useSelectedStore(token);
+	const storeId = initialStoreId ?? defaultStore?.id;
+	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+	const [isPending, setIsPending] = useState(false);
+
+	const { data: stockBalance, isLoading: isStockLoading, error: stockError } = useGetStockBalanceQuery(
+		{ id: id! },
+		{ skip: !token || !isEditMode },
+	);
+	const { data: products, isLoading: areProductsLoading } = useGetProductsQuery(
+		{ store: storeId, page: 1, pageSize: 100 },
+		{ skip: !token || !storeId },
+	);
+	const [adjustStock, adjustState] = useAdjustStockMutation();
+	const [updateThreshold, thresholdState] = useUpdateStockThresholdMutation();
+
+	const error = stockError || adjustState.error || thresholdState.error;
+	const axiosError = useMemo(
+		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
+		[error],
+	);
+
+	const formik = useFormik<StockAdjustmentFormValues>({
+		initialValues: {
+			product: stockBalance?.product ? String(stockBalance.product) : '',
+			quantity: '',
+			min_stock: stockBalance?.min_stock ?? stockBalance?.effective_min_stock ?? '',
+			note: '',
+			globalError: '',
+		},
+		enableReinitialize: true,
+		validateOnMount: true,
+		validationSchema: toFormikValidationSchema(isEditMode ? stockThresholdSchema : stockAdjustmentSchema),
+		onSubmit: async (values, { setFieldError }) => {
+			setHasAttemptedSubmit(true);
+			setIsPending(true);
+			try {
+				if (isEditMode) {
+					await updateThreshold({ id: id!, min_stock: values.min_stock ?? '0' }).unwrap();
+					if (values.quantity && Number(values.quantity) !== 0) {
+						await adjustStock({
+							store: stockBalance?.store ?? storeId!,
+							product: Number(values.product),
+							quantity: values.quantity,
+							movement_type: 'adjustment',
+							note: values.note,
+						}).unwrap();
+					}
+					onSuccess(t.magasin.stockUpdated);
+					router.push(STOCK_VIEW(id!, storeId));
+				} else {
+					await adjustStock({
+						store: storeId!,
+						product: Number(values.product),
+						quantity: values.quantity,
+						movement_type: 'adjustment',
+						note: values.note,
+					}).unwrap();
+					onSuccess(t.magasin.stockAdjusted);
+					router.push(STOCK_LIST);
+				}
+			} catch (e) {
+				onError(extractApiErrorMessage(e, isEditMode ? t.magasin.stockUpdateError : t.magasin.stockCreateError));
+				setFormikAutoErrors({ e, setFieldError });
+			} finally {
+				setIsPending(false);
+			}
+		},
+	});
+
+	const fieldLabels = useMemo<Record<string, string>>(
+		() => ({
+			product: t.magasin.product,
+			quantity: t.magasin.adjustmentQuantity,
+			min_stock: t.magasin.minimumStock,
+			note: t.magasin.movementNote,
+			globalError: t.errors.globalError,
+		}),
+		[t],
+	);
+
+	const validationErrors = useMemo(() => {
+		const errors: Record<string, string> = {};
+		if (hasAttemptedSubmit) {
+			Object.entries(formik.errors).forEach(([key, value]) => {
+				if (key !== 'globalError' && typeof value === 'string') {
+					errors[key] = value;
+				}
+			});
+		}
+		return errors;
+	}, [formik.errors, hasAttemptedSubmit]);
+
+	const isLoading = isPending || adjustState.isLoading || thresholdState.isLoading || areProductsLoading || (isEditMode && isStockLoading);
+	const shouldShowError = (axiosError?.status ?? 0) > 400 && !isLoading;
+
+	return (
+		<NavigationBar title={isEditMode ? t.magasin.editStock : t.magasin.newStock}>
+			<Protected permission={isEditMode ? 'can_edit' : 'can_create'}>
+				<Box sx={magasinPageContainerSx}>
+					<Box sx={magasinPageContentSx}>
+						<Stack spacing={3}>
+							<Stack direction={isMobile ? 'column' : 'row'} justifyContent="space-between" spacing={2}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(STOCK_LIST)}>
+									{t.magasin.backToStock}
+								</Button>
+							</Stack>
+							{Object.keys(validationErrors).length > 0 && (
+								<Alert severity="error" icon={<WarningIcon />} sx={{ mb: 2 }}>
+									<Typography variant="subtitle2" fontWeight={600}>
+										{t.users.validationErrorsDetected}
+									</Typography>
+									<ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+										{Object.entries(validationErrors).map(([key, errorMessage]) => (
+											<li key={key}>
+												<Typography variant="body2">
+													{getLabelForKey(fieldLabels, key)} : {errorMessage}
+												</Typography>
+											</li>
+										))}
+									</ul>
+								</Alert>
+							)}
+							{formik.errors.globalError && <span className={Styles.errorMessage}>{formik.errors.globalError}</span>}
+							{isLoading ? (
+								<ApiProgress backdropColor="#FFFFFF" circularColor="#0D070B" />
+							) : shouldShowError ? (
+								<ApiAlert errorDetails={axiosError?.data.details} />
+							) : (
+								<form onSubmit={formik.handleSubmit}>
+									<Stack spacing={3}>
+										<Card elevation={2} sx={{ borderRadius: 2 }}>
+											<CardContent sx={{ p: 3 }}>
+												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+													<InventoryIcon color="primary" />
+													<Typography variant="h6" fontWeight={700}>{t.magasin.stockMovement}</Typography>
+												</Stack>
+												<Divider sx={{ mb: 3 }} />
+												<Stack spacing={2.5}>
+													<ThemeProvider theme={dropdownTheme}>
+														<TextField
+															select
+															size="small"
+															id="product"
+															label={`${t.magasin.selectProduct} *`}
+															value={formik.values.product}
+															onChange={(event) => void formik.setFieldValue('product', event.target.value)}
+															onBlur={formik.handleBlur('product')}
+															error={formik.touched.product && Boolean(formik.errors.product)}
+															helperText={formik.touched.product ? formik.errors.product : ''}
+															InputProps={{ startAdornment: <InputAdornment position="start"><InventoryIcon fontSize="small" /></InputAdornment> }}
+															fullWidth
+															disabled={isEditMode}
+														>
+															<MenuItem value="">{t.common.selectValue}</MenuItem>
+															{products?.results.map((product) => (
+																<MenuItem key={product.id} value={String(product.id)}>
+																	{product.reference ?? product.barcode ?? product.id} - {product.name}
+																</MenuItem>
+															))}
+														</TextField>
+													</ThemeProvider>
+													<CustomTextInput
+														id="quantity"
+														type="number"
+														label={isEditMode ? t.magasin.adjustmentQuantity : `${t.magasin.adjustmentQuantity} *`}
+														value={formik.values.quantity}
+														onChange={formik.handleChange('quantity')}
+														onBlur={formik.handleBlur('quantity')}
+														error={formik.touched.quantity && Boolean(formik.errors.quantity)}
+														helperText={formik.touched.quantity ? formik.errors.quantity : ''}
+														fullWidth
+														size="small"
+														theme={inputTheme}
+														startIcon={<NumbersIcon fontSize="small" />}
+													/>
+													<CustomTextInput
+														id="note"
+														type="text"
+														label={t.magasin.movementNote}
+														value={formik.values.note ?? ''}
+														onChange={formik.handleChange('note')}
+														onBlur={formik.handleBlur('note')}
+														error={formik.touched.note && Boolean(formik.errors.note)}
+														helperText={formik.touched.note ? formik.errors.note : ''}
+														fullWidth
+														size="small"
+														theme={inputTheme}
+														startIcon={<DescriptionIcon fontSize="small" />}
+													/>
+												</Stack>
+											</CardContent>
+										</Card>
+										{isEditMode && (
+											<Card elevation={2} sx={{ borderRadius: 2 }}>
+												<CardContent sx={{ p: 3 }}>
+													<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+														<WarningIcon color="primary" />
+														<Typography variant="h6" fontWeight={700}>{t.magasin.stockThreshold}</Typography>
+													</Stack>
+													<Divider sx={{ mb: 3 }} />
+													<CustomTextInput
+														id="min_stock"
+														type="number"
+														label={`${t.magasin.minimumStock} *`}
+														value={formik.values.min_stock ?? ''}
+														onChange={formik.handleChange('min_stock')}
+														onBlur={formik.handleBlur('min_stock')}
+														error={formik.touched.min_stock && Boolean(formik.errors.min_stock)}
+														helperText={formik.touched.min_stock ? formik.errors.min_stock : ''}
+														fullWidth
+														size="small"
+														theme={inputTheme}
+														startIcon={<WarningIcon fontSize="small" />}
+													/>
+												</CardContent>
+											</Card>
+										)}
+										<Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 2 }}>
+											<PrimaryLoadingButton
+												type="submit"
+												buttonText={isEditMode ? t.magasin.editStock : t.magasin.newStock}
+												active={!isPending}
+												loading={isPending}
+												startIcon={isEditMode ? <EditIcon /> : <SaveIcon />}
+												onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+													setHasAttemptedSubmit(true);
+													if (!formik.isValid) {
+														event.preventDefault();
+														formik.handleSubmit();
+														onError(t.magasin.fixValidationErrors);
+														window.scrollTo({ top: 0, behavior: 'smooth' });
+													}
+												}}
+												cssClass={`${Styles.maxWidth} ${Styles.mobileButton} ${Styles.submitButton}`}
+											/>
+										</Box>
+									</Stack>
+								</form>
+							)}
+						</Stack>
+					</Box>
+				</Box>
+			</Protected>
+		</NavigationBar>
+	);
+};
+
+export default StockFormClient;

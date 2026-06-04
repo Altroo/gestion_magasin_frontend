@@ -1,0 +1,66 @@
+@use '@/styles/sass/variables' as *
+@use '@/styles/sass/colors' as *
+@use '@/styles/sass/mixins' as *
+
+// Global styles
+.rootStackWrapper
+  width: 100%
+  flex-wrap: wrap
+  gap: 40px
+  grid-gap: 40px
+.addImagesWrapper
+  position: relative
+  min-width: 360px
+  min-height: 250px
+.showImage
+  position: absolute
+  width: 360px
+  height: 250px
+.closeButtonWrapper
+  position: absolute
+  top: 0
+  right: 0
+  margin: 1rem
+  cursor: pointer
+.errorMessage
+  color: rgb(211, 47, 47)
+.clickedImageModal
+  display: flex
+  text-align: center
+  flex-direction: column
+  justify-content: center
+  align-items: center
+.clickedImageBox
+  display: flex
+  text-align: center
+  flex-direction: column
+  justify-content: center
+  align-items: center
+  padding: 4rem
+  width: auto
+  height: auto
+.clickedImage
+  width: auto
+  height: auto
+  max-width: 1440px
+  max-height: calc(100vh - 140px)
+@media #{$tablette}
+  .clickedImage
+    object-fit: cover
+    width: 100% !important
+    height: 100% !important
+    max-height: 400px !important
+  .rootStackWrapper
+    flex-direction: row
+    gap: 20px
+    grid-gap: 20px
+@media #{$mobile}
+  .rootStackWrapper
+    justify-content: center
+    button
+      height: 250px
+      width: 100%
+  .addImagesWrapper
+    height: 250px
+    width: 100%
+// @media #{}

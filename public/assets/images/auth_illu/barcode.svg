@@ -1,0 +1,19 @@
+<svg width="720" height="640" viewBox="0 0 720 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="90" y="106" width="540" height="408" rx="38" fill="#FFFFFF" stroke="#2F3437" stroke-width="24"/>
+  <path d="M156 176V444" stroke="#2F3437" stroke-width="18" stroke-linecap="round"/>
+  <path d="M204 176V444" stroke="#2F3437" stroke-width="36" stroke-linecap="round"/>
+  <path d="M276 176V444" stroke="#2E7D32" stroke-width="16" stroke-linecap="round"/>
+  <path d="M320 176V444" stroke="#2F3437" stroke-width="44" stroke-linecap="round"/>
+  <path d="M404 176V444" stroke="#E67E22" stroke-width="20" stroke-linecap="round"/>
+  <path d="M454 176V444" stroke="#2F3437" stroke-width="30" stroke-linecap="round"/>
+  <path d="M526 176V444" stroke="#2E7D32" stroke-width="18" stroke-linecap="round"/>
+  <path d="M570 176V444" stroke="#2F3437" stroke-width="34" stroke-linecap="round"/>
+  <path d="M130 80H220" stroke="#2F3437" stroke-width="24" stroke-linecap="round"/>
+  <path d="M90 120V210" stroke="#2F3437" stroke-width="24" stroke-linecap="round"/>
+  <path d="M500 80H590" stroke="#2F3437" stroke-width="24" stroke-linecap="round"/>
+  <path d="M630 120V210" stroke="#2F3437" stroke-width="24" stroke-linecap="round"/>
+  <path d="M130 540H220" stroke="#2F3437" stroke-width="24" stroke-linecap="round"/>
+  <path d="M90 410V500" stroke="#2F3437" stroke-width="24" stroke-linecap="round"/>
+  <path d="M500 540H590" stroke="#2F3437" stroke-width="24" stroke-linecap="round"/>
+  <path d="M630 410V500" stroke="#2F3437" stroke-width="24" stroke-linecap="round"/>
+</svg>

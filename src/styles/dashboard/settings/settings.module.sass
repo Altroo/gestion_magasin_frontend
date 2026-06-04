@@ -1,0 +1,71 @@
+@use '@/styles/sass/variables' as *
+@use '@/styles/sass/colors' as *
+@use '@/styles/sass/mixins' as *
+
+.flexRootStack
+  width: 100%
+
+.main
+  display: block
+  padding-top: 32px
+  width: 100%
+
+  // variant with right padding for certain pages
+  &--paddingRight
+    padding-right: 60px
+
+.pageTitle
+  +Bold
+  font-size: 32px
+  color: $primary
+  margin-top: 0
+
+.form
+  min-width: 430px
+
+.centerAvatar
+  display: flex
+  justify-content: center
+  align-items: center
+
+.maxWidth
+  width: 365px !important
+
+.submitButton
+  margin-top: 32px !important
+  margin-bottom: 32px !important
+
+.centerModal
+  left: 0 !important
+
+.cropButton
+  max-width: fit-content
+  padding-left: 24px
+  padding-right: 24px
+
+.maxInputWidth
+  max-width: 365px !important
+
+@media #{$tablette}
+  .main
+    padding-top: 0 !important
+    margin-top: 1rem !important
+
+  .pageTitle
+    text-align: start !important
+    margin-bottom: 0
+
+  .form
+    min-width: 100%
+
+  .mobileButton
+    margin-top: 2rem !important
+    margin-bottom: 2rem !important
+
+  .fixMobile
+    display: flex
+    flex-direction: column
+    justify-content: space-between
+    height: 100%
+    padding-left: 24px
+    padding-right: 24px

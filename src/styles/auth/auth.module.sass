@@ -1,0 +1,161 @@
+@use '@/styles/sass/variables' as *
+@use '@/styles/sass/colors' as *
+@use '@/styles/sass/mixins' as *
+
+// Unified auth styles
+// - Default sizes match existing pages (364px desktop)
+// - Modifier classes (--fluid, --mt60, etc.) allow per-page overrides
+
+.contentWrapper
+  width: 364px
+  height: calc(100% - 4rem)
+  margin: 0 auto
+  justify-content: center
+  align-items: center
+
+  // fluid variant - full width from start (set-password-complete only)
+  &--fluid
+    width: 100%
+
+.content
+  +Bold
+  font-size: 32px
+  color: $primary
+  margin-bottom: 0 !important
+
+  // content size adjustments
+  &--large
+    font-size: 45px
+
+.header
+  +Bold
+  font-size: 45px
+  color: $primary
+
+.subHeader
+  +Regular
+  font-size: 19px
+  color: #84848A
+  text-align: center
+
+.subContent
+  +Medium
+  font-size: 19px
+  color: $primary
+
+.paragraphe
+  +Regular
+  font-size: 17px
+  color: #84848A
+
+  // reset-password uses larger font
+  &--large
+    font-size: 19px
+
+.email
+  color: #0274d7
+
+.emailRegisterButton
+  width: 100% !important
+
+.errorMessage
+  +Regular
+  font-size: 16px
+  text-align: center
+  color: #E12D3D
+
+.resendCodeButton
+  color: #0274d7 !important
+  width: auto
+
+.divider
+  color: $buttonInputDisabled
+  width: 100%
+  margin-top: 20px !important
+
+.dividerNoMargin
+  color: $buttonInputDisabled
+  width: 100%
+  margin-top: 0 !important
+
+.bottomLinks
+  +Regular
+  font-size: 15px
+  color: #525256
+  a
+    color: #0274d7
+
+.desktopOnly
+  display: block
+
+.mobileWidth
+  width: 100%
+
+.logo
+  width: 200px
+  height: 280px
+
+.primaryButtonWrapper
+  // only used in set-password-complete tablet view
+  width: 100%
+  text-align: center
+  padding-left: 24px
+  padding-right: 24px
+  margin-top: 60px
+
+// Layout helpers applied on tablet across auth pages
+@media #{$tablette}
+  .main
+    display: flex
+    flex-direction: column
+    width: 100%
+    min-height: 100vh
+    height: 100%
+  .logo
+    width: 70px
+    height: 90px
+    margin-top: 20px
+  .content
+    margin: 40px 0 0 0 !important
+    height: 100%
+
+  .contentWrapper
+    width: 100% !important
+    height: 100% !important
+    padding-left: 24px
+    padding-right: 24px
+    margin: 0 !important
+    justify-content: flex-start
+
+  .divider
+    display: flex
+    align-self: center
+    width: 50vw
+
+  .desktopOnly
+    display: none
+
+  .emailRegisterButton
+    margin: 1rem auto 0 !important
+    width: 70vw
+
+    // set-password uses heavier top margin
+    &--mt60
+      margin-top: 60px !important
+
+  .header
+    text-align: center
+    font-size: 32px
+
+// Mobile specific adjustments
+@media #{$mobile}
+  .divider
+    display: flex
+    align-self: center
+    width: calc(100vw - 48px) !important
+  .logo
+    width: 50px
+    height: 70px
+    margin-top: 20px
+  .mobileWidth
+    width: 100%

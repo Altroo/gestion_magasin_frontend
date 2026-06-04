@@ -1,0 +1,52 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Calendar Frame -->
+  <rect x="60" y="80" width="280" height="260" rx="12" fill="#FFFFFF" stroke="#2C3E50" stroke-width="3"/>
+  <!-- Header Bar -->
+  <rect x="60" y="80" width="280" height="60" rx="12" fill="#27AE60"/>
+  <rect x="60" y="120" width="280" height="20" fill="#27AE60"/>
+  <!-- Month Label -->
+  <rect x="120" y="97" width="160" height="14" rx="7" fill="#FFFFFF" opacity="0.5"/>
+  <!-- Navigation Arrows -->
+  <polygon points="85,110 75,104 75,116" fill="#FFFFFF" opacity="0.8"/>
+  <polygon points="315,110 325,104 325,116" fill="#FFFFFF" opacity="0.8"/>
+  <!-- Calendar Bindings -->
+  <rect x="130" y="65" width="14" height="30" rx="7" fill="#2C3E50"/>
+  <rect x="256" y="65" width="14" height="30" rx="7" fill="#2C3E50"/>
+  <!-- Day Headers -->
+  <rect x="80" y="158" width="22" height="8" rx="4" fill="#95A5A6"/>
+  <rect x="118" y="158" width="22" height="8" rx="4" fill="#95A5A6"/>
+  <rect x="156" y="158" width="22" height="8" rx="4" fill="#95A5A6"/>
+  <rect x="194" y="158" width="22" height="8" rx="4" fill="#95A5A6"/>
+  <rect x="232" y="158" width="22" height="8" rx="4" fill="#95A5A6"/>
+  <rect x="270" y="158" width="22" height="8" rx="4" fill="#BDC3C7"/>
+  <rect x="308" y="158" width="22" height="8" rx="4" fill="#BDC3C7"/>
+  <!-- Week 1 -->
+  <rect x="270" y="180" width="22" height="22" rx="4" fill="#ECF0F1"/>
+  <rect x="308" y="180" width="22" height="22" rx="4" fill="#ECF0F1"/>
+  <!-- Week 2 -->
+  <rect x="80" y="214" width="22" height="22" rx="4" fill="#ECF0F1"/>
+  <rect x="118" y="214" width="22" height="22" rx="4" fill="#ECF0F1"/>
+  <rect x="156" y="214" width="22" height="22" rx="4" fill="#ECF0F1"/>
+  <rect x="194" y="214" width="22" height="22" rx="4" fill="#ECF0F1"/>
+  <rect x="232" y="214" width="22" height="22" rx="4" fill="#ECF0F1"/>
+  <rect x="270" y="214" width="22" height="22" rx="4" fill="#ECF0F1"/>
+  <rect x="308" y="214" width="22" height="22" rx="4" fill="#ECF0F1"/>
+  <!-- Week 3 - highlighted booking -->
+  <rect x="80" y="248" width="22" height="22" rx="4" fill="#ECF0F1"/>
+  <rect x="118" y="248" width="22" height="22" rx="4" fill="#ECF0F1"/>
+  <rect x="156" y="248" width="22" height="22" rx="4" fill="#ECF0F1"/>
+  <!-- Booking Range Highlight -->
+  <rect x="194" y="248" width="136" height="22" rx="4" fill="#27AE60" opacity="0.2"/>
+  <rect x="194" y="248" width="22" height="22" rx="4" fill="#27AE60"/>
+  <rect x="232" y="248" width="22" height="22" rx="4" fill="#ECF0F1"/>
+  <rect x="270" y="248" width="22" height="22" rx="4" fill="#ECF0F1"/>
+  <rect x="308" y="248" width="22" height="22" rx="4" fill="#27AE60"/>
+  <!-- Week 4 -->
+  <rect x="80" y="282" width="22" height="22" rx="4" fill="#ECF0F1"/>
+  <rect x="118" y="282" width="22" height="22" rx="4" fill="#ECF0F1"/>
+  <rect x="156" y="282" width="22" height="22" rx="4" fill="#ECF0F1"/>
+  <rect x="194" y="282" width="22" height="22" rx="4" fill="#ECF0F1"/>
+  <!-- Check Badge -->
+  <circle cx="310" cy="90" r="28" fill="#F39C12"/>
+  <path d="M295 90 L305 100 L325 80" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

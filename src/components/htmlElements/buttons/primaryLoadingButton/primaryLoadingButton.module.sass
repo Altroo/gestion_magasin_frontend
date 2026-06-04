@@ -1,0 +1,31 @@
+@use '@/styles/sass/variables' as *
+@use '@/styles/sass/colors' as *
+@use '@/styles/sass/mixins' as *
+
+// Global styles
+.primaryButtonDisabled
+  +SemiBold
+  font-size: 17px !important
+  width: 300px
+  background-color: $buttonInputDisabled !important
+  color: $buttonTextDisabled !important
+  border: 0 !important
+  border-radius: 50px !important
+  height: 3rem !important
+  margin: 16px auto !important
+  cursor: pointer !important
+  text-transform: none !important
+  &:hover
+    background-color: rgba(0, 0, 0, 0.7) !important
+
+.primaryButtonActive
+  background-color: $primary !important
+  color: white !important
+
+// @media #{$desktop}
+@media #{$tablette}
+  .primaryButtonDisabled
+    width: 100% !important
+@media #{$mobile}
+  .primaryButtonDisabled
+    width: 100% !important

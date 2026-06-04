@@ -1,0 +1,27 @@
+# Production docker-compose configuration
+# NOTE: SSL termination is handled by gestion_magasin_frontend nginx (single reverse proxy)
+services:
+  web:
+    build: .
+    container_name: gestion_magasin_frontend_web
+    restart: always
+    env_file:
+      - .env.production
+    environment:
+      - NODE_ENV=production
+    extra_hosts:
+      - "gestion-magasin-api.elbouazzatiholding.ma:host-gateway"
+    ports:
+      - '3006:3006'
+    networks:
+      - webnet
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f bun || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+networks:
+  webnet:
+    driver: bridge
