@@ -365,6 +365,7 @@ export type TranslationDictionary = {
     promotion: string;
     salePromotionLines: string;
     allMagasinsDashboard: string;
+    searchByStore: string;
     salesTrend: string;
     attendanceTrend: string;
     purchasesTrend: string;
