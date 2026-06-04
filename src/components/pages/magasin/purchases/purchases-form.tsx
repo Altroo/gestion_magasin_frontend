@@ -140,7 +140,7 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 
 	return (
 		<NavigationBar title={isEditMode ? t.magasin.editPurchase : t.magasin.newPurchase}>
-			<Protected permission="can_create">
+			<Protected>
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={3}>

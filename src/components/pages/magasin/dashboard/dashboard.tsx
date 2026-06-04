@@ -398,7 +398,7 @@ const DashboardClient = ({ session }: SessionProps) => {
 
 	return (
 		<NavigationBar title={t.navigation.dashboard}>
-			<Protected permission="can_view">
+			<Protected>
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={2.5}>

@@ -2,15 +2,28 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert, Box, Button, Card, CardContent, Chip, Divider, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, CheckCircle as ValidateIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Inventory2 as InventoryIcon } from '@mui/icons-material';
+import { Alert, Box, Button, Chip, Divider, Stack } from '@mui/material';
+import {
+	ArrowBack as ArrowBackIcon,
+	Badge as BadgeIcon,
+	CalendarMonth as CalendarIcon,
+	CheckCircle as ValidateIcon,
+	Close as CloseIcon,
+	Delete as DeleteIcon,
+	Description as DescriptionIcon,
+	Edit as EditIcon,
+	Inventory2 as InventoryIcon,
+	Numbers as NumbersIcon,
+	Person as PersonIcon,
+	Storefront as StorefrontIcon,
+} from '@mui/icons-material';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
-import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
+import { DetailCard, DetailHeaderCard, InfoRow, LineItemsCard, StatusChip } from '@/components/pages/magasin/shared/view-components';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeleteInventorySessionMutation, useGetInventorySessionQuery, useValidateInventorySessionMutation } from '@/store/services/magasin';
 import { INVENTORY_EDIT, INVENTORY_LIST } from '@/utils/routes';
@@ -75,33 +88,48 @@ const InventoryViewClient = ({ session, id }: Props) => {
 							</Stack>
 							{isLoading ? <ApiProgress backdropColor="#FFFFFF" circularColor="#0D070B" /> : (axiosError?.status as number) > 400 ? <ApiAlert errorDetails={axiosError?.data.details} /> : !inventory ? <Alert severity="warning">{t.magasin.noRows}</Alert> : (
 								<Stack spacing={3}>
-									<Card elevation={2} sx={{ borderRadius: 2 }}>
-										<CardContent sx={{ p: 3 }}>
-											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2, flexWrap: 'wrap' }}>
-												<InventoryIcon color="primary" />
-												<Typography variant="h6" fontWeight={700}>{inventory.title}</Typography>
-												<Chip size="small" color={inventory.status === 'validated' ? 'success' : 'default'} label={magasinStatusLabel(t, inventory.status)} />
-											</Stack>
-											<Divider sx={{ mb: 2 }} />
-											<Stack spacing={1}>
-												<Typography>{t.magasin.inventoryCode}: {inventory.code}</Typography>
-												<Typography>{t.magasin.store}: {inventory.store_name}</Typography>
-												<Typography>{t.magasin.date}: {formatDate(inventory.inventory_date)}</Typography>
-												<Typography>{t.magasin.responsible}: {inventory.created_by_email ?? '-'}</Typography>
-												<Typography>{t.magasin.note}: {inventory.note || '-'}</Typography>
-											</Stack>
-										</CardContent>
-									</Card>
-									<Card elevation={2} sx={{ borderRadius: 2 }}>
-										<CardContent sx={{ p: 3 }}>
-											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}><InventoryIcon color="primary" /><Typography variant="h6" fontWeight={700}>{t.magasin.saleLines}</Typography></Stack>
-											<Divider sx={{ mb: 2 }} />
-											<Table size="small">
-												<TableHead><TableRow><TableCell>{t.magasin.product}</TableCell><TableCell>{t.magasin.reference}</TableCell><TableCell align="right">{t.magasin.expectedQuantity}</TableCell><TableCell align="right">{t.magasin.countedQuantity}</TableCell><TableCell align="right">{t.magasin.difference}</TableCell><TableCell>{t.magasin.note}</TableCell></TableRow></TableHead>
-												<TableBody>{inventory.lines.map((line) => <TableRow key={line.id}><TableCell>{line.product_name}</TableCell><TableCell>{line.product_reference ?? line.product_barcode ?? '-'}</TableCell><TableCell align="right">{formatNumber(line.expected_quantity)}</TableCell><TableCell align="right">{formatNumber(line.counted_quantity)}</TableCell><TableCell align="right">{formatNumber(line.difference)}</TableCell><TableCell>{line.note || '-'}</TableCell></TableRow>)}</TableBody>
-											</Table>
-										</CardContent>
-									</Card>
+									<DetailHeaderCard
+										icon={<InventoryIcon />}
+										title={inventory.title}
+										chips={(
+											<>
+												<Chip label={`ID: ${inventory.id}`} size="small" variant="outlined" />
+												<Chip label={inventory.code} size="small" variant="outlined" />
+												<StatusChip t={t} status={inventory.status} />
+											</>
+										)}
+									/>
+									<DetailCard icon={<InventoryIcon />} title={t.magasin.inventoryDetails}>
+										<InfoRow icon={<BadgeIcon />} label={t.magasin.inventoryCode} value={inventory.code} />
+										<Divider />
+										<InfoRow icon={<StorefrontIcon />} label={t.magasin.store} value={inventory.store_name} />
+										<Divider />
+										<InfoRow icon={<CalendarIcon />} label={t.magasin.date} value={formatDate(inventory.inventory_date)} />
+										<Divider />
+										<InfoRow icon={<DescriptionIcon />} label={t.magasin.note} value={inventory.note} />
+									</DetailCard>
+									<DetailCard icon={<PersonIcon />} title={t.users.generalInfo}>
+										<InfoRow icon={<PersonIcon />} label={t.magasin.responsible} value={inventory.created_by_email} />
+										<Divider />
+										<InfoRow icon={<ValidateIcon />} label={t.magasin.validated} value={inventory.validated_by_email} />
+										<Divider />
+										<InfoRow icon={<CalendarIcon />} label={t.users.lastUpdate} value={formatDate(inventory.date_updated ?? null)} />
+									</DetailCard>
+									<LineItemsCard
+										icon={<NumbersIcon />}
+										title={t.magasin.products}
+										rows={inventory.lines}
+										getRowKey={(line) => line.id}
+										emptyLabel={t.magasin.noRows}
+										columns={[
+											{ key: 'product', label: t.magasin.product, render: (line) => line.product_name },
+											{ key: 'reference', label: t.magasin.reference, render: (line) => line.product_reference ?? line.product_barcode ?? '-' },
+											{ key: 'expected', label: t.magasin.expectedQuantity, align: 'right', render: (line) => formatNumber(line.expected_quantity) },
+											{ key: 'counted', label: t.magasin.countedQuantity, align: 'right', render: (line) => formatNumber(line.counted_quantity) },
+											{ key: 'difference', label: t.magasin.difference, align: 'right', render: (line) => formatNumber(line.difference) },
+											{ key: 'note', label: t.magasin.note, render: (line) => line.note || '-' },
+										]}
+									/>
 								</Stack>
 							)}
 						</Stack>

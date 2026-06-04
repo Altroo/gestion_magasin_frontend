@@ -2,15 +2,27 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert, Box, Button, Card, CardContent, Chip, Divider, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Close as CloseIcon, Delete as DeleteIcon, DownloadDone as ReceiveIcon, Edit as EditIcon, Inventory2 as InventoryIcon, Storefront as StorefrontIcon } from '@mui/icons-material';
+import { Alert, Box, Button, Chip, Divider, Stack } from '@mui/material';
+import {
+	ArrowBack as ArrowBackIcon,
+	CalendarMonth as CalendarIcon,
+	Close as CloseIcon,
+	Delete as DeleteIcon,
+	Description as DescriptionIcon,
+	DownloadDone as ReceiveIcon,
+	Edit as EditIcon,
+	Inventory2 as InventoryIcon,
+	Numbers as NumbersIcon,
+	Person as PersonIcon,
+	Storefront as StorefrontIcon,
+} from '@mui/icons-material';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
-import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
+import { DetailCard, DetailHeaderCard, InfoRow, LineItemsCard, StatusChip } from '@/components/pages/magasin/shared/view-components';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeletePurchaseMutation, useGetPurchaseQuery, useReceivePurchaseMutation } from '@/store/services/magasin';
 import { PURCHASES_EDIT, PURCHASES_LIST } from '@/utils/routes';
@@ -61,7 +73,7 @@ const PurchasesViewClient = ({ session, id }: Props) => {
 
 	return (
 		<NavigationBar title={t.magasin.purchaseDetails}>
-			<Protected permission="can_view">
+			<Protected>
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={3}>
@@ -77,40 +89,47 @@ const PurchasesViewClient = ({ session, id }: Props) => {
 							</Stack>
 							{isLoading ? <ApiProgress backdropColor="#FFFFFF" circularColor="#0D070B" /> : (axiosError?.status as number) > 400 ? <ApiAlert errorDetails={axiosError?.data.details} /> : !purchase ? <Alert severity="warning">{t.magasin.noRows}</Alert> : (
 								<Stack spacing={3}>
-									<Card elevation={2} sx={{ borderRadius: 2 }}>
-										<CardContent sx={{ p: 3 }}>
-											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2, flexWrap: 'wrap' }}>
-												<StorefrontIcon color="primary" />
-												<Typography variant="h6" fontWeight={700}>{purchase.reference || `#${purchase.id}`}</Typography>
-												<Chip size="small" color={purchase.status === 'received' ? 'success' : 'default'} label={magasinStatusLabel(t, purchase.status)} />
-											</Stack>
-											<Divider sx={{ mb: 2 }} />
-											<Stack spacing={1}>
-												<Typography>{t.magasin.store}: {purchase.store_name}</Typography>
-												<Typography>{t.magasin.supplier}: {purchase.supplier_name || '-'}</Typography>
-												<Typography>{t.magasin.date}: {formatDate(purchase.purchase_date)}</Typography>
-												<Typography>{t.magasin.subtotal}: {formatNumber(purchase.subtotal)} Dhs</Typography>
-												<Typography>{t.magasin.note}: {purchase.note || '-'}</Typography>
-											</Stack>
-										</CardContent>
-									</Card>
-									<Card elevation={2} sx={{ borderRadius: 2 }}>
-										<CardContent sx={{ p: 3 }}>
-											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-												<InventoryIcon color="primary" />
-												<Typography variant="h6" fontWeight={700}>{t.magasin.saleLines}</Typography>
-											</Stack>
-											<Divider sx={{ mb: 2 }} />
-											<Table size="small">
-												<TableHead>
-													<TableRow><TableCell>{t.magasin.product}</TableCell><TableCell align="right">{t.magasin.quantity}</TableCell><TableCell align="right">{t.magasin.purchasePrice}</TableCell><TableCell align="right">{t.magasin.total}</TableCell></TableRow>
-												</TableHead>
-												<TableBody>
-													{purchase.lines.map((line) => <TableRow key={line.id}><TableCell>{line.product_reference ?? line.product_barcode ?? line.product} - {line.product_name}</TableCell><TableCell align="right">{formatNumber(line.quantity)}</TableCell><TableCell align="right">{formatNumber(line.unit_cost)} Dhs</TableCell><TableCell align="right">{formatNumber(line.total)} Dhs</TableCell></TableRow>)}
-												</TableBody>
-											</Table>
-										</CardContent>
-									</Card>
+									<DetailHeaderCard
+										icon={<StorefrontIcon />}
+										title={purchase.reference || `#${purchase.id}`}
+										chips={(
+											<>
+												<Chip label={`ID: ${purchase.id}`} size="small" variant="outlined" />
+												<StatusChip t={t} status={purchase.status} />
+											</>
+										)}
+									/>
+									<DetailCard icon={<StorefrontIcon />} title={t.magasin.purchaseDetails}>
+										<InfoRow icon={<StorefrontIcon />} label={t.magasin.store} value={purchase.store_name} />
+										<Divider />
+										<InfoRow icon={<PersonIcon />} label={t.magasin.supplier} value={purchase.supplier_name} />
+										<Divider />
+										<InfoRow icon={<CalendarIcon />} label={t.magasin.date} value={formatDate(purchase.purchase_date)} />
+										<Divider />
+										<InfoRow icon={<NumbersIcon />} label={t.magasin.subtotal} value={`${formatNumber(purchase.subtotal)} Dhs`} />
+										<Divider />
+										<InfoRow icon={<DescriptionIcon />} label={t.magasin.note} value={purchase.note} />
+									</DetailCard>
+									<DetailCard icon={<PersonIcon />} title={t.users.generalInfo}>
+										<InfoRow icon={<PersonIcon />} label={t.magasin.responsible} value={purchase.created_by_email} />
+										<Divider />
+										<InfoRow icon={<ReceiveIcon />} label={t.magasin.received} value={purchase.received_by_email} />
+										<Divider />
+										<InfoRow icon={<CalendarIcon />} label={t.users.lastUpdate} value={formatDate(purchase.date_updated ?? null)} />
+									</DetailCard>
+									<LineItemsCard
+										icon={<InventoryIcon />}
+										title={t.magasin.products}
+										rows={purchase.lines}
+										getRowKey={(line) => line.id}
+										emptyLabel={t.magasin.noRows}
+										columns={[
+											{ key: 'product', label: t.magasin.product, render: (line) => `${line.product_reference ?? line.product_barcode ?? line.product} - ${line.product_name}` },
+											{ key: 'quantity', label: t.magasin.quantity, align: 'right', render: (line) => formatNumber(line.quantity) },
+											{ key: 'purchasePrice', label: t.magasin.purchasePrice, align: 'right', render: (line) => `${formatNumber(line.unit_cost)} Dhs` },
+											{ key: 'total', label: t.magasin.total, align: 'right', render: (line) => `${formatNumber(line.total)} Dhs` },
+										]}
+									/>
 								</Stack>
 							)}
 						</Stack>

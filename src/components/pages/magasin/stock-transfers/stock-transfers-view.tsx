@@ -2,15 +2,28 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert, Box, Button, Card, CardContent, Chip, Divider, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, CheckCircle as ValidateIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Inventory2 as InventoryIcon, SwapHoriz as TransferIcon } from '@mui/icons-material';
+import { Alert, Box, Button, Chip, Divider, Stack } from '@mui/material';
+import {
+	ArrowBack as ArrowBackIcon,
+	Badge as BadgeIcon,
+	CalendarMonth as CalendarIcon,
+	CheckCircle as ValidateIcon,
+	Close as CloseIcon,
+	Delete as DeleteIcon,
+	Description as DescriptionIcon,
+	Edit as EditIcon,
+	Inventory2 as InventoryIcon,
+	Person as PersonIcon,
+	Storefront as StorefrontIcon,
+	SwapHoriz as TransferIcon,
+} from '@mui/icons-material';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
-import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
+import { DetailCard, DetailHeaderCard, InfoRow, LineItemsCard, StatusChip } from '@/components/pages/magasin/shared/view-components';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeleteStockTransferMutation, useGetStockTransferQuery, useValidateStockTransferMutation } from '@/store/services/magasin';
 import { STOCK_TRANSFERS_EDIT, STOCK_TRANSFERS_LIST } from '@/utils/routes';
@@ -59,7 +72,7 @@ const StockTransfersViewClient = ({ session, id }: Props) => {
 
 	return (
 		<NavigationBar title={t.magasin.stockTransferDetails}>
-			<Protected permission="can_view">
+			<Protected>
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={3}>
@@ -75,32 +88,46 @@ const StockTransfersViewClient = ({ session, id }: Props) => {
 							</Stack>
 							{isLoading ? <ApiProgress backdropColor="#FFFFFF" circularColor="#0D070B" /> : (axiosError?.status as number) > 400 ? <ApiAlert errorDetails={axiosError?.data.details} /> : !transfer ? <Alert severity="warning">{t.magasin.noRows}</Alert> : (
 								<Stack spacing={3}>
-									<Card elevation={2} sx={{ borderRadius: 2 }}>
-										<CardContent sx={{ p: 3 }}>
-											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2, flexWrap: 'wrap' }}>
-												<TransferIcon color="primary" />
-												<Typography variant="h6" fontWeight={700}>{transfer.reference || `#${transfer.id}`}</Typography>
-												<Chip size="small" color={transfer.status === 'validated' ? 'success' : 'default'} label={magasinStatusLabel(t, transfer.status)} />
-											</Stack>
-											<Divider sx={{ mb: 2 }} />
-											<Stack spacing={1}>
-												<Typography>{t.magasin.sourceStore}: {transfer.source_store_name}</Typography>
-												<Typography>{t.magasin.targetStore}: {transfer.target_store_name}</Typography>
-												<Typography>{t.magasin.transferDate}: {formatDate(transfer.transfer_date)}</Typography>
-												<Typography>{t.magasin.note}: {transfer.note || '-'}</Typography>
-											</Stack>
-										</CardContent>
-									</Card>
-									<Card elevation={2} sx={{ borderRadius: 2 }}>
-										<CardContent sx={{ p: 3 }}>
-											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}><InventoryIcon color="primary" /><Typography variant="h6" fontWeight={700}>{t.magasin.saleLines}</Typography></Stack>
-											<Divider sx={{ mb: 2 }} />
-											<Table size="small">
-												<TableHead><TableRow><TableCell>{t.magasin.product}</TableCell><TableCell>{t.magasin.reference}</TableCell><TableCell align="right">{t.magasin.quantity}</TableCell></TableRow></TableHead>
-												<TableBody>{transfer.lines.map((line) => <TableRow key={line.id}><TableCell>{line.product_name}</TableCell><TableCell>{line.product_reference ?? line.product_barcode ?? '-'}</TableCell><TableCell align="right">{formatNumber(line.quantity)}</TableCell></TableRow>)}</TableBody>
-											</Table>
-										</CardContent>
-									</Card>
+									<DetailHeaderCard
+										icon={<TransferIcon />}
+										title={transfer.reference || `#${transfer.id}`}
+										chips={(
+											<>
+												<Chip label={`ID: ${transfer.id}`} size="small" variant="outlined" />
+												<StatusChip t={t} status={transfer.status} />
+											</>
+										)}
+									/>
+									<DetailCard icon={<TransferIcon />} title={t.magasin.stockTransferDetails}>
+										<InfoRow icon={<StorefrontIcon />} label={t.magasin.sourceStore} value={transfer.source_store_name} />
+										<Divider />
+										<InfoRow icon={<StorefrontIcon />} label={t.magasin.targetStore} value={transfer.target_store_name} />
+										<Divider />
+										<InfoRow icon={<CalendarIcon />} label={t.magasin.transferDate} value={formatDate(transfer.transfer_date)} />
+										<Divider />
+										<InfoRow icon={<BadgeIcon />} label={t.magasin.transferReference} value={transfer.reference} />
+										<Divider />
+										<InfoRow icon={<DescriptionIcon />} label={t.magasin.note} value={transfer.note} />
+									</DetailCard>
+									<DetailCard icon={<PersonIcon />} title={t.users.generalInfo}>
+										<InfoRow icon={<PersonIcon />} label={t.magasin.responsible} value={transfer.created_by_email} />
+										<Divider />
+										<InfoRow icon={<ValidateIcon />} label={t.magasin.validated} value={transfer.validated_by_email} />
+										<Divider />
+										<InfoRow icon={<CalendarIcon />} label={t.users.lastUpdate} value={formatDate(transfer.date_updated ?? null)} />
+									</DetailCard>
+									<LineItemsCard
+										icon={<InventoryIcon />}
+										title={t.magasin.products}
+										rows={transfer.lines}
+										getRowKey={(line) => line.id}
+										emptyLabel={t.magasin.noRows}
+										columns={[
+											{ key: 'product', label: t.magasin.product, render: (line) => line.product_name },
+											{ key: 'reference', label: t.magasin.reference, render: (line) => line.product_reference ?? line.product_barcode ?? '-' },
+											{ key: 'quantity', label: t.magasin.quantity, align: 'right', render: (line) => formatNumber(line.quantity) },
+										]}
+									/>
 								</Stack>
 							)}
 						</Stack>

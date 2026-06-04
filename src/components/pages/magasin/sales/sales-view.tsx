@@ -2,14 +2,28 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert, Box, Button, Card, CardContent, Chip, Divider, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Close as CloseIcon, Delete as DeleteIcon, PointOfSale as PointOfSaleIcon } from '@mui/icons-material';
+import { Alert, Box, Button, Chip, Divider, Stack } from '@mui/material';
+import {
+	ArrowBack as ArrowBackIcon,
+	CalendarMonth as CalendarIcon,
+	Close as CloseIcon,
+	Delete as DeleteIcon,
+	Description as DescriptionIcon,
+	Inventory2 as InventoryIcon,
+	LocalOffer as LocalOfferIcon,
+	Numbers as NumbersIcon,
+	Payment as PaymentIcon,
+	Person as PersonIcon,
+	PointOfSale as PointOfSaleIcon,
+	Storefront as StorefrontIcon,
+} from '@mui/icons-material';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
+import { DetailCard, DetailHeaderCard, InfoRow, LineItemsCard, StatusChip } from '@/components/pages/magasin/shared/view-components';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useGetSaleQuery, useVoidSaleMutation } from '@/store/services/magasin';
 import { SALES_LIST } from '@/utils/routes';
@@ -70,80 +84,68 @@ const SalesViewClient = ({ session, id }: Props) => {
 								<Alert severity="warning">{t.magasin.noRows}</Alert>
 							) : (
 								<Stack spacing={3}>
-									<Card elevation={2}>
-										<CardContent sx={{ p: 3 }}>
-											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-												<PointOfSaleIcon color="primary" />
-												<Typography variant="h6" fontWeight={700}>#{sale.id}</Typography>
-												<Chip size="small" label={sale.status} color={sale.status === 'void' ? 'default' : 'success'} />
-											</Stack>
-											<Divider sx={{ mb: 2 }} />
-											<Stack spacing={1}>
-												<Typography>{t.magasin.store}: {sale.store_name}</Typography>
-												<Typography>{t.magasin.date}: {formatDate(sale.date_created)}</Typography>
-												<Typography>{t.magasin.seller}: {sale.seller_email ?? '-'}</Typography>
-												<Typography>{t.magasin.paymentMode}: {sale.payment_mode_name ?? '-'}</Typography>
-												<Typography>{t.magasin.paymentStatus}: {sale.payment_status}</Typography>
-												<Typography>{t.magasin.subtotal}: {formatNumber(sale.subtotal)} Dhs</Typography>
-												<Typography>{t.magasin.discountAmount}: {formatNumber(sale.discount_amount)} Dhs</Typography>
-												<Typography>{t.magasin.paidAmount}: {formatNumber(sale.paid_amount)} Dhs</Typography>
-												<Typography>{t.magasin.changeAmount}: {formatNumber(sale.change_amount)} Dhs</Typography>
-												<Typography fontWeight={700}>{t.magasin.total}: {formatNumber(sale.total)} Dhs</Typography>
-											</Stack>
-										</CardContent>
-									</Card>
-									<Card elevation={2}>
-										<CardContent sx={{ p: 3 }}>
-											<Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>{t.magasin.saleLines}</Typography>
-											{sale.lines.length > 0 && (
-												<Table size="small">
-													<TableHead>
-														<TableRow>
-															<TableCell>{t.magasin.product}</TableCell>
-															<TableCell align="right">{t.magasin.quantity}</TableCell>
-															<TableCell align="right">{t.magasin.unitPrice}</TableCell>
-															<TableCell align="right">{t.magasin.total}</TableCell>
-														</TableRow>
-													</TableHead>
-													<TableBody>
-														{sale.lines.map((line) => (
-															<TableRow key={line.id}>
-																<TableCell>{line.product_reference ?? line.product_barcode} - {line.product_name}</TableCell>
-																<TableCell align="right">{formatNumber(line.quantity)}</TableCell>
-																<TableCell align="right">{formatNumber(line.unit_price)} Dhs</TableCell>
-																<TableCell align="right">{formatNumber(line.total)} Dhs</TableCell>
-															</TableRow>
-														))}
-													</TableBody>
-												</Table>
-											)}
-											{sale.promotion_lines.length > 0 && (
-												<Box sx={{ mt: sale.lines.length > 0 ? 3 : 0 }}>
-													<Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>{t.magasin.salePromotionLines}</Typography>
-													<Table size="small">
-														<TableHead>
-															<TableRow>
-																<TableCell>{t.magasin.promotion}</TableCell>
-																<TableCell align="right">{t.magasin.quantity}</TableCell>
-																<TableCell align="right">{t.magasin.unitPrice}</TableCell>
-																<TableCell align="right">{t.magasin.total}</TableCell>
-															</TableRow>
-														</TableHead>
-														<TableBody>
-															{sale.promotion_lines.map((line) => (
-																<TableRow key={line.id}>
-																	<TableCell>{line.promotion_name}</TableCell>
-																	<TableCell align="right">{formatNumber(line.quantity)}</TableCell>
-																	<TableCell align="right">{formatNumber(line.unit_price)} Dhs</TableCell>
-																	<TableCell align="right">{formatNumber(line.total)} Dhs</TableCell>
-																</TableRow>
-															))}
-														</TableBody>
-													</Table>
-												</Box>
-											)}
-										</CardContent>
-									</Card>
+									<DetailHeaderCard
+										icon={<PointOfSaleIcon />}
+										title={`#${sale.id}`}
+										chips={(
+											<>
+												<Chip label={`ID: ${sale.id}`} size="small" variant="outlined" />
+												<StatusChip t={t} status={sale.status} />
+											</>
+										)}
+									/>
+									<DetailCard icon={<PointOfSaleIcon />} title={t.magasin.saleDetails}>
+										<InfoRow icon={<StorefrontIcon />} label={t.magasin.store} value={sale.store_name} />
+										<Divider />
+										<InfoRow icon={<CalendarIcon />} label={t.magasin.date} value={formatDate(sale.date_created)} />
+										<Divider />
+										<InfoRow icon={<PersonIcon />} label={t.magasin.seller} value={sale.seller_email} />
+										<Divider />
+										<InfoRow icon={<PaymentIcon />} label={t.magasin.paymentMode} value={sale.payment_mode_name} />
+										<Divider />
+										<InfoRow icon={<DescriptionIcon />} label={t.magasin.note} value={sale.note} />
+									</DetailCard>
+									<DetailCard icon={<PaymentIcon />} title={t.magasin.paymentStatus}>
+										<InfoRow icon={<PaymentIcon />} label={t.magasin.paymentStatus} value={<StatusChip t={t} status={sale.payment_status} />} />
+										<Divider />
+										<InfoRow icon={<NumbersIcon />} label={t.magasin.subtotal} value={`${formatNumber(sale.subtotal)} Dhs`} />
+										<Divider />
+										<InfoRow icon={<NumbersIcon />} label={t.magasin.discountAmount} value={`${formatNumber(sale.discount_amount)} Dhs`} />
+										<Divider />
+										<InfoRow icon={<NumbersIcon />} label={t.magasin.paidAmount} value={`${formatNumber(sale.paid_amount)} Dhs`} />
+										<Divider />
+										<InfoRow icon={<NumbersIcon />} label={t.magasin.changeAmount} value={`${formatNumber(sale.change_amount)} Dhs`} />
+										<Divider />
+										<InfoRow icon={<NumbersIcon />} label={t.magasin.total} value={`${formatNumber(sale.total)} Dhs`} />
+									</DetailCard>
+									<LineItemsCard
+										icon={<InventoryIcon />}
+										title={t.magasin.saleLines}
+										rows={sale.lines}
+										getRowKey={(line) => line.id}
+										emptyLabel={t.magasin.noRows}
+										columns={[
+											{ key: 'product', label: t.magasin.product, render: (line) => `${line.product_reference ?? line.product_barcode ?? '-'} - ${line.product_name}` },
+											{ key: 'quantity', label: t.magasin.quantity, align: 'right', render: (line) => formatNumber(line.quantity) },
+											{ key: 'unitPrice', label: t.magasin.unitPrice, align: 'right', render: (line) => `${formatNumber(line.unit_price)} Dhs` },
+											{ key: 'total', label: t.magasin.total, align: 'right', render: (line) => `${formatNumber(line.total)} Dhs` },
+										]}
+									/>
+									{sale.promotion_lines.length > 0 && (
+										<LineItemsCard
+											icon={<LocalOfferIcon />}
+											title={t.magasin.salePromotionLines}
+											rows={sale.promotion_lines}
+											getRowKey={(line) => line.id}
+											emptyLabel={t.magasin.noRows}
+											columns={[
+												{ key: 'promotion', label: t.magasin.promotion, render: (line) => line.promotion_name },
+												{ key: 'quantity', label: t.magasin.quantity, align: 'right', render: (line) => formatNumber(line.quantity) },
+												{ key: 'unitPrice', label: t.magasin.unitPrice, align: 'right', render: (line) => `${formatNumber(line.unit_price)} Dhs` },
+												{ key: 'total', label: t.magasin.total, align: 'right', render: (line) => `${formatNumber(line.total)} Dhs` },
+											]}
+										/>
+									)}
 								</Stack>
 							)}
 						</Stack>

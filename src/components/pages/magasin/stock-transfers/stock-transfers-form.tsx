@@ -123,7 +123,7 @@ const StockTransfersFormClient = ({ session, id }: Props) => {
 
 	return (
 		<NavigationBar title={isEditMode ? t.magasin.editStockTransfer : t.magasin.newStockTransfer}>
-			<Protected permission="can_create">
+			<Protected>
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={3}>

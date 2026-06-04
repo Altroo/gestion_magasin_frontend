@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '@/types/_initTypes';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useGetUserQuery, useDeleteUserMutation } from '@/store/services/account';
-import Styles from '@/styles/dashboard/dashboard.module.sass';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import {
 	Stack,
@@ -44,6 +43,7 @@ import { useToast, useLanguage } from '@/utils/hooks';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import { Protected } from '@/components/layouts/protected/protected';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
+import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 
 interface InfoRowProps {
 	icon: React.ReactNode;
@@ -161,10 +161,11 @@ const UsersViewClient: React.FC<Props> = ({ session, id }) => {
 	];
 
 	return (
-		<Stack direction="column" spacing={2} className={Styles.flexRootStack} mt="32px">
-			<NavigationBar title={t.users.userDetails}>
-				<Protected>
-					<Stack spacing={3} sx={{ p: { xs: 2, md: 3 }, mt: 2 }}>
+		<NavigationBar title={t.users.userDetails}>
+			<Protected>
+				<Box sx={magasinPageContainerSx}>
+					<Box sx={magasinPageContentSx}>
+						<Stack spacing={3}>
 						<Stack direction={isMobile ? 'column' : 'row'} justifyContent="space-between" alignItems={isMobile ? 'stretch' : 'center'} spacing={2}>
 							<Button
 								variant="outlined"
@@ -435,9 +436,10 @@ const UsersViewClient: React.FC<Props> = ({ session, id }) => {
 								</Card>
 							</Stack>
 						)}
-					</Stack>
-				</Protected>
-			</NavigationBar>
+						</Stack>
+					</Box>
+				</Box>
+			</Protected>
 		{showDeleteModal && (
 			<ActionModals
 				title={t.users.deleteUser}
@@ -447,7 +449,7 @@ const UsersViewClient: React.FC<Props> = ({ session, id }) => {
 				titleIconColor="#D32F2F"
 			/>
 		)}
-		</Stack>
+		</NavigationBar>
 	);
 };
 

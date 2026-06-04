@@ -2,15 +2,27 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert, Box, Button, Card, CardContent, Chip, Divider, Stack, Typography } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Payments as PaymentsIcon } from '@mui/icons-material';
+import { Alert, Box, Button, Chip, Divider, Stack } from '@mui/material';
+import {
+	ArrowBack as ArrowBackIcon,
+	CalendarMonth as CalendarIcon,
+	Close as CloseIcon,
+	Delete as DeleteIcon,
+	Description as DescriptionIcon,
+	Edit as EditIcon,
+	Numbers as NumbersIcon,
+	Payment as PaymentIcon,
+	Payments as PaymentsIcon,
+	Person as PersonIcon,
+	Storefront as StorefrontIcon,
+} from '@mui/icons-material';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
-import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
+import { DetailCard, DetailHeaderCard, InfoRow, StatusChip } from '@/components/pages/magasin/shared/view-components';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeleteExpenseMutation, useGetExpenseQuery } from '@/store/services/magasin';
 import { EXPENSES_EDIT, EXPENSES_LIST } from '@/utils/routes';
@@ -59,25 +71,33 @@ const ExpensesViewClient = ({ session, id }: Props) => {
 								)}
 							</Stack>
 							{isLoading ? <ApiProgress backdropColor="#FFFFFF" circularColor="#0D070B" /> : (axiosError?.status as number) > 400 ? <ApiAlert errorDetails={axiosError?.data.details} /> : !expense ? <Alert severity="warning">{t.magasin.noRows}</Alert> : (
-								<Card elevation={2} sx={{ borderRadius: 2 }}>
-									<CardContent sx={{ p: 3 }}>
-										<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2, flexWrap: 'wrap' }}>
-											<PaymentsIcon color="primary" />
-											<Typography variant="h6" fontWeight={700}>{expense.label}</Typography>
-											<Chip size="small" color={expense.payment_status === 'paid' ? 'success' : 'warning'} label={magasinStatusLabel(t, expense.payment_status)} />
-										</Stack>
-										<Divider sx={{ mb: 2 }} />
-										<Stack spacing={1}>
-											<Typography>{t.magasin.store}: {expense.store_name}</Typography>
-											<Typography>{t.magasin.expenseCategory}: {expense.category_name}</Typography>
-											<Typography>{t.magasin.date}: {formatDate(expense.expense_date)}</Typography>
-											<Typography>{t.magasin.paymentMode}: {expense.payment_mode}</Typography>
-											<Typography>{t.magasin.expenseAmount}: {formatNumber(expense.amount)} Dhs</Typography>
-											<Typography>{t.magasin.responsible}: {expense.created_by_email ?? '-'}</Typography>
-											<Typography>{t.magasin.note}: {expense.note || '-'}</Typography>
-										</Stack>
-									</CardContent>
-								</Card>
+								<Stack spacing={3}>
+									<DetailHeaderCard
+										icon={<PaymentsIcon />}
+										title={expense.label}
+										chips={(
+											<>
+												<Chip label={`ID: ${expense.id}`} size="small" variant="outlined" />
+												<StatusChip t={t} status={expense.payment_status} />
+											</>
+										)}
+									/>
+									<DetailCard icon={<PaymentsIcon />} title={t.magasin.expenseDetails}>
+										<InfoRow icon={<StorefrontIcon />} label={t.magasin.store} value={expense.store_name} />
+										<Divider />
+										<InfoRow icon={<PaymentsIcon />} label={t.magasin.expenseCategory} value={expense.category_name} />
+										<Divider />
+										<InfoRow icon={<CalendarIcon />} label={t.magasin.date} value={formatDate(expense.expense_date)} />
+										<Divider />
+										<InfoRow icon={<PaymentIcon />} label={t.magasin.paymentMode} value={expense.payment_mode} />
+										<Divider />
+										<InfoRow icon={<NumbersIcon />} label={t.magasin.expenseAmount} value={`${formatNumber(expense.amount)} Dhs`} />
+										<Divider />
+										<InfoRow icon={<PersonIcon />} label={t.magasin.responsible} value={expense.created_by_email} />
+										<Divider />
+										<InfoRow icon={<DescriptionIcon />} label={t.magasin.note} value={expense.note} />
+									</DetailCard>
+								</Stack>
 							)}
 						</Stack>
 					</Box>

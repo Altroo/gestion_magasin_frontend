@@ -113,7 +113,7 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 
 	return (
 		<NavigationBar title={t.magasin.purchases}>
-			<Protected permission="can_view">
+			<Protected>
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack direction="row" spacing={1} flexWrap="wrap">

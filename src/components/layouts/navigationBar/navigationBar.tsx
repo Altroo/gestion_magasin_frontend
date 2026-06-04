@@ -89,15 +89,6 @@ import type { NotificationType } from '@/types/gestionMagasinTypes';
 
 const getNavigationMenu = (isStaff: boolean, t: TranslationDictionary) => {
 	return {
-		mbrSouth: {
-			title: t.navigation.mbrSouth,
-			icon: <DomainIcon />,
-			items: [
-				{ title: t.navigation.dashboard, label: t.navigation.dashboard, path: DASHBOARD },
-				{ title: t.navigation.stockTransfers, label: t.navigation.stockTransfers, path: DASHBOARD_STOCK_TRANSFERS },
-				{ title: t.navigation.purchases, label: t.navigation.purchases, path: DASHBOARD_PURCHASES },
-			],
-		},
 		operations: {
 			title: t.navigation.operations,
 			icon: <PointOfSaleIcon />,
@@ -113,6 +104,15 @@ const getNavigationMenu = (isStaff: boolean, t: TranslationDictionary) => {
 			],
 		},
 		...(isStaff && {
+			mbrSouth: {
+				title: t.navigation.mbrSouth,
+				icon: <DomainIcon />,
+				items: [
+					{ title: t.navigation.dashboard, label: t.navigation.dashboard, path: DASHBOARD },
+					{ title: t.navigation.stockTransfers, label: t.navigation.stockTransfers, path: DASHBOARD_STOCK_TRANSFERS },
+					{ title: t.navigation.purchases, label: t.navigation.purchases, path: DASHBOARD_PURCHASES },
+				],
+			},
 			magasins: {
 				title: t.navigation.stores,
 				icon: <StorefrontIcon />,

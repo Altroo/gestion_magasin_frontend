@@ -1,23 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
 	Box,
 	Button,
-	Card,
-	CardContent,
 	Chip,
 	Divider,
 	Stack,
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableRow,
-	Typography,
 } from '@mui/material';
 import {
 	ArrowBack as ArrowBackIcon,
@@ -37,6 +28,7 @@ import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiP
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
+import { DetailCard, DetailHeaderCard, InfoRow, LineItemsCard, StatusChip } from '@/components/pages/magasin/shared/view-components';
 import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeletePromotionMutation, useGetPromotionQuery } from '@/store/services/magasin';
@@ -49,16 +41,6 @@ type Props = SessionProps & {
 	id: number;
 	storeId?: number;
 };
-
-const InfoRow = ({ icon, label, value }: { icon: ReactNode; label: string; value?: ReactNode }) => (
-	<Stack direction="row" spacing={2} alignItems="center" sx={{ py: 1.5 }}>
-		<Box sx={{ color: 'primary.main', display: 'flex', width: 28 }}>{icon}</Box>
-		<Box sx={{ flex: 1, minWidth: 0 }}>
-			<Typography variant="caption" color="text.secondary">{label}</Typography>
-			<Typography variant="body2" fontWeight={600}>{value || '-'}</Typography>
-		</Box>
-	</Stack>
-);
 
 const PromotionsViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
 	const token = useInitAccessToken(session);
@@ -118,56 +100,39 @@ const PromotionsViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 								<Alert severity="warning">{t.magasin.noRows}</Alert>
 							) : (
 								<Stack spacing={3}>
-									<Card elevation={2} sx={{ borderRadius: 2 }}>
-										<CardContent sx={{ p: 3 }}>
-											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-												<LocalOfferIcon color="primary" />
-												<Typography variant="h6" fontWeight={700}>{promotion.name}</Typography>
-												<Chip
-													size="small"
-													color={promotion.status === 'active' ? 'success' : 'default'}
-													label={promotion.status === 'active' ? t.magasin.activePromotion : t.magasin.expiredPromotion}
-												/>
-											</Stack>
-											<Divider sx={{ mb: 2 }} />
-											<InfoRow icon={<StorefrontIcon />} label={t.magasin.store} value={promotion.store_name} />
-											<Divider />
-											<InfoRow icon={<NumbersIcon />} label={t.magasin.sellingPrice} value={`${formatNumber(promotion.selling_price)} Dhs`} />
-											<Divider />
-											<InfoRow icon={<CalendarIcon />} label={t.magasin.startDate} value={formatDate(promotion.start_date)} />
-											<Divider />
-											<InfoRow icon={<CalendarIcon />} label={t.magasin.endDate} value={formatDate(promotion.end_date)} />
-											<Divider />
-											<InfoRow icon={<DescriptionIcon />} label={t.magasin.note} value={promotion.note} />
-										</CardContent>
-									</Card>
-									<Card elevation={2} sx={{ borderRadius: 2 }}>
-										<CardContent sx={{ p: 3 }}>
-											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-												<InventoryIcon color="primary" />
-												<Typography variant="h6" fontWeight={700}>{t.magasin.promotionLines}</Typography>
-											</Stack>
-											<Divider sx={{ mb: 2 }} />
-											<Table size="small">
-												<TableHead>
-													<TableRow>
-														<TableCell>{t.magasin.product}</TableCell>
-														<TableCell>{t.magasin.reference}</TableCell>
-														<TableCell align="right">{t.magasin.quantity}</TableCell>
-													</TableRow>
-												</TableHead>
-												<TableBody>
-													{promotion.lines.map((line) => (
-														<TableRow key={line.id}>
-															<TableCell>{line.product_name}</TableCell>
-															<TableCell>{line.product_reference ?? line.product_barcode ?? '-'}</TableCell>
-															<TableCell align="right">{formatNumber(line.quantity)}</TableCell>
-														</TableRow>
-													))}
-												</TableBody>
-											</Table>
-										</CardContent>
-									</Card>
+									<DetailHeaderCard
+										icon={<LocalOfferIcon />}
+										title={promotion.name}
+										chips={(
+											<>
+												<Chip label={`ID: ${promotion.id}`} size="small" variant="outlined" />
+												<StatusChip t={t} status={promotion.status} />
+											</>
+										)}
+									/>
+									<DetailCard icon={<LocalOfferIcon />} title={t.magasin.promotionDetails}>
+										<InfoRow icon={<StorefrontIcon />} label={t.magasin.store} value={promotion.store_name} />
+										<Divider />
+										<InfoRow icon={<NumbersIcon />} label={t.magasin.sellingPrice} value={`${formatNumber(promotion.selling_price)} Dhs`} />
+										<Divider />
+										<InfoRow icon={<CalendarIcon />} label={t.magasin.startDate} value={formatDate(promotion.start_date)} />
+										<Divider />
+										<InfoRow icon={<CalendarIcon />} label={t.magasin.endDate} value={formatDate(promotion.end_date)} />
+										<Divider />
+										<InfoRow icon={<DescriptionIcon />} label={t.magasin.note} value={promotion.note} />
+									</DetailCard>
+									<LineItemsCard
+										icon={<InventoryIcon />}
+										title={t.magasin.promotionLines}
+										rows={promotion.lines}
+										getRowKey={(line) => line.id}
+										emptyLabel={t.magasin.noRows}
+										columns={[
+											{ key: 'product', label: t.magasin.product, render: (line) => line.product_name },
+											{ key: 'reference', label: t.magasin.reference, render: (line) => line.product_reference ?? line.product_barcode ?? '-' },
+											{ key: 'quantity', label: t.magasin.quantity, align: 'right', render: (line) => formatNumber(line.quantity) },
+										]}
+									/>
 								</Stack>
 							)}
 						</Stack>

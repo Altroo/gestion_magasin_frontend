@@ -2,14 +2,15 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Button, Chip, Stack, Typography } from '@mui/material';
+import { Box, Button, Stack, Typography } from '@mui/material';
 import { Add as AddIcon, CheckCircle as ValidateIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
 import { GridLogicOperator, type GridColDef, type GridFilterModel, type GridRenderCellParams } from '@mui/x-data-grid';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
-import { magasinStatusLabel, stockWorkflowStatusOptions } from '@/components/pages/magasin/shared/status-labels';
+import { stockWorkflowStatusOptions } from '@/components/pages/magasin/shared/status-labels';
+import { StatusIcon } from '@/components/pages/magasin/shared/view-components';
 import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelectFilterBar';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
@@ -76,7 +77,7 @@ const StockTransfersListClient = ({ session }: SessionProps) => {
 		{ field: 'source_store_name', headerName: t.magasin.sourceStore, flex: 1, minWidth: 150 },
 		{ field: 'target_store_name', headerName: t.magasin.targetStore, flex: 1, minWidth: 150 },
 		{ field: 'transfer_date', headerName: t.magasin.transferDate, flex: 0.8, minWidth: 130, renderCell: (params: GridRenderCellParams<StockTransferType>) => <Typography>{formatDate(params.value as string)}</Typography> },
-		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 110, renderCell: (params: GridRenderCellParams<StockTransferType>) => <Chip size="small" color={params.value === 'validated' ? 'success' : 'default'} label={magasinStatusLabel(t, params.value as string)} /> },
+		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 110, align: 'center', headerAlign: 'center', renderCell: (params: GridRenderCellParams<StockTransferType>) => <StatusIcon t={t} status={params.value as string} /> },
 		{
 			field: 'actions',
 			headerName: t.common.actions,
@@ -98,7 +99,7 @@ const StockTransfersListClient = ({ session }: SessionProps) => {
 
 	return (
 		<NavigationBar title={t.magasin.stockTransfers}>
-			<Protected permission="can_view">
+			<Protected>
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack direction="row" spacing={1} flexWrap="wrap">
