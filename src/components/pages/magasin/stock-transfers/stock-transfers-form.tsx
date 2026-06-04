@@ -13,6 +13,7 @@ import PrimaryLoadingButton from '@/components/htmlElements/buttons/primaryLoadi
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
+import { stockWorkflowStatusOptions } from '@/components/pages/magasin/shared/status-labels';
 import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useAddStockTransferMutation, useEditStockTransferMutation, useGetProductsQuery, useGetStockTransferQuery } from '@/store/services/magasin';
@@ -47,8 +48,8 @@ const StockTransfersFormClient = ({ session, id }: Props) => {
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
 	const isEditMode = id !== undefined;
-	const { defaultStore, memberships } = useSelectedStore(token);
-	const mbrStore = memberships.find((membership) => membership.store.is_global_stock)?.store ?? defaultStore;
+	const { defaultStore, globalStore, memberships } = useSelectedStore(token);
+	const mbrStore = globalStore ?? defaultStore;
 	const targetStores = memberships.map((membership) => membership.store).filter((store) => !store.is_global_stock);
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [addTransfer, addState] = useAddStockTransferMutation();
@@ -140,7 +141,7 @@ const StockTransfersFormClient = ({ session, id }: Props) => {
 													<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={`${t.magasin.targetStore} *`} value={formik.values.target_store} onChange={(event) => void formik.setFieldValue('target_store', event.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><StorefrontIcon fontSize="small" /></InputAdornment> }} fullWidth><MenuItem value="">{t.common.selectValue}</MenuItem>{targetStores.map((store) => <MenuItem key={store.id} value={String(store.id)}>{store.name}</MenuItem>)}</TextField></ThemeProvider>
 													<CustomTextInput id="reference" type="text" label={t.magasin.transferReference} value={formik.values.reference} onChange={formik.handleChange('reference')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
 													<CustomTextInput id="transfer_date" type="date" label={t.magasin.transferDate} value={formik.values.transfer_date} onChange={formik.handleChange('transfer_date')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
-													<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={t.magasin.status} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> }} fullWidth><MenuItem value="draft">Draft</MenuItem><MenuItem value="validated">Validated</MenuItem><MenuItem value="cancelled">Cancelled</MenuItem></TextField></ThemeProvider>
+													<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={t.magasin.status} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> }} fullWidth>{stockWorkflowStatusOptions(t).map((option) => <MenuItem key={option.id} value={option.id}>{option.nom}</MenuItem>)}</TextField></ThemeProvider>
 												</Box>
 												<Box sx={{ mt: 2.5 }}><CustomTextInput id="note" type="text" label={t.magasin.note} value={formik.values.note} onChange={formik.handleChange('note')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} /></Box>
 											</CardContent>

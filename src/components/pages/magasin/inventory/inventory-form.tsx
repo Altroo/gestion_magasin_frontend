@@ -13,6 +13,7 @@ import PrimaryLoadingButton from '@/components/htmlElements/buttons/primaryLoadi
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
+import { stockWorkflowStatusOptions } from '@/components/pages/magasin/shared/status-labels';
 import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useAddInventorySessionMutation, useEditInventorySessionMutation, useGetInventorySessionQuery, useGetProductsQuery } from '@/store/services/magasin';
@@ -167,7 +168,7 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 													<CustomTextInput id="code" type="text" label={t.magasin.inventoryCode} value={formik.values.code} onChange={formik.handleChange('code')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
 													<CustomTextInput id="title" type="text" label={t.magasin.inventoryTitle} value={formik.values.title} onChange={formik.handleChange('title')} fullWidth size="small" theme={inputTheme} startIcon={<InventoryIcon fontSize="small" />} />
 													<CustomTextInput id="inventory_date" type="date" label={t.magasin.date} value={formik.values.inventory_date} onChange={formik.handleChange('inventory_date')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
-													<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={t.magasin.status} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> }} fullWidth><MenuItem value="draft">Draft</MenuItem><MenuItem value="validated">Validated</MenuItem><MenuItem value="cancelled">Cancelled</MenuItem></TextField></ThemeProvider>
+													<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={t.magasin.status} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> }} fullWidth>{stockWorkflowStatusOptions(t).map((option) => <MenuItem key={option.id} value={option.id}>{option.nom}</MenuItem>)}</TextField></ThemeProvider>
 												</Box>
 												<Box sx={{ mt: 2.5 }}><CustomTextInput id="note" type="text" label={t.magasin.note} value={formik.values.note} onChange={formik.handleChange('note')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} /></Box>
 											</CardContent>

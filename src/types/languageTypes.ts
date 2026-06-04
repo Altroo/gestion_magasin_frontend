@@ -59,6 +59,7 @@ export type TranslationDictionary = {
   };
   navigation: {
     dashboard: string;
+    mbrSouth: string;
     operations: string;
     pos: string;
     catalog: string;
@@ -112,6 +113,12 @@ export type TranslationDictionary = {
     deleteStoresBody: (n: number) => string;
     bulkStoresDeleted: (n: number) => string;
     storeNotFound: string;
+    draft: string;
+    validated: string;
+    cancelled: string;
+    received: string;
+    paid: string;
+    payable: string;
     pos: string;
     barcode: string;
     scan: string;
@@ -360,6 +367,23 @@ export type TranslationDictionary = {
     allMagasinsDashboard: string;
     salesTrend: string;
     attendanceTrend: string;
+    purchasesTrend: string;
+    expensesTrend: string;
+    stockByStore: string;
+    lowStockByStore: string;
+    transfersByStatus: string;
+    inventoryByStatus: string;
+    promotionsByStatus: string;
+    salesPurchasesExpensesTrend: string;
+    noChartData: string;
+    financialTrendTooltip: string;
+    salesTrendTooltip: string;
+    attendanceTrendTooltip: string;
+    stockByStoreTooltip: string;
+    lowStockByStoreTooltip: string;
+    transfersByStatusTooltip: string;
+    inventoryByStatusTooltip: string;
+    promotionsByStatusTooltip: string;
     activePromotions: string;
     transfersCount: string;
   };

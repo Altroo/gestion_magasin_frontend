@@ -13,6 +13,7 @@ import PrimaryLoadingButton from '@/components/htmlElements/buttons/primaryLoadi
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
+import { purchaseStatusOptions } from '@/components/pages/magasin/shared/status-labels';
 import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useAddPurchaseMutation, useEditPurchaseMutation, useGetProductsQuery, useGetPurchaseQuery } from '@/store/services/magasin';
@@ -30,6 +31,7 @@ const dropdownTheme = customDropdownTheme();
 const emptyLine = { product: '', quantity: '1', unit_cost: '0' };
 
 type PurchaseFormValues = {
+	store: string;
 	supplier_name: string;
 	reference: string;
 	purchase_date: string;
@@ -47,8 +49,12 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
 	const isEditMode = id !== undefined;
-	const { defaultStore, memberships } = useSelectedStore(token);
-	const mbrStore = memberships.find((membership) => membership.store.is_global_stock)?.store ?? defaultStore;
+	const { defaultStore, globalStore, memberships } = useSelectedStore(token);
+	const storeOptions = useMemo(() => {
+		const options = [globalStore, ...memberships.map((membership) => membership.store)].filter(Boolean);
+		return options.filter((store, index, stores) => stores.findIndex((candidate) => candidate?.id === store?.id) === index);
+	}, [globalStore, memberships]);
+	const defaultPurchaseStore = globalStore ?? defaultStore;
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [addPurchase, addState] = useAddPurchaseMutation();
 	const [editPurchase, editState] = useEditPurchaseMutation();
@@ -57,13 +63,13 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 		{ skip: !token || !isEditMode },
 	);
 	const { data: products, isLoading: areProductsLoading } = useGetProductsQuery(
-		{ store: mbrStore?.id, page: 1, pageSize: 200 },
-		{ skip: !token || !mbrStore?.id },
+		{ store: defaultPurchaseStore?.id, page: 1, pageSize: 200 },
+		{ skip: !token || !defaultPurchaseStore?.id },
 	);
 	const axiosError = useMemo(() => (purchaseError ? (purchaseError as ResponseDataInterface<ApiErrorResponseType>) : undefined), [purchaseError]);
 
 	const toPayload = (values: PurchaseFormValues): PurchasePayload => ({
-		store: mbrStore?.id ?? 0,
+		store: Number(values.store),
 		supplier_name: values.supplier_name.trim(),
 		reference: values.reference.trim(),
 		purchase_date: values.purchase_date,
@@ -74,6 +80,7 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 
 	const formik = useFormik<PurchaseFormValues>({
 		initialValues: {
+			store: purchase?.store ? String(purchase.store) : defaultPurchaseStore?.id ? String(defaultPurchaseStore.id) : '',
 			supplier_name: purchase?.supplier_name ?? '',
 			reference: purchase?.reference ?? '',
 			purchase_date: purchase?.purchase_date ?? new Date().toISOString().slice(0, 10),
@@ -106,6 +113,7 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 
 	const fieldLabels = useMemo<Record<string, string>>(() => ({
 		supplier_name: t.magasin.supplier,
+		store: t.magasin.store,
 		reference: t.magasin.reference,
 		purchase_date: t.magasin.date,
 		status: t.magasin.status,
@@ -152,12 +160,13 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}><StorefrontIcon color="primary" /><Typography variant="h6" fontWeight={700}>{t.magasin.purchaseDetails}</Typography></Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2.5 }}>
+													<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={`${t.magasin.store} *`} value={formik.values.store} onChange={(event) => void formik.setFieldValue('store', event.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><StorefrontIcon fontSize="small" /></InputAdornment> }} fullWidth><MenuItem value="">{t.common.selectValue}</MenuItem>{storeOptions.map((store) => <MenuItem key={store!.id} value={String(store!.id)}>{store!.name}</MenuItem>)}</TextField></ThemeProvider>
 													<CustomTextInput id="supplier_name" type="text" label={t.magasin.supplier} value={formik.values.supplier_name} onChange={formik.handleChange('supplier_name')} fullWidth size="small" theme={inputTheme} startIcon={<StorefrontIcon fontSize="small" />} />
 													<CustomTextInput id="reference" type="text" label={t.magasin.reference} value={formik.values.reference} onChange={formik.handleChange('reference')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
 													<CustomTextInput id="purchase_date" type="date" label={t.magasin.date} value={formik.values.purchase_date} onChange={formik.handleChange('purchase_date')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
 													<ThemeProvider theme={dropdownTheme}>
 														<TextField select size="small" label={t.magasin.status} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> }} fullWidth>
-															<MenuItem value="draft">Draft</MenuItem><MenuItem value="received">Received</MenuItem><MenuItem value="cancelled">Cancelled</MenuItem>
+															{purchaseStatusOptions(t).map((option) => <MenuItem key={option.id} value={option.id}>{option.nom}</MenuItem>)}
 														</TextField>
 													</ThemeProvider>
 												</Box>

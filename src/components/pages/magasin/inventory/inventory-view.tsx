@@ -10,6 +10,7 @@ import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiP
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
+import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeleteInventorySessionMutation, useGetInventorySessionQuery, useValidateInventorySessionMutation } from '@/store/services/magasin';
 import { INVENTORY_EDIT, INVENTORY_LIST } from '@/utils/routes';
@@ -79,7 +80,7 @@ const InventoryViewClient = ({ session, id }: Props) => {
 											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2, flexWrap: 'wrap' }}>
 												<InventoryIcon color="primary" />
 												<Typography variant="h6" fontWeight={700}>{inventory.title}</Typography>
-												<Chip size="small" color={inventory.status === 'validated' ? 'success' : 'default'} label={inventory.status} />
+												<Chip size="small" color={inventory.status === 'validated' ? 'success' : 'default'} label={magasinStatusLabel(t, inventory.status)} />
 											</Stack>
 											<Divider sx={{ mb: 2 }} />
 											<Stack spacing={1}>

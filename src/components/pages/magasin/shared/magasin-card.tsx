@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Box, Card, CardContent, Divider, Stack, Typography } from '@mui/material';
+import { Box, Card, CardContent, Divider, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import { InfoOutlined as InfoOutlinedIcon, InsertChartOutlined as InsertChartOutlinedIcon } from '@mui/icons-material';
 import type { CardProps } from '@mui/material/Card';
 import type { SxProps, Theme } from '@mui/material/styles';
 
@@ -60,6 +61,7 @@ type MagasinSectionCardProps = CardProps & {
 	title?: string;
 	icon?: ReactNode;
 	action?: ReactNode;
+	infoTooltip?: string;
 	contentSx?: SxProps<Theme>;
 };
 
@@ -68,6 +70,7 @@ export const MagasinSectionCard = ({
 	title,
 	icon,
 	action,
+	infoTooltip,
 	contentSx,
 	sx,
 	...cardProps
@@ -82,11 +85,42 @@ export const MagasinSectionCard = ({
 							{title}
 						</Typography>
 					</Stack>
-					{action}
+					<Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexShrink: 0 }}>
+						{infoTooltip && (
+							<Tooltip title={infoTooltip} arrow placement="top">
+								<IconButton size="small" sx={{ color: 'text.secondary' }}>
+									<InfoOutlinedIcon fontSize="small" />
+								</IconButton>
+							</Tooltip>
+						)}
+						{action}
+					</Stack>
 				</Stack>
 				<Divider sx={{ mt: 2 }} />
 			</CardContent>
 		)}
 		<CardContent sx={contentSx}>{children}</CardContent>
 	</Card>
+);
+
+export const MagasinEmptyChart = ({ message }: { message: string }) => (
+	<Box
+		sx={{
+			display: 'flex',
+			flexDirection: 'column',
+			justifyContent: 'center',
+			alignItems: 'center',
+			height: '100%',
+			bgcolor: 'grey.50',
+			borderRadius: 2,
+			border: '1px dashed',
+			borderColor: 'grey.300',
+			color: 'text.secondary',
+			textAlign: 'center',
+			px: 2,
+		}}
+	>
+		<InsertChartOutlinedIcon sx={{ mb: 1, fontSize: 30 }} />
+		<Typography variant="body2">{message}</Typography>
+	</Box>
 );

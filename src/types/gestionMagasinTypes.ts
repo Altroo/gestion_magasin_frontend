@@ -239,7 +239,14 @@ export type DashboardReportType = {
 		attendance_delay_minutes: number;
 	};
 	sales_trend: Array<{ date: string; total: string; count: number }>;
+	purchases_trend: Array<{ date: string; total: string; count: number }>;
+	expenses_trend: Array<{ date: string; total: string; count: number }>;
 	attendance_trend: Array<{ date: string; hours: string; delay: number }>;
+	stock_by_store: Array<{ store: string; quantity: string }>;
+	low_stock_by_store: Array<{ store: string; count: number }>;
+	transfers_by_status: Array<{ status: string; count: number }>;
+	inventory_by_status: Array<{ status: string; count: number }>;
+	promotions_by_status: Array<{ status: string; count: number }>;
 	stock_alerts: Array<{ id: number; product: string; quantity: string; min_stock: string }>;
 };
 

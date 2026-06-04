@@ -4,11 +4,12 @@ import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Chip, Stack, Typography } from '@mui/material';
 import { Add as AddIcon, Close as CloseIcon, Delete as DeleteIcon, DownloadDone as ReceiveIcon, Edit as EditIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
-import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { GridLogicOperator, type GridColDef, type GridFilterModel, type GridRenderCellParams } from '@mui/x-data-grid';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
+import { magasinStatusLabel, purchaseStatusOptions } from '@/components/pages/magasin/shared/status-labels';
 import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelectFilterBar';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
@@ -28,11 +29,14 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 	const { onSuccess, onError } = useToast();
 	const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
 	const [searchTerm, setSearchTerm] = useState('');
+	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
+	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});
 	const [chipFilterParams, setChipFilterParams] = useState<Record<string, string>>({});
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 	const [receiveTarget, setReceiveTarget] = useState<number | null>(null);
+	const mergedFilterParams = useMemo(() => ({ ...chipFilterParams, ...customFilterParams }), [chipFilterParams, customFilterParams]);
 	const { data, isLoading, refetch } = useGetPurchasesQuery(
-		{ search: searchTerm, page: paginationModel.page + 1, pageSize: paginationModel.pageSize, ...chipFilterParams },
+		{ search: searchTerm, page: paginationModel.page + 1, pageSize: paginationModel.pageSize, ...mergedFilterParams },
 		{ skip: !token },
 	);
 	const [deletePurchase] = useDeletePurchaseMutation();
@@ -44,14 +48,10 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 				key: 'status',
 				label: t.magasin.status,
 				paramName: 'status',
-				options: [
-					{ id: 'draft', nom: 'Draft' },
-					{ id: 'received', nom: 'Received' },
-					{ id: 'cancelled', nom: 'Cancelled' },
-				],
+				options: purchaseStatusOptions(t),
 			},
 		],
-		[t.magasin.status],
+		[t],
 	);
 
 	const handleChipFilterChange = useCallback((params: Record<string, string>) => {
@@ -90,7 +90,7 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 		{ field: 'supplier_name', headerName: t.magasin.supplier, flex: 1.2, minWidth: 160, renderCell: (params: GridRenderCellParams<PurchaseType>) => <Typography fontWeight={600}>{params.value || '-'}</Typography> },
 		{ field: 'store_name', headerName: t.magasin.store, flex: 1, minWidth: 140 },
 		{ field: 'purchase_date', headerName: t.magasin.date, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<PurchaseType>) => <Typography>{formatDate(params.value as string)}</Typography> },
-		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 110, renderCell: (params: GridRenderCellParams<PurchaseType>) => <Chip size="small" color={params.value === 'received' ? 'success' : 'default'} label={String(params.value)} /> },
+		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 110, renderCell: (params: GridRenderCellParams<PurchaseType>) => <Chip size="small" color={params.value === 'received' ? 'success' : 'default'} label={magasinStatusLabel(t, params.value as string)} /> },
 		{ field: 'subtotal', headerName: t.magasin.subtotal, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<PurchaseType>) => <Typography fontWeight={600}>{formatNumber(params.value as string)} Dhs</Typography> },
 		{
 			field: 'actions',
@@ -116,14 +116,24 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 			<Protected permission="can_view">
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
-						<Stack spacing={2}>
-							<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-								{permissions.can_create && <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.push(PURCHASES_ADD())}>{t.magasin.newPurchase}</Button>}
-							</Box>
-							<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} columns={1} />
-							<PaginatedDataGrid data={data} isLoading={isLoading} columns={columns} paginationModel={paginationModel} setPaginationModel={setPaginationModel} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+						<Stack direction="row" spacing={1} flexWrap="wrap">
+							{permissions.can_create && <Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => router.push(PURCHASES_ADD())}>{t.magasin.newPurchase}</Button>}
 						</Stack>
 					</Box>
+					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} columns={1} />
+					<PaginatedDataGrid
+						data={data}
+						isLoading={isLoading}
+						columns={columns}
+						paginationModel={paginationModel}
+						setPaginationModel={setPaginationModel}
+						searchTerm={searchTerm}
+						setSearchTerm={setSearchTerm}
+						filterModel={filterModel}
+						onFilterModelChange={setFilterModel}
+						onCustomFilterParamsChange={setCustomFilterParams}
+						toolbar={{ quickFilter: true, debounceMs: 500 }}
+					/>
 				</Box>
 			</Protected>
 			{deleteTarget && (

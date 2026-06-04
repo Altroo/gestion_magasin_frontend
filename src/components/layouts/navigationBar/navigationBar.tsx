@@ -89,16 +89,22 @@ import type { NotificationType } from '@/types/gestionMagasinTypes';
 
 const getNavigationMenu = (isStaff: boolean, t: TranslationDictionary) => {
 	return {
+		mbrSouth: {
+			title: t.navigation.mbrSouth,
+			icon: <DomainIcon />,
+			items: [
+				{ title: t.navigation.dashboard, label: t.navigation.dashboard, path: DASHBOARD },
+				{ title: t.navigation.stockTransfers, label: t.navigation.stockTransfers, path: DASHBOARD_STOCK_TRANSFERS },
+				{ title: t.navigation.purchases, label: t.navigation.purchases, path: DASHBOARD_PURCHASES },
+			],
+		},
 		operations: {
 			title: t.navigation.operations,
 			icon: <PointOfSaleIcon />,
 			items: [
-				{ title: t.navigation.dashboard, label: t.navigation.dashboard, path: DASHBOARD },
 				{ title: t.navigation.pos, label: t.navigation.pos, path: DASHBOARD_POS },
 				{ title: t.navigation.catalog, label: t.navigation.catalog, path: DASHBOARD_CATALOG },
 				{ title: t.navigation.stock, label: t.navigation.stock, path: DASHBOARD_STOCK },
-				{ title: t.navigation.stockTransfers, label: t.navigation.stockTransfers, path: DASHBOARD_STOCK_TRANSFERS },
-				{ title: t.navigation.purchases, label: t.navigation.purchases, path: DASHBOARD_PURCHASES },
 				{ title: t.navigation.inventory, label: t.navigation.inventory, path: DASHBOARD_INVENTORY },
 				{ title: t.navigation.sales, label: t.navigation.sales, path: DASHBOARD_SALES },
 				{ title: t.navigation.promotions, label: t.navigation.promotions, path: DASHBOARD_PROMOTIONS },

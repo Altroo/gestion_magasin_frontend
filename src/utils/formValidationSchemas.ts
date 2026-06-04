@@ -226,6 +226,7 @@ export const expenseSchema = z.object({
 });
 
 export const purchaseSchema = z.object({
+	store: requiredNumberTextField(),
 	supplier_name: optionalTextField(1, 160),
 	reference: optionalTextField(1, 80),
 	purchase_date: requiredChoiceTextField(),

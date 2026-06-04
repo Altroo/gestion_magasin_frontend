@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Chip, Stack, Typography } from '@mui/material';
 import { Add as AddIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
-import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { GridLogicOperator, type GridColDef, type GridFilterModel, type GridRenderCellParams } from '@mui/x-data-grid';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
@@ -32,10 +32,13 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 	const storeId = selectedStoreId ?? defaultStore?.id;
 	const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
 	const [searchTerm, setSearchTerm] = useState('');
+	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
+	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});
 	const [chipFilterParams, setChipFilterParams] = useState<Record<string, string>>({});
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+	const mergedFilterParams = useMemo(() => ({ ...chipFilterParams, ...customFilterParams }), [chipFilterParams, customFilterParams]);
 	const { data, isLoading, refetch } = useGetPromotionsQuery(
-		{ store: storeId, search: searchTerm, page: paginationModel.page + 1, pageSize: paginationModel.pageSize, ...chipFilterParams },
+		{ store: storeId, search: searchTerm, page: paginationModel.page + 1, pageSize: paginationModel.pageSize, ...mergedFilterParams },
 		{ skip: !token || !storeId },
 	);
 	const [deletePromotion] = useDeletePromotionMutation();
@@ -103,22 +106,24 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 				<Box sx={magasinPageContainerSx}>
 					<StoreTabs selectedStoreId={storeId} onChange={setSelectedStoreId} token={token} />
 					<Box sx={magasinPageContentSx}>
-						<Stack spacing={2}>
-							<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-								{permissions.can_create_promotion && <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.push(PROMOTIONS_ADD(storeId))}>{t.magasin.newPromotion}</Button>}
-							</Box>
-							<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} columns={1} />
-							<PaginatedDataGrid
-								data={data}
-								isLoading={isLoading}
-								columns={columns}
-								paginationModel={paginationModel}
-								setPaginationModel={setPaginationModel}
-								searchTerm={searchTerm}
-								setSearchTerm={setSearchTerm}
-							/>
+						<Stack direction="row" spacing={1} flexWrap="wrap">
+							{permissions.can_create_promotion && <Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => router.push(PROMOTIONS_ADD(storeId))}>{t.magasin.newPromotion}</Button>}
 						</Stack>
 					</Box>
+					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} columns={1} />
+					<PaginatedDataGrid
+						data={data}
+						isLoading={isLoading}
+						columns={columns}
+						paginationModel={paginationModel}
+						setPaginationModel={setPaginationModel}
+						searchTerm={searchTerm}
+						setSearchTerm={setSearchTerm}
+						filterModel={filterModel}
+						onFilterModelChange={setFilterModel}
+						onCustomFilterParamsChange={setCustomFilterParams}
+						toolbar={{ quickFilter: true, debounceMs: 500 }}
+					/>
 				</Box>
 			</Protected>
 			{deleteTarget && (

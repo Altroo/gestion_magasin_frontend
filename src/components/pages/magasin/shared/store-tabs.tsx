@@ -12,12 +12,21 @@ type Props = {
 	token?: string;
 };
 
+const isStoreTabVisible = (membership: StoreMembershipType) =>
+	membership.is_active &&
+	membership.store.is_active &&
+	!membership.store.is_global_stock &&
+	membership.store.code !== 'mbr-south';
+
 export const useSelectedStore = (token?: string) => {
 	const { data = [], isLoading } = useGetMyStoresQuery(undefined, { skip: !token });
-	const defaultStore = data[0]?.store;
+	const visibleMemberships = useMemo(() => data.filter(isStoreTabVisible), [data]);
+	const defaultStore = visibleMemberships[0]?.store;
+	const globalStore = data.find((membership) => membership.is_active && membership.store.is_active && membership.store.is_global_stock)?.store;
 	return {
-		memberships: data,
+		memberships: visibleMemberships,
 		defaultStore,
+		globalStore,
 		isLoading,
 	};
 };
@@ -25,15 +34,12 @@ export const useSelectedStore = (token?: string) => {
 const StoreTabs = ({ selectedStoreId, onChange, token }: Props) => {
 	const { t } = useLanguage();
 	const { data = [] } = useGetMyStoresQuery(undefined, { skip: !token });
-	const activeStoreId = selectedStoreId ?? data[0]?.store.id;
 
 	const stores = useMemo(
-		() =>
-			data
-				.filter((membership: StoreMembershipType) => membership.is_active && membership.store.is_active)
-				.map((membership) => membership.store),
+		() => data.filter(isStoreTabVisible).map((membership) => membership.store),
 		[data],
 	);
+	const visibleActiveStoreId = selectedStoreId ?? stores[0]?.id;
 
 	if (!stores.length) {
 		return <Alert severity="warning">{t.errors.accessDeniedText}</Alert>;
@@ -50,7 +56,7 @@ const StoreTabs = ({ selectedStoreId, onChange, token }: Props) => {
 			}}
 		>
 			<Tabs
-				value={activeStoreId ?? false}
+				value={visibleActiveStoreId ?? false}
 				onChange={(_, value: number) => onChange(value)}
 				variant="scrollable"
 				allowScrollButtonsMobile

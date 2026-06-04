@@ -10,6 +10,7 @@ import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiP
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
+import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeleteExpenseMutation, useGetExpenseQuery } from '@/store/services/magasin';
 import { EXPENSES_EDIT, EXPENSES_LIST } from '@/utils/routes';
@@ -63,7 +64,7 @@ const ExpensesViewClient = ({ session, id }: Props) => {
 										<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2, flexWrap: 'wrap' }}>
 											<PaymentsIcon color="primary" />
 											<Typography variant="h6" fontWeight={700}>{expense.label}</Typography>
-											<Chip size="small" color={expense.payment_status === 'paid' ? 'success' : 'warning'} label={expense.payment_status} />
+											<Chip size="small" color={expense.payment_status === 'paid' ? 'success' : 'warning'} label={magasinStatusLabel(t, expense.payment_status)} />
 										</Stack>
 										<Divider sx={{ mb: 2 }} />
 										<Stack spacing={1}>

@@ -10,6 +10,7 @@ import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiP
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
+import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeletePurchaseMutation, useGetPurchaseQuery, useReceivePurchaseMutation } from '@/store/services/magasin';
 import { PURCHASES_EDIT, PURCHASES_LIST } from '@/utils/routes';
@@ -81,7 +82,7 @@ const PurchasesViewClient = ({ session, id }: Props) => {
 											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2, flexWrap: 'wrap' }}>
 												<StorefrontIcon color="primary" />
 												<Typography variant="h6" fontWeight={700}>{purchase.reference || `#${purchase.id}`}</Typography>
-												<Chip size="small" color={purchase.status === 'received' ? 'success' : 'default'} label={purchase.status} />
+												<Chip size="small" color={purchase.status === 'received' ? 'success' : 'default'} label={magasinStatusLabel(t, purchase.status)} />
 											</Stack>
 											<Divider sx={{ mb: 2 }} />
 											<Stack spacing={1}>

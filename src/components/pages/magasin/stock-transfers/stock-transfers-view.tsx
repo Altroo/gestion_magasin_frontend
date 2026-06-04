@@ -10,6 +10,7 @@ import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiP
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
+import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeleteStockTransferMutation, useGetStockTransferQuery, useValidateStockTransferMutation } from '@/store/services/magasin';
 import { STOCK_TRANSFERS_EDIT, STOCK_TRANSFERS_LIST } from '@/utils/routes';
@@ -79,7 +80,7 @@ const StockTransfersViewClient = ({ session, id }: Props) => {
 											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2, flexWrap: 'wrap' }}>
 												<TransferIcon color="primary" />
 												<Typography variant="h6" fontWeight={700}>{transfer.reference || `#${transfer.id}`}</Typography>
-												<Chip size="small" color={transfer.status === 'validated' ? 'success' : 'default'} label={transfer.status} />
+												<Chip size="small" color={transfer.status === 'validated' ? 'success' : 'default'} label={magasinStatusLabel(t, transfer.status)} />
 											</Stack>
 											<Divider sx={{ mb: 2 }} />
 											<Stack spacing={1}>

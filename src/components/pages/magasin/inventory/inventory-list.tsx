@@ -4,12 +4,13 @@ import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Chip, Stack, Typography } from '@mui/material';
 import { Add as AddIcon, CheckCircle as ValidateIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
-import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { GridLogicOperator, type GridColDef, type GridFilterModel, type GridRenderCellParams } from '@mui/x-data-grid';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import StoreTabs, { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
+import { magasinStatusLabel, stockWorkflowStatusOptions } from '@/components/pages/magasin/shared/status-labels';
 import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelectFilterBar';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
@@ -32,20 +33,23 @@ const InventoryListClient = ({ session }: SessionProps) => {
 	const storeId = selectedStoreId ?? defaultStore?.id;
 	const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
 	const [searchTerm, setSearchTerm] = useState('');
+	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
+	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});
 	const [chipFilterParams, setChipFilterParams] = useState<Record<string, string>>({});
 	const [selectedIds, setSelectedIds] = useState<number[]>([]);
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 	const [validateTarget, setValidateTarget] = useState<number | null>(null);
 	const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+	const mergedFilterParams = useMemo(() => ({ ...chipFilterParams, ...customFilterParams }), [chipFilterParams, customFilterParams]);
 	const { data, isLoading, refetch } = useGetInventorySessionsQuery(
-		{ store: storeId, search: searchTerm, page: paginationModel.page + 1, pageSize: paginationModel.pageSize, ...chipFilterParams },
+		{ store: storeId, search: searchTerm, page: paginationModel.page + 1, pageSize: paginationModel.pageSize, ...mergedFilterParams },
 		{ skip: !token || !storeId },
 	);
 	const [deleteInventory] = useDeleteInventorySessionMutation();
 	const [bulkDeleteInventory] = useBulkDeleteInventorySessionsMutation();
 	const [validateInventory] = useValidateInventorySessionMutation();
 
-	const chipFilters = useMemo(() => [{ key: 'status', label: t.magasin.status, paramName: 'status', options: [{ id: 'draft', nom: 'Draft' }, { id: 'validated', nom: 'Validated' }, { id: 'cancelled', nom: 'Cancelled' }] }], [t.magasin.status]);
+	const chipFilters = useMemo(() => [{ key: 'status', label: t.magasin.status, paramName: 'status', options: stockWorkflowStatusOptions(t) }], [t]);
 	const handleChipFilterChange = useCallback((params: Record<string, string>) => { setChipFilterParams(params); setPaginationModel((current) => ({ ...current, page: 0 })); }, []);
 
 	const handleDelete = async () => {
@@ -93,7 +97,7 @@ const InventoryListClient = ({ session }: SessionProps) => {
 		{ field: 'title', headerName: t.magasin.inventory, flex: 1.4, minWidth: 180, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <Typography fontWeight={600}>{params.value}</Typography> },
 		{ field: 'store_name', headerName: t.magasin.store, flex: 1, minWidth: 140 },
 		{ field: 'inventory_date', headerName: t.magasin.date, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <Typography>{formatDate(params.value as string)}</Typography> },
-		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 110, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <Chip size="small" color={params.value === 'validated' ? 'success' : 'default'} label={String(params.value)} /> },
+		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 110, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <Chip size="small" color={params.value === 'validated' ? 'success' : 'default'} label={magasinStatusLabel(t, params.value as string)} /> },
 		{
 			field: 'actions',
 			headerName: t.common.actions,
@@ -119,15 +123,28 @@ const InventoryListClient = ({ session }: SessionProps) => {
 				<Box sx={magasinPageContainerSx}>
 					<StoreTabs selectedStoreId={storeId} onChange={setSelectedStoreId} token={token} />
 					<Box sx={magasinPageContentSx}>
-						<Stack spacing={2}>
-							<Stack direction="row" spacing={1} flexWrap="wrap" justifyContent="flex-end">
-								{permissions.can_delete && selectedIds.length > 0 && <Button variant="outlined" color="error" startIcon={<DeleteIcon />} onClick={() => setShowBulkDeleteModal(true)}>{t.common.delete}</Button>}
-								{permissions.can_create && <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.push(INVENTORY_ADD(storeId))}>{t.magasin.newInventory}</Button>}
-							</Stack>
-							<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} columns={1} />
-							<PaginatedDataGrid data={data} isLoading={isLoading} columns={columns} paginationModel={paginationModel} setPaginationModel={setPaginationModel} searchTerm={searchTerm} setSearchTerm={setSearchTerm} checkboxSelection={permissions.can_delete} selectedIds={selectedIds} onSelectionChange={setSelectedIds} />
+						<Stack direction="row" spacing={1} flexWrap="wrap">
+							{permissions.can_create && <Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => router.push(INVENTORY_ADD(storeId))}>{t.magasin.newInventory}</Button>}
+							{permissions.can_delete && selectedIds.length > 0 && <Button variant="outlined" color="error" startIcon={<DeleteIcon fontSize="small" />} onClick={() => setShowBulkDeleteModal(true)}>{t.common.delete} ({selectedIds.length})</Button>}
 						</Stack>
 					</Box>
+					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} columns={1} />
+					<PaginatedDataGrid
+						data={data}
+						isLoading={isLoading}
+						columns={columns}
+						paginationModel={paginationModel}
+						setPaginationModel={setPaginationModel}
+						searchTerm={searchTerm}
+						setSearchTerm={setSearchTerm}
+						filterModel={filterModel}
+						onFilterModelChange={setFilterModel}
+						onCustomFilterParamsChange={setCustomFilterParams}
+						toolbar={{ quickFilter: true, debounceMs: 500 }}
+						checkboxSelection={permissions.can_delete}
+						selectedIds={selectedIds}
+						onSelectionChange={setSelectedIds}
+					/>
 				</Box>
 			</Protected>
 			{deleteTarget && <ActionModals title={t.magasin.deleteInventoryTitle} body={t.magasin.deleteInventoryBody} titleIcon={<DeleteIcon />} titleIconColor="#D32F2F" actions={[{ text: t.common.cancel, active: false, onClick: () => setDeleteTarget(null), icon: <CloseIcon />, color: '#6B6B6B' }, { text: t.common.delete, active: true, onClick: handleDelete, icon: <DeleteIcon />, color: '#D32F2F' }]} />}
