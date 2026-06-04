@@ -24,6 +24,7 @@ import {
 	Delete as DeleteIcon,
 	Description as DescriptionIcon,
 	Inventory2 as InventoryIcon,
+	LocalOffer as LocalOfferIcon,
 	ReceiptLong as ReceiptLongIcon,
 	Save as SaveIcon,
 	Warning as WarningIcon,
@@ -38,7 +39,7 @@ import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
-import { useCreateSaleMutation, useGetProductsQuery } from '@/store/services/magasin';
+import { useCreateSaleMutation, useGetProductsQuery, useGetPromotionsQuery } from '@/store/services/magasin';
 import Styles from '@/styles/dashboard/dashboard.module.sass';
 import type { SessionProps } from '@/types/_initTypes';
 import type { SaleCreatePayload, SaleFormValues } from '@/types/gestionMagasinTypes';
@@ -55,7 +56,7 @@ type Props = SessionProps & {
 	storeId?: number;
 };
 
-const emptyLine = { product: '', quantity: '1', unit_price: '0' };
+const emptyLine = { type: 'product' as const, product: '', promotion: '', quantity: '1', unit_price: '0' };
 
 const firstFormikError = (value: unknown): string | undefined => {
 	if (typeof value === 'string') return value;
@@ -88,9 +89,14 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 		{ store: storeId, page: 1, pageSize: 100, is_active: 'true' },
 		{ skip: !token || !storeId },
 	);
+	const { data: promotions } = useGetPromotionsQuery(
+		{ store: storeId, page: 1, pageSize: 100, status: 'active' },
+		{ skip: !token || !storeId },
+	);
 	const [createSale] = useCreateSaleMutation();
 
 	const productOptions = products?.results ?? [];
+	const promotionOptions = promotions?.results ?? [];
 
 	const formik = useFormik<SaleFormValues>({
 		initialValues: {
@@ -118,11 +124,20 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 				discount_amount: values.discount_amount,
 				note: values.note.trim(),
 				idempotency_key: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`,
-				lines: values.lines.map((line) => ({
-					product: Number(line.product),
-					quantity: line.quantity,
-					unit_price: line.unit_price,
-				})),
+				lines: values.lines
+					.filter((line) => line.type === 'product')
+					.map((line) => ({
+						product: Number(line.product),
+						quantity: line.quantity,
+						unit_price: line.unit_price,
+					})),
+				promotion_lines: values.lines
+					.filter((line) => line.type === 'promotion')
+					.map((line) => ({
+						promotion: Number(line.promotion),
+						quantity: line.quantity,
+						unit_price: line.unit_price,
+					})),
 			};
 			try {
 				const created = await createSale(payload).unwrap();
@@ -172,7 +187,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 		return errors;
 	}, [formik.errors, hasAttemptedSubmit]);
 
-	const getLineFieldError = (index: number, field: 'product' | 'quantity' | 'unit_price') => {
+	const getLineFieldError = (index: number, field: 'type' | 'product' | 'promotion' | 'quantity' | 'unit_price') => {
 		const error = getIn(formik.errors, `lines.${index}.${field}`);
 		const touched = getIn(formik.touched, `lines.${index}.${field}`);
 		return (touched || hasAttemptedSubmit) && typeof error === 'string' ? error : '';
@@ -180,9 +195,21 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 
 	const setLineProduct = (index: number, productId: string) => {
 		const product = productOptions.find((item) => item.id === Number(productId));
+		void formik.setFieldValue(`lines.${index}.type`, 'product');
 		void formik.setFieldValue(`lines.${index}.product`, productId);
+		void formik.setFieldValue(`lines.${index}.promotion`, '');
 		if (product) {
 			void formik.setFieldValue(`lines.${index}.unit_price`, product.counter_price);
+		}
+	};
+
+	const setLinePromotion = (index: number, promotionId: string) => {
+		const promotion = promotionOptions.find((item) => item.id === Number(promotionId));
+		void formik.setFieldValue(`lines.${index}.type`, 'promotion');
+		void formik.setFieldValue(`lines.${index}.promotion`, promotionId);
+		void formik.setFieldValue(`lines.${index}.product`, '');
+		if (promotion) {
+			void formik.setFieldValue(`lines.${index}.unit_price`, promotion.selling_price);
 		}
 	};
 
@@ -311,24 +338,48 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 													{formik.values.lines.map((line, index) => (
 														<Box
 															key={index}
-															sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.5fr) 140px 160px 48px' }, gap: 2, alignItems: 'flex-start' }}
+															sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '150px minmax(0, 1.5fr) 140px 160px 48px' }, gap: 2, alignItems: 'flex-start' }}
 														>
 															<ThemeProvider theme={dropdownTheme}>
 																<TextField
 																	select
 																	size="small"
-																	label={t.magasin.product}
-																	value={line.product}
-																	onChange={(event) => setLineProduct(index, event.target.value)}
-																	InputProps={{ startAdornment: <InputAdornment position="start"><InventoryIcon fontSize="small" /></InputAdornment> }}
-																	error={Boolean(getLineFieldError(index, 'product'))}
-																	helperText={getLineFieldError(index, 'product')}
+																	label={t.magasin.lineType}
+																	value={line.type}
+																	onChange={(event) => {
+																		const type = event.target.value as 'product' | 'promotion';
+																		void formik.setFieldValue(`lines.${index}.type`, type);
+																		void formik.setFieldValue(`lines.${index}.product`, '');
+																		void formik.setFieldValue(`lines.${index}.promotion`, '');
+																		void formik.setFieldValue(`lines.${index}.unit_price`, '0');
+																	}}
+																	InputProps={{ startAdornment: <InputAdornment position="start">{line.type === 'promotion' ? <LocalOfferIcon fontSize="small" /> : <InventoryIcon fontSize="small" />}</InputAdornment> }}
+																	fullWidth
+																>
+																	<MenuItem value="product">{t.magasin.product}</MenuItem>
+																	<MenuItem value="promotion">{t.magasin.promotion}</MenuItem>
+																</TextField>
+															</ThemeProvider>
+															<ThemeProvider theme={dropdownTheme}>
+																<TextField
+																	select
+																	size="small"
+																	label={line.type === 'promotion' ? t.magasin.promotion : t.magasin.product}
+																	value={line.type === 'promotion' ? line.promotion : line.product}
+																	onChange={(event) => (line.type === 'promotion' ? setLinePromotion(index, event.target.value) : setLineProduct(index, event.target.value))}
+																	InputProps={{ startAdornment: <InputAdornment position="start">{line.type === 'promotion' ? <LocalOfferIcon fontSize="small" /> : <InventoryIcon fontSize="small" />}</InputAdornment> }}
+																	error={Boolean(getLineFieldError(index, line.type === 'promotion' ? 'promotion' : 'product'))}
+																	helperText={getLineFieldError(index, line.type === 'promotion' ? 'promotion' : 'product')}
 																	fullWidth
 																>
 																	<MenuItem value="">{t.common.selectValue}</MenuItem>
-																	{productOptions.map((product) => (
-																		<MenuItem key={product.id} value={String(product.id)}>{product.name}</MenuItem>
-																	))}
+																	{line.type === 'promotion'
+																		? promotionOptions.map((promotion) => (
+																			<MenuItem key={promotion.id} value={String(promotion.id)}>{promotion.name}</MenuItem>
+																		))
+																		: productOptions.map((product) => (
+																			<MenuItem key={product.id} value={String(product.id)}>{product.name}</MenuItem>
+																		))}
 																</TextField>
 															</ThemeProvider>
 															<CustomTextInput

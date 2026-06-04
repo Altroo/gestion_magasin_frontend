@@ -21,6 +21,7 @@ export class UserClass {
 		public can_create: boolean,
 		public can_edit: boolean,
 		public can_delete: boolean,
+		public can_create_promotion: boolean = false,
 		public stores?: UserStoreAssignmentType[],
 	) {}
 }

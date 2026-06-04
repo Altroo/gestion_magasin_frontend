@@ -21,6 +21,7 @@ import {
 	Add as AddIcon,
 	Delete as DeleteIcon,
 	Inventory2 as InventoryIcon,
+	LocalOffer as LocalOfferIcon,
 	PointOfSale as PointOfSaleIcon,
 	QrCodeScanner as QrCodeScannerIcon,
 	ReceiptLong as ReceiptLongIcon,
@@ -41,6 +42,7 @@ import { useInitAccessToken } from '@/contexts/InitContext';
 import {
 	useCreateSaleMutation,
 	useGetDashboardStatsQuery,
+	useGetPromotionsQuery,
 	useLazyScanProductQuery,
 	useSyncOfflineSalesMutation,
 } from '@/store/services/magasin';
@@ -49,13 +51,23 @@ import { setFormikAutoErrors } from '@/utils/helpers';
 import { posScanSchema } from '@/utils/formValidationSchemas';
 import { textInputTheme } from '@/utils/themes';
 import type { SessionProps } from '@/types/_initTypes';
-import type { PosScanFormValues, ProductType, SaleCreatePayload } from '@/types/gestionMagasinTypes';
+import type { PosScanFormValues, ProductType, PromotionType, SaleCreatePayload } from '@/types/gestionMagasinTypes';
 
-type CartLine = {
+type ProductCartLine = {
+	type: 'product';
 	product: ProductType;
 	quantity: number;
 	unitPrice: number;
 };
+
+type PromotionCartLine = {
+	type: 'promotion';
+	promotion: PromotionType;
+	quantity: number;
+	unitPrice: number;
+};
+
+type CartLine = ProductCartLine | PromotionCartLine;
 
 const OFFLINE_KEY = 'gestion-magasin-offline-sales';
 const inputTheme = textInputTheme();
@@ -103,6 +115,10 @@ const PosClient = ({ session }: SessionProps) => {
 	const [createSale, createState] = useCreateSaleMutation();
 	const [syncOffline, syncState] = useSyncOfflineSalesMutation();
 	const { data: stats } = useGetDashboardStatsQuery({ store: storeId }, { skip: !token || !storeId });
+	const { data: promotions } = useGetPromotionsQuery(
+		{ store: storeId, page: 1, pageSize: 50, status: 'active' },
+		{ skip: !token || !storeId },
+	);
 
 	const total = useMemo(
 		() => cart.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0),
@@ -111,18 +127,39 @@ const PosClient = ({ session }: SessionProps) => {
 
 	const addProduct = (product: ProductType) => {
 		setCart((current) => {
-			const existing = current.find((line) => line.product.id === product.id);
+			const existing = current.find((line) => line.type === 'product' && line.product.id === product.id);
 			if (existing) {
 				return current.map((line) =>
-					line.product.id === product.id ? { ...line, quantity: line.quantity + 1 } : line,
+					line.type === 'product' && line.product.id === product.id ? { ...line, quantity: line.quantity + 1 } : line,
 				);
 			}
 			return [
 				...current,
 				{
+					type: 'product',
 					product,
 					quantity: 1,
 					unitPrice: Number(product.counter_price || 0),
+				},
+			];
+		});
+	};
+
+	const addPromotion = (promotion: PromotionType) => {
+		setCart((current) => {
+			const existing = current.find((line) => line.type === 'promotion' && line.promotion.id === promotion.id);
+			if (existing) {
+				return current.map((line) =>
+					line.type === 'promotion' && line.promotion.id === promotion.id ? { ...line, quantity: line.quantity + 1 } : line,
+				);
+			}
+			return [
+				...current,
+				{
+					type: 'promotion',
+					promotion,
+					quantity: 1,
+					unitPrice: Number(promotion.selling_price || 0),
 				},
 			];
 		});
@@ -161,11 +198,13 @@ const PosClient = ({ session }: SessionProps) => {
 		},
 	});
 
-	const updateQuantity = (productId: number, delta: number) => {
+	const lineKey = (line: CartLine) => `${line.type}-${line.type === 'product' ? line.product.id : line.promotion.id}`;
+
+	const updateQuantity = (targetKey: string, delta: number) => {
 		setCart((current) =>
 			current
 				.map((line) =>
-					line.product.id === productId
+					lineKey(line) === targetKey
 						? { ...line, quantity: Math.max(0, line.quantity + delta) }
 						: line,
 				)
@@ -179,11 +218,20 @@ const PosClient = ({ session }: SessionProps) => {
 		}
 		return {
 			store: storeId,
-			lines: cart.map((line) => ({
-				product: line.product.id,
-				quantity: String(line.quantity),
-				unit_price: String(line.unitPrice),
-			})),
+			lines: cart
+				.filter((line): line is ProductCartLine => line.type === 'product')
+				.map((line) => ({
+					product: line.product.id,
+					quantity: String(line.quantity),
+					unit_price: String(line.unitPrice),
+				})),
+			promotion_lines: cart
+				.filter((line): line is PromotionCartLine => line.type === 'promotion')
+				.map((line) => ({
+					promotion: line.promotion.id,
+					quantity: String(line.quantity),
+					unit_price: String(line.unitPrice),
+				})),
 			payment_mode_code: 'cash',
 			paid_amount: String(total),
 			idempotency_key: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`,
@@ -374,6 +422,27 @@ const PosClient = ({ session }: SessionProps) => {
 									)}
 								</MagasinSectionCard>
 							</Box>
+							{(promotions?.results?.length ?? 0) > 0 && (
+								<MagasinSectionCard
+									title={t.magasin.promotions}
+									icon={<LocalOfferIcon fontSize="small" />}
+									contentSx={{ p: 2, '&:last-child': { pb: 2 } }}
+								>
+									<Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+										{promotions?.results.map((promotion) => (
+											<Button
+												key={promotion.id}
+												variant="outlined"
+												startIcon={<LocalOfferIcon />}
+												onClick={() => addPromotion(promotion)}
+												sx={{ borderRadius: '50px', textTransform: 'none' }}
+											>
+												{promotion.name} - {money(promotion.selling_price)}
+											</Button>
+										))}
+									</Stack>
+								</MagasinSectionCard>
+							)}
 							<MagasinSectionCard
 								title={t.magasin.cart}
 								icon={<PointOfSaleIcon fontSize="small" />}
@@ -402,27 +471,32 @@ const PosClient = ({ session }: SessionProps) => {
 												</TableRow>
 											</TableHead>
 											<TableBody>
-												{cart.map((line) => (
-													<TableRow key={line.product.id}>
+												{cart.map((line) => {
+													const key = lineKey(line);
+													const name = line.type === 'product' ? line.product.name : line.promotion.name;
+													const sub = line.type === 'product' ? (line.product.reference ?? line.product.barcode) : t.magasin.promotion;
+													return (
+													<TableRow key={key}>
 														<TableCell>
-															<Typography variant="body2" fontWeight={600}>{line.product.name}</Typography>
-															<Typography variant="caption" color="text.secondary">{line.product.reference ?? line.product.barcode}</Typography>
+															<Typography variant="body2" fontWeight={600}>{name}</Typography>
+															<Typography variant="caption" color="text.secondary">{sub}</Typography>
 														</TableCell>
 														<TableCell align="right">
 															<Stack direction="row" spacing={0.5} justifyContent="flex-end" alignItems="center">
-																<IconButton size="small" onClick={() => updateQuantity(line.product.id, -1)}><RemoveIcon fontSize="small" /></IconButton>
+																<IconButton size="small" onClick={() => updateQuantity(key, -1)}><RemoveIcon fontSize="small" /></IconButton>
 																<Typography sx={{ minWidth: 28, textAlign: 'center' }}>{line.quantity}</Typography>
-																<IconButton size="small" onClick={() => updateQuantity(line.product.id, 1)}><AddIcon fontSize="small" /></IconButton>
+																<IconButton size="small" onClick={() => updateQuantity(key, 1)}><AddIcon fontSize="small" /></IconButton>
 															</Stack>
 														</TableCell>
 														<TableCell align="right">{money(line.quantity * line.unitPrice)}</TableCell>
 														<TableCell align="right">
-															<IconButton color="error" size="small" onClick={() => setCart((current) => current.filter((item) => item.product.id !== line.product.id))}>
+															<IconButton color="error" size="small" onClick={() => setCart((current) => current.filter((item) => lineKey(item) !== key))}>
 																<DeleteIcon fontSize="small" />
 															</IconButton>
 														</TableCell>
 													</TableRow>
-												))}
+												);
+												})}
 											</TableBody>
 										</Table>
 									</TableContainer>

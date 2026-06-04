@@ -4,7 +4,7 @@ import { usePermission, useAppSelector } from '@/utils/hooks';
 import { getProfilState } from '@/store/selectors';
 import NoPermission from '@/components/shared/noPermission/noPermission';
 
-type PermissionKey = 'is_staff' | 'can_view' | 'can_print' | 'can_create' | 'can_edit' | 'can_delete';
+type PermissionKey = 'is_staff' | 'can_view' | 'can_print' | 'can_create' | 'can_edit' | 'can_delete' | 'can_create_promotion';
 
 interface ProtectedProps {
 	children: ReactNode;

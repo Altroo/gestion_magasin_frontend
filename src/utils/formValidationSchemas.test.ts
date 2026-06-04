@@ -121,6 +121,7 @@ describe('Zod Schema Validation', () => {
 			can_create: false,
 			can_edit: false,
 			can_delete: false,
+			can_create_promotion: false,
 		};
 
 		it('validates required fields', () => {
@@ -261,6 +262,7 @@ describe('Zod Schema Validation', () => {
 					address: 'Casablanca',
 					phone: '212600000000',
 					is_active: true,
+					managed_by: [],
 					globalError: '',
 				}),
 			).not.toThrow();
@@ -274,6 +276,7 @@ describe('Zod Schema Validation', () => {
 					address: '',
 					phone: '',
 					is_active: true,
+					managed_by: [],
 				}),
 			).toThrow();
 		});
@@ -308,7 +311,7 @@ describe('Zod Schema Validation', () => {
 			paid_amount: '120',
 			discount_amount: '0',
 			note: '',
-			lines: [{ product: '1', quantity: '2', unit_price: '60' }],
+			lines: [{ type: 'product', product: '1', promotion: '', quantity: '2', unit_price: '60' }],
 			globalError: '',
 		};
 
@@ -320,7 +323,7 @@ describe('Zod Schema Validation', () => {
 			expect(() =>
 				saleSchema.parse({
 					...validSale,
-					lines: [{ product: '', quantity: '2', unit_price: '60' }],
+					lines: [{ type: 'product', product: '', promotion: '', quantity: '2', unit_price: '60' }],
 				}),
 			).toThrow();
 		});

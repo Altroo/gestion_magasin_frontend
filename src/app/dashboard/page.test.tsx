@@ -17,11 +17,13 @@ jest.mock('next/navigation', () => ({
 }));
 
 const AUTH_LOGIN = '/login';
-const DASHBOARD_POS = '/dashboard/pos';
 jest.mock('@/utils/routes', () => ({
 	__esModule: true,
 	AUTH_LOGIN,
-	DASHBOARD_POS,
+}));
+jest.mock('@/components/pages/magasin/dashboard/dashboard', () => ({
+	__esModule: true,
+	default: () => 'DashboardClient',
 }));
 
 beforeEach(() => {
@@ -48,7 +50,7 @@ describe('DashboardPage server component', () => {
 		expect(mockRedirect).toHaveBeenCalledWith(AUTH_LOGIN);
 	});
 
-	it('redirects to DASHBOARD_POS when session exists', async () => {
+	it('renders dashboard when session exists', async () => {
 		const sessionValue: Session = { user: { pk: 1, email: 'user@site.com' } };
 		mockAuth.mockResolvedValueOnce(sessionValue);
 
@@ -59,7 +61,8 @@ describe('DashboardPage server component', () => {
 			Page = mod.default as () => Promise<unknown>;
 		});
 
-		await Page!();
-		expect(mockRedirect).toHaveBeenCalledWith(DASHBOARD_POS);
+		const result = await Page!();
+		expect(mockRedirect).not.toHaveBeenCalled();
+		expect(result).toBeTruthy();
 	});
 });

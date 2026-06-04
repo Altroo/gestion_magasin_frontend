@@ -10,12 +10,25 @@ import type {
 	AttendanceRecordType,
 	CategoryType,
 	DashboardStatsType,
+	DashboardReportType,
 	EmployeeType,
+	ExpenseCategoryType,
+	ExpensePayload,
+	ExpenseType,
+	ActivityHistoryType,
+	InventoryPayload,
+	InventorySessionType,
 	ProductPayload,
 	ProductType,
+	PromotionPayload,
+	PromotionType,
+	PurchasePayload,
+	PurchaseType,
 	SaleCreatePayload,
 	SaleType,
 	StockBalanceType,
+	StockTransferPayload,
+	StockTransferType,
 	StoreRoleType,
 	StoreMembershipType,
 	StorePayload,
@@ -32,7 +45,7 @@ type ListParams = {
 
 export const magasinApi = createApi({
 	reducerPath: 'magasinApi',
-	tagTypes: ['Stores', 'Products', 'Stock', 'Sales', 'Attendance'],
+	tagTypes: ['Stores', 'Products', 'Stock', 'Sales', 'Attendance', 'Expenses', 'Purchases', 'Inventory', 'Transfers', 'Promotions', 'Reports'],
 	baseQuery: axiosBaseQuery((api) =>
 		isAuthenticatedInstance(
 			() => getInitStateToken(api.getState() as RootState),
@@ -112,6 +125,22 @@ export const magasinApi = createApi({
 				params: { store },
 			}),
 			providesTags: ['Sales', 'Stock'],
+		}),
+		getDashboardReport: builder.query<DashboardReportType, { store?: number; date_from?: string; date_to?: string }>({
+			query: (params) => ({
+				url: process.env.NEXT_PUBLIC_REPORTS_DASHBOARD,
+				method: 'GET',
+				params,
+			}),
+			providesTags: ['Reports', 'Sales', 'Stock', 'Expenses', 'Purchases', 'Inventory'],
+		}),
+		getActivityHistory: builder.query<{ results: ActivityHistoryType[] }, { page?: number } | void>({
+			query: (params) => ({
+				url: process.env.NEXT_PUBLIC_REPORTS_ACTIVITY,
+				method: 'GET',
+				params,
+			}),
+			providesTags: ['Reports'],
 		}),
 		getCategories: builder.query<PaginationResponseType<CategoryType>, { search?: string; page?: number; pageSize?: number } | void>({
 			query: (params) => ({
@@ -197,6 +226,170 @@ export const magasinApi = createApi({
 			},
 			invalidatesTags: ['Products', 'Stock'],
 		}),
+		getPurchases: builder.query<PaginationResponseType<PurchaseType>, ListParams>({
+			query: ({ store, search, page = 1, pageSize = 10, ...filters }) => ({
+				url: process.env.NEXT_PUBLIC_STOCK_PURCHASES,
+				method: 'GET',
+				params: { store, search, page, page_size: pageSize, ...filters },
+			}),
+			providesTags: ['Purchases', 'Stock'],
+		}),
+		getPurchase: builder.query<PurchaseType, { id: number }>({
+			query: ({ id }) => ({
+				url: `${process.env.NEXT_PUBLIC_STOCK_PURCHASES}${id}/`,
+				method: 'GET',
+			}),
+			providesTags: ['Purchases', 'Stock'],
+		}),
+		addPurchase: builder.mutation<PurchaseType, PurchasePayload>({
+			query: (data) => ({
+				url: process.env.NEXT_PUBLIC_STOCK_PURCHASES,
+				method: 'POST',
+				data,
+			}),
+			invalidatesTags: ['Purchases', 'Stock', 'Reports'],
+		}),
+		editPurchase: builder.mutation<PurchaseType, { id: number; data: PurchasePayload }>({
+			query: ({ id, data }) => ({
+				url: `${process.env.NEXT_PUBLIC_STOCK_PURCHASES}${id}/`,
+				method: 'PUT',
+				data,
+			}),
+			invalidatesTags: ['Purchases', 'Stock', 'Reports'],
+		}),
+		deletePurchase: builder.mutation<void, { id: number }>({
+			query: ({ id }) => ({
+				url: `${process.env.NEXT_PUBLIC_STOCK_PURCHASES}${id}/`,
+				method: 'DELETE',
+			}),
+			invalidatesTags: ['Purchases', 'Stock', 'Reports'],
+		}),
+		bulkDeletePurchases: builder.mutation<{ deleted: number }, { ids: number[] }>({
+			query: ({ ids }) => ({
+				url: `${process.env.NEXT_PUBLIC_STOCK_PURCHASES}bulk-delete/`,
+				method: 'DELETE',
+				data: { ids },
+			}),
+			invalidatesTags: ['Purchases', 'Stock', 'Reports'],
+		}),
+		receivePurchase: builder.mutation<PurchaseType, { id: number }>({
+			query: ({ id }) => ({
+				url: `${process.env.NEXT_PUBLIC_STOCK_PURCHASES}${id}/receive/`,
+				method: 'POST',
+			}),
+			invalidatesTags: ['Purchases', 'Stock', 'Reports'],
+		}),
+		getInventorySessions: builder.query<PaginationResponseType<InventorySessionType>, ListParams>({
+			query: ({ store, search, page = 1, pageSize = 10, ...filters }) => ({
+				url: process.env.NEXT_PUBLIC_STOCK_INVENTORY,
+				method: 'GET',
+				params: { store, search, page, page_size: pageSize, ...filters },
+			}),
+			providesTags: ['Inventory', 'Stock'],
+		}),
+		getInventorySession: builder.query<InventorySessionType, { id: number }>({
+			query: ({ id }) => ({
+				url: `${process.env.NEXT_PUBLIC_STOCK_INVENTORY}${id}/`,
+				method: 'GET',
+			}),
+			providesTags: ['Inventory', 'Stock'],
+		}),
+		addInventorySession: builder.mutation<InventorySessionType, InventoryPayload>({
+			query: (data) => ({
+				url: process.env.NEXT_PUBLIC_STOCK_INVENTORY,
+				method: 'POST',
+				data,
+			}),
+			invalidatesTags: ['Inventory', 'Stock', 'Reports'],
+		}),
+		editInventorySession: builder.mutation<InventorySessionType, { id: number; data: InventoryPayload }>({
+			query: ({ id, data }) => ({
+				url: `${process.env.NEXT_PUBLIC_STOCK_INVENTORY}${id}/`,
+				method: 'PUT',
+				data,
+			}),
+			invalidatesTags: ['Inventory', 'Stock', 'Reports'],
+		}),
+		deleteInventorySession: builder.mutation<void, { id: number }>({
+			query: ({ id }) => ({
+				url: `${process.env.NEXT_PUBLIC_STOCK_INVENTORY}${id}/`,
+				method: 'DELETE',
+			}),
+			invalidatesTags: ['Inventory', 'Stock', 'Reports'],
+		}),
+		bulkDeleteInventorySessions: builder.mutation<{ deleted: number }, { ids: number[] }>({
+			query: ({ ids }) => ({
+				url: `${process.env.NEXT_PUBLIC_STOCK_INVENTORY}bulk-delete/`,
+				method: 'DELETE',
+				data: { ids },
+			}),
+			invalidatesTags: ['Inventory', 'Stock', 'Reports'],
+		}),
+		validateInventorySession: builder.mutation<InventorySessionType, { id: number }>({
+			query: ({ id }) => ({
+				url: `${process.env.NEXT_PUBLIC_STOCK_INVENTORY}${id}/validate/`,
+				method: 'POST',
+			}),
+			invalidatesTags: ['Inventory', 'Stock', 'Reports'],
+		}),
+		getStockTransfers: builder.query<PaginationResponseType<StockTransferType>, ListParams>({
+			query: ({ store, search, page = 1, pageSize = 10, ...filters }) => ({
+				url: process.env.NEXT_PUBLIC_STOCK_TRANSFERS,
+				method: 'GET',
+				params: { store, search, page, page_size: pageSize, ...filters },
+			}),
+			providesTags: ['Transfers', 'Stock'],
+		}),
+		getStockTransfer: builder.query<StockTransferType, { id: number }>({
+			query: ({ id }) => ({
+				url: `${process.env.NEXT_PUBLIC_STOCK_TRANSFERS}${id}/`,
+				method: 'GET',
+			}),
+			providesTags: ['Transfers', 'Stock'],
+		}),
+		addStockTransfer: builder.mutation<StockTransferType, StockTransferPayload>({
+			query: ({ store, ...data }) => ({
+				url: process.env.NEXT_PUBLIC_STOCK_TRANSFERS,
+				method: 'POST',
+				params: { store },
+				data,
+			}),
+			invalidatesTags: ['Transfers', 'Stock', 'Reports'],
+		}),
+		editStockTransfer: builder.mutation<StockTransferType, { id: number; data: StockTransferPayload }>({
+			query: ({ id, data }) => {
+				const { store, ...payload } = data;
+				return {
+					url: `${process.env.NEXT_PUBLIC_STOCK_TRANSFERS}${id}/`,
+					method: 'PUT',
+					params: { store },
+					data: payload,
+				};
+			},
+			invalidatesTags: ['Transfers', 'Stock', 'Reports'],
+		}),
+		deleteStockTransfer: builder.mutation<void, { id: number }>({
+			query: ({ id }) => ({
+				url: `${process.env.NEXT_PUBLIC_STOCK_TRANSFERS}${id}/`,
+				method: 'DELETE',
+			}),
+			invalidatesTags: ['Transfers', 'Stock', 'Reports'],
+		}),
+		bulkDeleteStockTransfers: builder.mutation<{ deleted: number }, { ids: number[] }>({
+			query: ({ ids }) => ({
+				url: `${process.env.NEXT_PUBLIC_STOCK_TRANSFERS}bulk-delete/`,
+				method: 'DELETE',
+				data: { ids },
+			}),
+			invalidatesTags: ['Transfers', 'Stock', 'Reports'],
+		}),
+		validateStockTransfer: builder.mutation<StockTransferType, { id: number }>({
+			query: ({ id }) => ({
+				url: `${process.env.NEXT_PUBLIC_STOCK_TRANSFERS}${id}/validate/`,
+				method: 'POST',
+			}),
+			invalidatesTags: ['Transfers', 'Stock', 'Reports'],
+		}),
 		getStockBalances: builder.query<PaginationResponseType<StockBalanceType>, ListParams & { low?: boolean | string }>({
 			query: ({ store, search, low, page = 1, pageSize = 10, ...filters }) => ({
 				url: process.env.NEXT_PUBLIC_STOCK_BALANCES,
@@ -244,6 +437,49 @@ export const magasinApi = createApi({
 			}),
 			invalidatesTags: ['Stock'],
 		}),
+		getPromotions: builder.query<PaginationResponseType<PromotionType>, ListParams>({
+			query: ({ store, page = 1, pageSize = 10, search, ...filters }) => ({
+				url: process.env.NEXT_PUBLIC_SALES_PROMOTIONS,
+				method: 'GET',
+				params: { store, page, page_size: pageSize, search, ...filters },
+			}),
+			providesTags: ['Promotions'],
+		}),
+		getPromotion: builder.query<PromotionType, { id: number }>({
+			query: ({ id }) => ({
+				url: `${process.env.NEXT_PUBLIC_SALES_PROMOTIONS}${id}/`,
+				method: 'GET',
+			}),
+			providesTags: ['Promotions'],
+		}),
+		addPromotion: builder.mutation<PromotionType, PromotionPayload>({
+			query: ({ store, ...data }) => ({
+				url: process.env.NEXT_PUBLIC_SALES_PROMOTIONS,
+				method: 'POST',
+				params: { store },
+				data,
+			}),
+			invalidatesTags: ['Promotions', 'Reports'],
+		}),
+		editPromotion: builder.mutation<PromotionType, { id: number; data: PromotionPayload }>({
+			query: ({ id, data }) => {
+				const { store, ...payload } = data;
+				return {
+					url: `${process.env.NEXT_PUBLIC_SALES_PROMOTIONS}${id}/`,
+					method: 'PUT',
+					params: { store },
+					data: payload,
+				};
+			},
+			invalidatesTags: ['Promotions', 'Reports'],
+		}),
+		deletePromotion: builder.mutation<void, { id: number }>({
+			query: ({ id }) => ({
+				url: `${process.env.NEXT_PUBLIC_SALES_PROMOTIONS}${id}/`,
+				method: 'DELETE',
+			}),
+			invalidatesTags: ['Promotions', 'Reports'],
+		}),
 		createSale: builder.mutation<SaleType, SaleCreatePayload>({
 			query: (data) => ({
 				url: process.env.NEXT_PUBLIC_SALES_ROOT,
@@ -283,6 +519,60 @@ export const magasinApi = createApi({
 				data: { reason },
 			}),
 			invalidatesTags: ['Sales', 'Stock'],
+		}),
+		getExpenseCategories: builder.query<PaginationResponseType<ExpenseCategoryType>, { page?: number; pageSize?: number; search?: string } | void>({
+			query: (params) => ({
+				url: process.env.NEXT_PUBLIC_FINANCE_CATEGORIES,
+				method: 'GET',
+				params: { page: params?.page ?? 1, page_size: params?.pageSize ?? 100, search: params?.search },
+			}),
+			providesTags: ['Expenses'],
+		}),
+		getExpenses: builder.query<PaginationResponseType<ExpenseType>, ListParams>({
+			query: ({ store, search, page = 1, pageSize = 10, ...filters }) => ({
+				url: process.env.NEXT_PUBLIC_FINANCE_ROOT,
+				method: 'GET',
+				params: { store, search, page, page_size: pageSize, ...filters },
+			}),
+			providesTags: ['Expenses'],
+		}),
+		getExpense: builder.query<ExpenseType, { id: number }>({
+			query: ({ id }) => ({
+				url: `${process.env.NEXT_PUBLIC_FINANCE_ROOT}${id}/`,
+				method: 'GET',
+			}),
+			providesTags: ['Expenses'],
+		}),
+		addExpense: builder.mutation<ExpenseType, ExpensePayload>({
+			query: (data) => ({
+				url: process.env.NEXT_PUBLIC_FINANCE_ROOT,
+				method: 'POST',
+				data,
+			}),
+			invalidatesTags: ['Expenses', 'Reports'],
+		}),
+		editExpense: builder.mutation<ExpenseType, { id: number; data: ExpensePayload }>({
+			query: ({ id, data }) => ({
+				url: `${process.env.NEXT_PUBLIC_FINANCE_ROOT}${id}/`,
+				method: 'PUT',
+				data,
+			}),
+			invalidatesTags: ['Expenses', 'Reports'],
+		}),
+		deleteExpense: builder.mutation<void, { id: number }>({
+			query: ({ id }) => ({
+				url: `${process.env.NEXT_PUBLIC_FINANCE_ROOT}${id}/`,
+				method: 'DELETE',
+			}),
+			invalidatesTags: ['Expenses', 'Reports'],
+		}),
+		bulkDeleteExpenses: builder.mutation<{ deleted: number }, { ids: number[] }>({
+			query: ({ ids }) => ({
+				url: `${process.env.NEXT_PUBLIC_FINANCE_ROOT}bulk-delete/`,
+				method: 'DELETE',
+				data: { ids },
+			}),
+			invalidatesTags: ['Expenses', 'Reports'],
 		}),
 		getEmployees: builder.query<PaginationResponseType<EmployeeType>, { store?: number; page?: number; pageSize?: number; search?: string }>({
 			query: ({ store, page = 1, pageSize = 100, search }) => ({
@@ -347,29 +637,59 @@ export const magasinApi = createApi({
 });
 
 export const {
+	useAddExpenseMutation,
+	useAddInventorySessionMutation,
 	useAddAttendanceRecordMutation,
+	useAddPromotionMutation,
+	useAddPurchaseMutation,
 	useAddStoreMutation,
 	useAddProductMutation,
+	useAddStockTransferMutation,
 	useAdjustStockMutation,
+	useBulkDeleteExpensesMutation,
+	useBulkDeleteInventorySessionsMutation,
 	useBulkDeleteProductsMutation,
+	useBulkDeletePurchasesMutation,
 	useBulkDeleteStoresMutation,
 	useBulkDeleteStockBalancesMutation,
+	useBulkDeleteStockTransfersMutation,
 	useCreateSaleMutation,
 	useDeleteAttendanceRecordMutation,
+	useDeleteExpenseMutation,
+	useDeleteInventorySessionMutation,
 	useDeleteProductMutation,
+	useDeletePromotionMutation,
+	useDeletePurchaseMutation,
 	useDeleteStoreMutation,
 	useDeleteStockBalanceMutation,
+	useDeleteStockTransferMutation,
 	useEditAttendanceRecordMutation,
+	useEditExpenseMutation,
+	useEditInventorySessionMutation,
 	useEditProductMutation,
+	useEditPromotionMutation,
+	useEditPurchaseMutation,
 	useEditStoreMutation,
+	useEditStockTransferMutation,
+	useGetActivityHistoryQuery,
 	useGetAttendanceRecordQuery,
 	useGetAttendanceRecordsQuery,
 	useGetCategoriesQuery,
 	useGetDashboardStatsQuery,
+	useGetDashboardReportQuery,
 	useGetEmployeesQuery,
+	useGetExpenseCategoriesQuery,
+	useGetExpenseQuery,
+	useGetExpensesQuery,
+	useGetInventorySessionQuery,
+	useGetInventorySessionsQuery,
 	useGetMyStoresQuery,
 	useGetProductQuery,
 	useGetProductsQuery,
+	useGetPromotionQuery,
+	useGetPromotionsQuery,
+	useGetPurchaseQuery,
+	useGetPurchasesQuery,
 	useGetSaleQuery,
 	useGetSalesQuery,
 	useGetStoreQuery,
@@ -377,10 +697,15 @@ export const {
 	useGetStoresQuery,
 	useGetStockBalanceQuery,
 	useGetStockBalancesQuery,
+	useGetStockTransferQuery,
+	useGetStockTransfersQuery,
 	useImportAttendanceMutation,
 	useImportProductsMutation,
 	useLazyScanProductQuery,
+	useReceivePurchaseMutation,
 	useSyncOfflineSalesMutation,
+	useValidateStockTransferMutation,
 	useUpdateStockThresholdMutation,
+	useValidateInventorySessionMutation,
 	useVoidSaleMutation,
 } = magasinApi;

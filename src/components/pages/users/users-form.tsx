@@ -80,6 +80,7 @@ interface UserFormValues {
 	can_create: boolean;
 	can_edit: boolean;
 	can_delete: boolean;
+	can_create_promotion: boolean;
 	stores: UserStoreAssignmentType[];
 	avatar: string | ArrayBuffer | null;
 	avatar_cropped: string | ArrayBuffer | null;
@@ -138,6 +139,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 			can_create: rawData?.can_create ?? false,
 			can_edit: rawData?.can_edit ?? false,
 			can_delete: rawData?.can_delete ?? false,
+			can_create_promotion: rawData?.can_create_promotion ?? false,
 			stores: rawData?.stores ?? [],
 			avatar: rawData?.avatar ?? '',
 			avatar_cropped: rawData?.avatar_cropped ?? '',
@@ -199,6 +201,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 			can_create: t.users.canCreate,
 			can_edit: t.users.canEdit,
 			can_delete: t.users.canDelete,
+			can_create_promotion: t.users.canCreatePromotion,
 			stores: t.users.storeAccess,
 			globalError: t.errors.globalError,
 		}),
@@ -678,6 +681,10 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 									<FormControlLabel
 										control={<Switch checked={formik.values.can_delete} onChange={formik.handleChange} name="can_delete" />}
 								label={t.users.canDelete}
+									/>
+									<FormControlLabel
+										control={<Switch checked={formik.values.can_create_promotion} onChange={formik.handleChange} name="can_create_promotion" />}
+								label={t.users.canCreatePromotion}
 									/>
 								</Stack>
 							</CardContent>

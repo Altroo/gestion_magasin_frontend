@@ -95,26 +95,53 @@ const SalesViewClient = ({ session, id }: Props) => {
 									<Card elevation={2}>
 										<CardContent sx={{ p: 3 }}>
 											<Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>{t.magasin.saleLines}</Typography>
-											<Table size="small">
-												<TableHead>
-													<TableRow>
-														<TableCell>{t.magasin.product}</TableCell>
-														<TableCell align="right">{t.magasin.quantity}</TableCell>
-														<TableCell align="right">{t.magasin.unitPrice}</TableCell>
-														<TableCell align="right">{t.magasin.total}</TableCell>
-													</TableRow>
-												</TableHead>
-												<TableBody>
-													{sale.lines.map((line) => (
-														<TableRow key={line.id}>
-															<TableCell>{line.product_reference ?? line.product_barcode} - {line.product_name}</TableCell>
-															<TableCell align="right">{formatNumber(line.quantity)}</TableCell>
-															<TableCell align="right">{formatNumber(line.unit_price)} Dhs</TableCell>
-															<TableCell align="right">{formatNumber(line.total)} Dhs</TableCell>
+											{sale.lines.length > 0 && (
+												<Table size="small">
+													<TableHead>
+														<TableRow>
+															<TableCell>{t.magasin.product}</TableCell>
+															<TableCell align="right">{t.magasin.quantity}</TableCell>
+															<TableCell align="right">{t.magasin.unitPrice}</TableCell>
+															<TableCell align="right">{t.magasin.total}</TableCell>
 														</TableRow>
-													))}
-												</TableBody>
-											</Table>
+													</TableHead>
+													<TableBody>
+														{sale.lines.map((line) => (
+															<TableRow key={line.id}>
+																<TableCell>{line.product_reference ?? line.product_barcode} - {line.product_name}</TableCell>
+																<TableCell align="right">{formatNumber(line.quantity)}</TableCell>
+																<TableCell align="right">{formatNumber(line.unit_price)} Dhs</TableCell>
+																<TableCell align="right">{formatNumber(line.total)} Dhs</TableCell>
+															</TableRow>
+														))}
+													</TableBody>
+												</Table>
+											)}
+											{sale.promotion_lines.length > 0 && (
+												<Box sx={{ mt: sale.lines.length > 0 ? 3 : 0 }}>
+													<Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>{t.magasin.salePromotionLines}</Typography>
+													<Table size="small">
+														<TableHead>
+															<TableRow>
+																<TableCell>{t.magasin.promotion}</TableCell>
+																<TableCell align="right">{t.magasin.quantity}</TableCell>
+																<TableCell align="right">{t.magasin.unitPrice}</TableCell>
+																<TableCell align="right">{t.magasin.total}</TableCell>
+															</TableRow>
+														</TableHead>
+														<TableBody>
+															{sale.promotion_lines.map((line) => (
+																<TableRow key={line.id}>
+																	<TableCell>{line.promotion_name}</TableCell>
+																	<TableCell align="right">{formatNumber(line.quantity)}</TableCell>
+																	<TableCell align="right">{formatNumber(line.unit_price)} Dhs</TableCell>
+																	<TableCell align="right">{formatNumber(line.total)} Dhs</TableCell>
+																</TableRow>
+															))}
+														</TableBody>
+													</Table>
+												</Box>
+											)}
 										</CardContent>
 									</Card>
 								</Stack>

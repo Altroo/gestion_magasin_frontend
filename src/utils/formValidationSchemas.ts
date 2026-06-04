@@ -111,6 +111,7 @@ export const userSchema = z.object({
 	can_create: z.boolean(),
 	can_edit: z.boolean(),
 	can_delete: z.boolean(),
+	can_create_promotion: z.boolean(),
 	stores: z
 		.array(
 			z.object({
@@ -182,6 +183,8 @@ export const storeSchema = z.object({
 	address: optionalTextField(1, 255),
 	phone: optionalTextField(1, 40),
 	is_active: z.boolean(),
+	is_global_stock: z.boolean().optional(),
+	managed_by: z.array(z.object({ pk: z.number(), role: z.string().min(1) })),
 	globalError: optionalTextField(1, 500),
 });
 
@@ -193,9 +196,101 @@ export const saleSchema = z.object({
 	lines: z
 		.array(
 			z.object({
-				product: requiredNumberTextField(),
+				type: z.enum(['product', 'promotion']),
+				product: optionalTextField(1, 50),
+				promotion: optionalTextField(1, 50),
 				quantity: requiredNumberTextField(),
 				unit_price: requiredNumberTextField(),
+			}).superRefine((line, ctx) => {
+				if (line.type === 'product' && !line.product) {
+					ctx.addIssue({ code: z.ZodIssueCode.custom, message: INPUT_REQUIRED(), path: ['product'] });
+				}
+				if (line.type === 'promotion' && !line.promotion) {
+					ctx.addIssue({ code: z.ZodIssueCode.custom, message: INPUT_REQUIRED(), path: ['promotion'] });
+				}
+			}),
+		)
+		.min(1, { error: INPUT_REQUIRED }),
+	globalError: optionalTextField(1, 500),
+});
+
+export const expenseSchema = z.object({
+	category: requiredNumberTextField(),
+	label: requiredTextField(2, 180),
+	amount: requiredNumberTextField(),
+	payment_status: requiredChoiceTextField(),
+	payment_mode: requiredChoiceTextField(),
+	expense_date: requiredChoiceTextField(),
+	note: optionalTextField(1, 500),
+	globalError: optionalTextField(1, 500),
+});
+
+export const purchaseSchema = z.object({
+	supplier_name: optionalTextField(1, 160),
+	reference: optionalTextField(1, 80),
+	purchase_date: requiredChoiceTextField(),
+	status: requiredChoiceTextField(),
+	note: optionalTextField(1, 500),
+	lines: z
+		.array(
+			z.object({
+				product: requiredNumberTextField(),
+				quantity: requiredNumberTextField(),
+				unit_cost: requiredNumberTextField(),
+			}),
+		)
+		.min(1, { error: INPUT_REQUIRED }),
+	globalError: optionalTextField(1, 500),
+});
+
+export const inventorySchema = z.object({
+	code: requiredTextField(2, 80),
+	title: requiredTextField(2, 160),
+	inventory_date: requiredChoiceTextField(),
+	status: requiredChoiceTextField(),
+	note: optionalTextField(1, 500),
+	lines: z
+		.array(
+			z.object({
+				product: requiredNumberTextField(),
+				expected_quantity: requiredNumberTextField(),
+				counted_quantity: requiredNumberTextField(),
+				note: optionalTextField(1, 255),
+			}),
+		)
+		.min(1, { error: INPUT_REQUIRED }),
+	globalError: optionalTextField(1, 500),
+});
+
+export const stockTransferSchema = z.object({
+	target_store: requiredNumberTextField(),
+	reference: optionalTextField(1, 80),
+	transfer_date: requiredChoiceTextField(),
+	status: requiredChoiceTextField(),
+	note: optionalTextField(1, 500),
+	lines: z
+		.array(
+			z.object({
+				product: requiredNumberTextField(),
+				quantity: requiredNumberTextField(),
+			}),
+		)
+		.min(1, { error: INPUT_REQUIRED }),
+	globalError: optionalTextField(1, 500),
+});
+
+export const promotionSchema = z.object({
+	name: requiredTextField(2, 160),
+	selling_price: requiredNumberTextField(),
+	status: requiredChoiceTextField(),
+	start_date: optionalTextField(1, 20),
+	end_date: optionalTextField(1, 20),
+	note: optionalTextField(1, 500),
+	lines: z
+		.array(
+			z.object({
+				product: requiredNumberTextField(),
+				quantity: requiredNumberTextField(),
 			}),
 		)
 		.min(1, { error: INPUT_REQUIRED }),

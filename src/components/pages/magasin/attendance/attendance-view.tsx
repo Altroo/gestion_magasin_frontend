@@ -1,9 +1,22 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { isValidElement, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert, Box, Button, Card, CardContent, Chip, Divider, Stack, Typography } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Badge as BadgeIcon } from '@mui/icons-material';
+import { Alert, Box, Button, Card, CardContent, Chip, Divider, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
+import {
+	AccessTime as AccessTimeIcon,
+	ArrowBack as ArrowBackIcon,
+	Badge as BadgeIcon,
+	CalendarMonth as CalendarIcon,
+	Close as CloseIcon,
+	Delete as DeleteIcon,
+	Description as DescriptionIcon,
+	Edit as EditIcon,
+	Storefront as StorefrontIcon,
+	Timer as TimerIcon,
+	Warning as WarningIcon,
+} from '@mui/icons-material';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
@@ -14,13 +27,33 @@ import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeleteAttendanceRecordMutation, useGetAttendanceRecordQuery } from '@/store/services/magasin';
 import { ATTENDANCE_EDIT, ATTENDANCE_LIST } from '@/utils/routes';
-import { extractApiErrorMessage, formatNumber } from '@/utils/helpers';
+import { extractApiErrorMessage, formatDate, formatNumber } from '@/utils/helpers';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
 import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '@/types/_initTypes';
 
 type Props = SessionProps & {
 	id: number;
 	storeId?: number;
+};
+
+const InfoRow = ({ icon, label, value }: { icon: ReactNode; label: string; value?: ReactNode }) => {
+	const theme = useTheme();
+	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+	const displayValue = isValidElement(value) ? value : value || '-';
+
+	return (
+		<Stack direction="row" spacing={2} alignItems="flex-start" sx={{ py: 1.5, flexWrap: 'wrap' }}>
+			<Box sx={{ color: 'primary.main', display: 'flex', alignItems: 'center', minWidth: 40 }}>{icon}</Box>
+			<Stack direction="row" spacing={isMobile ? 0 : 2} alignItems="center" sx={{ flex: 1, flexWrap: 'wrap' }}>
+				<Typography fontWeight={600} color="text.secondary" sx={{ minWidth: { xs: '100%', sm: 220 }, wordBreak: 'break-word' }}>
+					{label}
+				</Typography>
+				<Box sx={{ flex: 1 }}>
+					{isValidElement(displayValue) ? displayValue : <Typography sx={{ color: 'text.primary' }}>{displayValue}</Typography>}
+				</Box>
+			</Stack>
+		</Stack>
+	);
 };
 
 const AttendanceViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
@@ -80,28 +113,69 @@ const AttendanceViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 							) : !attendance ? (
 								<Alert severity="warning">{t.magasin.noRows}</Alert>
 							) : (
-								<Card elevation={2}>
-									<CardContent sx={{ p: 3 }}>
-										<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-											<BadgeIcon color="primary" />
-											<Typography variant="h6" fontWeight={700}>{attendance.employee_name}</Typography>
-											<Chip size="small" label={attendance.status} />
-										</Stack>
-										<Divider sx={{ mb: 2 }} />
-										<Stack spacing={1}>
-											<Typography>{t.magasin.store}: {attendance.store_name}</Typography>
-											<Typography>{t.magasin.date}: {attendance.date}</Typography>
-											<Typography>{t.magasin.clockIn}: {attendance.clock_in ?? '-'}</Typography>
-											<Typography>{t.magasin.breakStart}: {attendance.break_start ?? '-'}</Typography>
-											<Typography>{t.magasin.breakEnd}: {attendance.break_end ?? '-'}</Typography>
-											<Typography>{t.magasin.clockOut}: {attendance.clock_out ?? '-'}</Typography>
-											<Typography>{t.magasin.hours}: {formatNumber(attendance.hours_worked)}</Typography>
-											<Typography>{t.magasin.delayMinutes}: {attendance.delay_minutes}</Typography>
-											<Typography>{t.magasin.responsible}: {attendance.responsible || '-'}</Typography>
-											<Typography>{t.magasin.observations}: {attendance.observations || '-'}</Typography>
-										</Stack>
-									</CardContent>
-								</Card>
+								<Stack spacing={3}>
+									<Card elevation={2} sx={{ borderRadius: 2 }}>
+										<CardContent sx={{ p: 3 }}>
+											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2, flexWrap: 'wrap' }}>
+												<BadgeIcon color="primary" />
+												<Typography variant="h6" fontWeight={700}>{attendance.employee_name}</Typography>
+												<Chip size="small" label={attendance.status} color={attendance.status === 'present' ? 'success' : attendance.status === 'absent' ? 'error' : 'default'} />
+											</Stack>
+											<Stack direction="row" spacing={1} flexWrap="wrap">
+												<Chip label={`ID: ${attendance.id}`} size="small" variant="outlined" />
+												<Chip label={formatDate(attendance.date)} size="small" variant="outlined" />
+											</Stack>
+										</CardContent>
+									</Card>
+									<Card elevation={2} sx={{ borderRadius: 2 }}>
+										<CardContent sx={{ p: 3 }}>
+											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+												<StorefrontIcon color="primary" />
+												<Typography variant="h6" fontWeight={700}>{t.magasin.attendanceInformation}</Typography>
+											</Stack>
+											<Divider sx={{ mb: 2 }} />
+											<InfoRow icon={<StorefrontIcon />} label={t.magasin.store} value={attendance.store_name} />
+											<Divider />
+											<InfoRow icon={<CalendarIcon />} label={t.magasin.date} value={formatDate(attendance.date)} />
+											<Divider />
+											<InfoRow icon={<BadgeIcon />} label={t.magasin.employee} value={attendance.employee_name} />
+											<Divider />
+											<InfoRow icon={<BadgeIcon />} label={t.magasin.responsible} value={attendance.responsible} />
+										</CardContent>
+									</Card>
+									<Card elevation={2} sx={{ borderRadius: 2 }}>
+										<CardContent sx={{ p: 3 }}>
+											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+												<TimerIcon color="primary" />
+												<Typography variant="h6" fontWeight={700}>{t.magasin.hours}</Typography>
+											</Stack>
+											<Divider sx={{ mb: 2 }} />
+											<InfoRow icon={<AccessTimeIcon />} label={t.magasin.clockIn} value={attendance.clock_in} />
+											<Divider />
+											<InfoRow icon={<AccessTimeIcon />} label={t.magasin.breakStart} value={attendance.break_start} />
+											<Divider />
+											<InfoRow icon={<AccessTimeIcon />} label={t.magasin.breakEnd} value={attendance.break_end} />
+											<Divider />
+											<InfoRow icon={<AccessTimeIcon />} label={t.magasin.clockOut} value={attendance.clock_out} />
+											<Divider />
+											<InfoRow icon={<TimerIcon />} label={t.magasin.hours} value={formatNumber(attendance.hours_worked)} />
+											<Divider />
+											<InfoRow icon={<WarningIcon />} label={t.magasin.delayMinutes} value={attendance.delay_minutes} />
+										</CardContent>
+									</Card>
+									<Card elevation={2} sx={{ borderRadius: 2 }}>
+										<CardContent sx={{ p: 3 }}>
+											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+												<DescriptionIcon color="primary" />
+												<Typography variant="h6" fontWeight={700}>{t.magasin.observations}</Typography>
+											</Stack>
+											<Divider sx={{ mb: 2 }} />
+											<Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+												{attendance.observations || '-'}
+											</Typography>
+										</CardContent>
+									</Card>
+								</Stack>
 							)}
 						</Stack>
 					</Box>

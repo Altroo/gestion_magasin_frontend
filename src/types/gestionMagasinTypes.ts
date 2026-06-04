@@ -14,7 +14,9 @@ export type StoreType = {
 	address: string;
 	phone: string;
 	is_active: boolean;
+	is_global_stock: boolean;
 	members_count?: number;
+	managed_by?: StoreManagedByType[];
 };
 
 export type StorePayload = {
@@ -23,9 +25,12 @@ export type StorePayload = {
 	address: string;
 	phone: string;
 	is_active: boolean;
+	is_global_stock?: boolean;
+	managed_by?: Array<{ pk: number; role: StoreRoleCode; role_name?: string }>;
 };
 
 export type StoreFormValues = StorePayload & {
+	managed_by: Array<{ pk: number; role: StoreRoleCode }>;
 	globalError: string;
 };
 
@@ -43,6 +48,13 @@ export type UserStoreAssignmentType = {
 	role: StoreRoleCode;
 	role_name: string;
 	is_active: boolean;
+};
+
+export type StoreManagedByType = {
+	pk: number;
+	role: StoreRoleCode;
+	role_name: string;
+	membership_id?: number;
 };
 
 export type CategoryType = {
@@ -124,6 +136,15 @@ export type SaleLineType = {
 	total: string;
 };
 
+export type SalePromotionLineType = {
+	id: number;
+	promotion: number;
+	promotion_name: string;
+	quantity: string;
+	unit_price: string;
+	total: string;
+};
+
 export type SaleType = {
 	id: number;
 	store: number;
@@ -150,12 +171,18 @@ export type SaleType = {
 	date_created: string;
 	date_updated?: string;
 	lines: SaleLineType[];
+	promotion_lines: SalePromotionLineType[];
 };
 
 export type SaleCreatePayload = {
 	store: number;
-	lines: Array<{
+	lines?: Array<{
 		product: number;
+		quantity: string;
+		unit_price?: string;
+	}>;
+	promotion_lines?: Array<{
+		promotion: number;
 		quantity: string;
 		unit_price?: string;
 	}>;
@@ -168,7 +195,9 @@ export type SaleCreatePayload = {
 };
 
 export type SaleFormLineValues = {
+	type: 'product' | 'promotion';
 	product: string;
+	promotion: string;
 	quantity: string;
 	unit_price: string;
 };
@@ -187,6 +216,234 @@ export type DashboardStatsType = {
 	total_sales: string;
 	low_stock_count: number;
 	products_count: number;
+};
+
+export type DashboardReportType = {
+	store: { id: number | null; name: string };
+	period: { date_from: string; date_to: string };
+	kpis: {
+		sales_count: number;
+		sales_total: string;
+		expenses_total: string;
+		purchases_total: string;
+		net_total: string;
+		low_stock_count: number;
+		expired_count: number;
+		expiring_count: number;
+		products_count: number;
+		categories_count: number;
+		customers_count: number;
+		promotions_active_count: number;
+		transfers_count: number;
+		attendance_hours: string;
+		attendance_delay_minutes: number;
+	};
+	sales_trend: Array<{ date: string; total: string; count: number }>;
+	attendance_trend: Array<{ date: string; hours: string; delay: number }>;
+	stock_alerts: Array<{ id: number; product: string; quantity: string; min_stock: string }>;
+};
+
+export type ExpenseCategoryType = {
+	id: number;
+	code: string;
+	name: string;
+	is_active: boolean;
+};
+
+export type ExpenseType = {
+	id: number;
+	store: number;
+	store_name: string;
+	category: number;
+	category_name: string;
+	label: string;
+	amount: string;
+	payment_status: 'paid' | 'payable';
+	payment_mode: 'cash' | 'card' | 'transfer' | 'other';
+	expense_date: string;
+	note: string;
+	created_by?: number | null;
+	created_by_email?: string | null;
+	date_created?: string;
+	date_updated?: string;
+};
+
+export type ExpensePayload = {
+	store: number;
+	category: number;
+	label: string;
+	amount: string;
+	payment_status: 'paid' | 'payable';
+	payment_mode: 'cash' | 'card' | 'transfer' | 'other';
+	expense_date: string;
+	note?: string;
+};
+
+export type PurchaseLineType = {
+	id: number;
+	product: number;
+	product_name: string;
+	product_reference: string | null;
+	product_barcode: string | null;
+	quantity: string;
+	unit_cost: string;
+	total: string;
+};
+
+export type PurchaseType = {
+	id: number;
+	store: number;
+	store_name: string;
+	supplier_name: string;
+	reference: string;
+	purchase_date: string;
+	status: 'draft' | 'received' | 'cancelled';
+	subtotal: string;
+	note: string;
+	created_by?: number | null;
+	created_by_email?: string | null;
+	received_by?: number | null;
+	received_by_email?: string | null;
+	received_at?: string | null;
+	date_created?: string;
+	date_updated?: string;
+	lines: PurchaseLineType[];
+};
+
+export type PurchasePayload = {
+	store: number;
+	supplier_name?: string;
+	reference?: string;
+	purchase_date?: string;
+	status: 'draft' | 'received' | 'cancelled';
+	note?: string;
+	lines: Array<{ product: number; quantity: string; unit_cost: string }>;
+};
+
+export type InventoryLineType = {
+	id: number;
+	product: number;
+	product_name: string;
+	product_reference: string | null;
+	product_barcode: string | null;
+	expected_quantity: string;
+	counted_quantity: string;
+	difference: string;
+	note: string;
+};
+
+export type InventorySessionType = {
+	id: number;
+	store: number;
+	store_name: string;
+	code: string;
+	title: string;
+	inventory_date: string;
+	status: 'draft' | 'validated' | 'cancelled';
+	note: string;
+	created_by?: number | null;
+	created_by_email?: string | null;
+	validated_by?: number | null;
+	validated_by_email?: string | null;
+	validated_at?: string | null;
+	date_created?: string;
+	date_updated?: string;
+	lines: InventoryLineType[];
+};
+
+export type InventoryPayload = {
+	store: number;
+	code: string;
+	title: string;
+	inventory_date?: string;
+	status: 'draft' | 'validated' | 'cancelled';
+	note?: string;
+	lines: Array<{ product: number; expected_quantity?: string; counted_quantity: string; note?: string }>;
+};
+
+export type StockTransferLineType = {
+	id: number;
+	product: number;
+	product_name: string;
+	product_reference: string | null;
+	product_barcode: string | null;
+	quantity: string;
+};
+
+export type StockTransferType = {
+	id: number;
+	source_store: number;
+	source_store_name: string;
+	target_store: number;
+	target_store_name: string;
+	reference: string;
+	transfer_date: string;
+	status: 'draft' | 'validated' | 'cancelled';
+	note: string;
+	created_by?: number | null;
+	created_by_email?: string | null;
+	validated_by?: number | null;
+	validated_by_email?: string | null;
+	validated_at?: string | null;
+	date_created?: string;
+	date_updated?: string;
+	lines: StockTransferLineType[];
+};
+
+export type StockTransferPayload = {
+	store: number;
+	target_store: number;
+	reference?: string;
+	transfer_date?: string;
+	status: 'draft' | 'validated' | 'cancelled';
+	note?: string;
+	lines: Array<{ product: number; quantity: string }>;
+};
+
+export type PromotionLineType = {
+	id: number;
+	product: number;
+	product_name: string;
+	product_reference: string | null;
+	product_barcode: string | null;
+	quantity: string;
+};
+
+export type PromotionType = {
+	id: number;
+	store: number;
+	store_name: string;
+	name: string;
+	selling_price: string;
+	status: 'active' | 'expired';
+	start_date: string | null;
+	end_date: string | null;
+	note: string;
+	created_by?: number | null;
+	created_by_email?: string | null;
+	date_created?: string;
+	date_updated?: string;
+	lines: PromotionLineType[];
+};
+
+export type PromotionPayload = {
+	store: number;
+	name: string;
+	selling_price: string;
+	status: 'active' | 'expired';
+	start_date?: string | null;
+	end_date?: string | null;
+	note?: string;
+	lines: Array<{ product: number; quantity: string }>;
+};
+
+export type ActivityHistoryType = {
+	model: string;
+	object_id: number | null;
+	history_type: '+' | '~' | '-';
+	history_date: string;
+	history_user: string;
+	label: string;
 };
 
 export type EmployeeType = {

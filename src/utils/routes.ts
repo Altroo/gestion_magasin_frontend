@@ -19,7 +19,12 @@ export const DASHBOARD = appRoute('dashboard');
 export const DASHBOARD_POS = appRoute('dashboard/pos');
 export const DASHBOARD_CATALOG = appRoute('dashboard/catalog');
 export const DASHBOARD_STOCK = appRoute('dashboard/stock');
+export const DASHBOARD_STOCK_TRANSFERS = appRoute('dashboard/stock-transfers');
+export const DASHBOARD_PURCHASES = appRoute('dashboard/purchases');
+export const DASHBOARD_INVENTORY = appRoute('dashboard/inventory');
 export const DASHBOARD_SALES = appRoute('dashboard/sales');
+export const DASHBOARD_PROMOTIONS = appRoute('dashboard/promotions');
+export const DASHBOARD_EXPENSES = appRoute('dashboard/expenses');
 export const DASHBOARD_ATTENDANCE = appRoute('dashboard/attendance');
 export const DASHBOARD_STORES = appRoute('dashboard/stores');
 export const DASHBOARD_NOTIFICATIONS = appRoute('dashboard/settings/notifications');
@@ -34,10 +39,35 @@ export const STOCK_LIST = DASHBOARD_STOCK;
 export const STOCK_ADD = (storeId?: number) => `${appRoute('dashboard/stock/new')}${storeQuery(storeId)}`;
 export const STOCK_VIEW = (id: number, storeId?: number) => `${appRoute(`dashboard/stock/${id}`)}${storeQuery(storeId)}`;
 export const STOCK_EDIT = (id: number, storeId?: number) => `${appRoute(`dashboard/stock/${id}/edit`)}${storeQuery(storeId)}`;
+// Stock transfers
+export const STOCK_TRANSFERS_LIST = DASHBOARD_STOCK_TRANSFERS;
+export const STOCK_TRANSFERS_ADD = (storeId?: number) => `${appRoute('dashboard/stock-transfers/new')}${storeQuery(storeId)}`;
+export const STOCK_TRANSFERS_VIEW = (id: number, storeId?: number) => `${appRoute(`dashboard/stock-transfers/${id}`)}${storeQuery(storeId)}`;
+export const STOCK_TRANSFERS_EDIT = (id: number, storeId?: number) => `${appRoute(`dashboard/stock-transfers/${id}/edit`)}${storeQuery(storeId)}`;
+// Purchases
+export const PURCHASES_LIST = DASHBOARD_PURCHASES;
+export const PURCHASES_ADD = (storeId?: number) => `${appRoute('dashboard/purchases/new')}${storeQuery(storeId)}`;
+export const PURCHASES_VIEW = (id: number, storeId?: number) => `${appRoute(`dashboard/purchases/${id}`)}${storeQuery(storeId)}`;
+export const PURCHASES_EDIT = (id: number, storeId?: number) => `${appRoute(`dashboard/purchases/${id}/edit`)}${storeQuery(storeId)}`;
+// Inventory
+export const INVENTORY_LIST = DASHBOARD_INVENTORY;
+export const INVENTORY_ADD = (storeId?: number) => `${appRoute('dashboard/inventory/new')}${storeQuery(storeId)}`;
+export const INVENTORY_VIEW = (id: number, storeId?: number) => `${appRoute(`dashboard/inventory/${id}`)}${storeQuery(storeId)}`;
+export const INVENTORY_EDIT = (id: number, storeId?: number) => `${appRoute(`dashboard/inventory/${id}/edit`)}${storeQuery(storeId)}`;
 // Sales
 export const SALES_LIST = DASHBOARD_SALES;
 export const SALES_ADD = (storeId?: number) => `${appRoute('dashboard/sales/new')}${storeQuery(storeId)}`;
 export const SALES_VIEW = (id: number, storeId?: number) => `${appRoute(`dashboard/sales/${id}`)}${storeQuery(storeId)}`;
+// Promotions
+export const PROMOTIONS_LIST = DASHBOARD_PROMOTIONS;
+export const PROMOTIONS_ADD = (storeId?: number) => `${appRoute('dashboard/promotions/new')}${storeQuery(storeId)}`;
+export const PROMOTIONS_VIEW = (id: number, storeId?: number) => `${appRoute(`dashboard/promotions/${id}`)}${storeQuery(storeId)}`;
+export const PROMOTIONS_EDIT = (id: number, storeId?: number) => `${appRoute(`dashboard/promotions/${id}/edit`)}${storeQuery(storeId)}`;
+// Expenses
+export const EXPENSES_LIST = DASHBOARD_EXPENSES;
+export const EXPENSES_ADD = (storeId?: number) => `${appRoute('dashboard/expenses/new')}${storeQuery(storeId)}`;
+export const EXPENSES_VIEW = (id: number, storeId?: number) => `${appRoute(`dashboard/expenses/${id}`)}${storeQuery(storeId)}`;
+export const EXPENSES_EDIT = (id: number, storeId?: number) => `${appRoute(`dashboard/expenses/${id}/edit`)}${storeQuery(storeId)}`;
 // Attendance
 export const ATTENDANCE_LIST = DASHBOARD_ATTENDANCE;
 export const ATTENDANCE_ADD = (storeId?: number) => `${appRoute('dashboard/attendance/new')}${storeQuery(storeId)}`;
