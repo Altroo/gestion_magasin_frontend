@@ -5,6 +5,26 @@ import { allowAnyInstance } from '@/utils/helpers';
 import { postApi } from '@/utils/apiHelpers';
 import type { AccountPostLoginResponseType } from '@/types/accountTypes';
 
+const getAuthCookies = (prefix: string) => {
+	const secure = process.env.NEXTAUTH_URL?.startsWith('https://') ?? process.env.NODE_ENV === 'production';
+	const baseOptions = { path: '/', sameSite: 'lax' as const, secure };
+
+	return {
+		sessionToken: {
+			name: `${secure ? '__Secure-' : ''}${prefix}.session-token`,
+			options: { ...baseOptions, httpOnly: true },
+		},
+		callbackUrl: {
+			name: `${secure ? '__Secure-' : ''}${prefix}.callback-url`,
+			options: { ...baseOptions, httpOnly: true },
+		},
+		csrfToken: {
+			name: `${secure ? '__Host-' : ''}${prefix}.csrf-token`,
+			options: { ...baseOptions, httpOnly: true },
+		},
+	};
+};
+
 const parseExpirationToMs = (expiration: unknown): number => {
 	if (typeof expiration === 'number') {
 		return Number.isFinite(expiration) ? expiration : 0;
@@ -110,6 +130,62 @@ export const { handlers, auth } = NextAuth({
 				return null;
 			},
 		}),
+		Credentials({
+			id: 'sso-code',
+			type: 'credentials',
+			name: 'sso-code',
+			credentials: {
+				code: { label: 'Code', type: 'text' },
+			},
+			async authorize(credentials) {
+				const validatedCredentials = z
+					.object({
+						code: z.string().min(1),
+					})
+					.safeParse(credentials);
+
+				if (!validatedCredentials.success) {
+					return null;
+				}
+
+				try {
+					const instance = allowAnyInstance();
+					const response: AccountPostLoginResponseType = await postApi(
+						`${process.env.NEXT_PUBLIC_ACCOUNT_SSO_EXCHANGE}`,
+						instance,
+						{ code: validatedCredentials.data.code },
+					);
+
+					if (response.status === 200) {
+						const { user, access, refresh, access_expiration, refresh_expiration } = response.data;
+						return {
+							id: String(user.pk),
+							email: user.email,
+							name: `${user.first_name} ${user.last_name}`,
+							image: null,
+							user: {
+								id: String(user.pk),
+								pk: user.pk,
+								email: user.email,
+								emailVerified: null,
+								name: `${user.first_name} ${user.last_name}`,
+								first_name: user.first_name,
+								last_name: user.last_name,
+								image: null,
+							},
+							access,
+							access_expiration,
+							refresh,
+							refresh_expiration,
+						};
+					}
+				} catch (error) {
+					console.error('[Auth] SSO login failed:', error instanceof Error ? error.message : error);
+				}
+
+				return null;
+			},
+		}),
 	],
 
 	secret: process.env.NEXTAUTH_SECRET, // Ensure this is set securely
@@ -122,15 +198,17 @@ export const { handlers, auth } = NextAuth({
 		maxAge: 6 * 24 * 60 * 60,    // 6 days
 	},
 
+	cookies: getAuthCookies('ebh-gestion-magasin'),
+
 	pages: {
-		signIn: 'login',
-		error: 'login',
+		signIn: '/login',
+		error: '/login',
 	},
 
 	callbacks: {
 		async signIn({ user, account }) {
 			if (account) {
-				if (account.provider === 'credentials') {
+				if (account.provider === 'credentials' || account.provider === 'sso-code') {
 					account.user = user.user;
 					account.access = user.access;
 					account.refresh = user.refresh;

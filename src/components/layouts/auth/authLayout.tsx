@@ -4,7 +4,7 @@ import React, { ForwardedRef, forwardRef } from 'react';
 import Styles from './authLayout.module.sass';
 import { Box, Stack } from '@mui/material';
 import Image from 'next/image';
-import Logo from '../../../../public/assets/images/gestion-magasin-logo-v2.png';
+import Logo from '../../../../public/assets/images/gestion-magasin-logo.svg';
 import BarcodeSVG from '../../../../public/assets/images/auth_illu/barcode.svg';
 import StorefrontSVG from '../../../../public/assets/images/auth_illu/storefront.svg';
 import { useLanguage } from '@/utils/hooks';

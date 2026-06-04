@@ -2,6 +2,8 @@
  "name": "E.B.H Gestion Magasin",
  "short_name": "Gestion Magasin",
  "display": "standalone",
+ "background_color": "#243447",
+ "theme_color": "#243447",
  "start_url": "/dashboard",
  "icons": [
   {

@@ -7,6 +7,8 @@ const PUBLIC_PATHS = [
 	'/reset-password/enter-code',
 	'/reset-password/set-password',
 	'/reset-password/set-password-complete',
+	'/sso/start',
+	'/sso/callback',
 ];
 
 export default auth((req) => {

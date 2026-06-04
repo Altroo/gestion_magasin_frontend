@@ -45,6 +45,11 @@ const getAuthorizeFunction = () => {
 	return config?.providers?.[0]?.authorize;
 };
 
+const getSsoAuthorizeFunction = () => {
+	const config = getNextAuthConfig();
+	return config?.providers?.[1]?.authorize;
+};
+
 // Helper to get callbacks
 const getCallbacks = () => {
 	const config = getNextAuthConfig();
@@ -76,8 +81,8 @@ describe('auth.ts', () => {
 				maxAge: 6 * 24 * 60 * 60,
 			});
 			expect(config.pages).toEqual({
-				signIn: 'login',
-				error: 'login',
+				signIn: '/login',
+				error: '/login',
 			});
 		});
 
@@ -91,6 +96,18 @@ describe('auth.ts', () => {
 			expect(provider.credentials).toEqual({
 				email: { label: 'Email', type: 'email', placeholder: 'email' },
 				password: { label: 'Password', type: 'password', placeholder: 'password' },
+			});
+		});
+
+		it('should have SSO code provider configured', () => {
+			const config = getNextAuthConfig();
+			const provider = config?.providers?.[1];
+
+			expect(provider).toBeDefined();
+			expect(provider.id).toBe('sso-code');
+			expect(provider.name).toBe('sso-code');
+			expect(provider.credentials).toEqual({
+				code: { label: 'Code', type: 'text' },
 			});
 		});
 	});
@@ -190,6 +207,22 @@ describe('auth.ts', () => {
 
 			expect(result).toBeNull();
 		});
+
+		it('should exchange SSO code and return user object', async () => {
+			process.env.NEXT_PUBLIC_ACCOUNT_SSO_EXCHANGE = 'https://api.example.test/account/sso/exchange/';
+			mockedPostApi.mockResolvedValueOnce(mockSuccessResponse);
+
+			const authorize = getSsoAuthorizeFunction();
+			const result = await authorize({ code: 'sso-code-123' });
+
+			expect(mockedAllowAnyInstance).toHaveBeenCalled();
+			expect(mockedPostApi).toHaveBeenCalledWith(
+				'https://api.example.test/account/sso/exchange/',
+				expect.any(Object),
+				{ code: 'sso-code-123' },
+			);
+			expect(result).toEqual(expect.objectContaining({ id: '1', email: 'test@example.com' }));
+		});
 	});
 
 	describe('signIn callback', () => {
@@ -205,6 +238,28 @@ describe('auth.ts', () => {
 
 			const account = {
 				provider: 'credentials',
+			} as Account;
+
+			const result = await callbacks.signIn({ user, account });
+
+			expect(result).toBe(true);
+			expect(account.user).toEqual(user.user);
+			expect(account.access).toBe('access-token');
+			expect(account.refresh).toBe('refresh-token');
+		});
+
+		it('should return true and attach tokens for SSO provider', async () => {
+			const callbacks = getCallbacks();
+			const user = {
+				user: { pk: 1, email: 'test@example.com' },
+				access: 'access-token',
+				refresh: 'refresh-token',
+				access_expiration: '2025-12-31',
+				refresh_expiration: '2026-01-15',
+			} as unknown as User;
+
+			const account = {
+				provider: 'sso-code',
 			} as Account;
 
 			const result = await callbacks.signIn({ user, account });
