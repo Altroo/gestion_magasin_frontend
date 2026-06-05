@@ -17,7 +17,7 @@ export const AUTH_RESET_PASSWORD_COMPLETE = appRoute('reset-password/set-passwor
 // Dashboard
 export const DASHBOARD = appRoute('dashboard');
 export const DASHBOARD_POS = appRoute('dashboard/pos');
-export const DASHBOARD_CATALOG = appRoute('dashboard/catalog');
+export const DASHBOARD_CATALOG = appRoute('dashboard/article');
 export const DASHBOARD_STOCK = appRoute('dashboard/stock');
 export const DASHBOARD_STOCK_TRANSFERS = appRoute('dashboard/stock-transfers');
 export const DASHBOARD_PURCHASES = appRoute('dashboard/purchases');
@@ -31,9 +31,9 @@ export const DASHBOARD_NOTIFICATIONS = appRoute('dashboard/settings/notification
 const storeQuery = (storeId?: number) => (storeId ? `?store_id=${storeId}` : '');
 // Catalog
 export const CATALOG_LIST = DASHBOARD_CATALOG;
-export const CATALOG_ADD = (storeId?: number) => `${appRoute('dashboard/catalog/new')}${storeQuery(storeId)}`;
-export const CATALOG_VIEW = (id: number, storeId?: number) => `${appRoute(`dashboard/catalog/${id}`)}${storeQuery(storeId)}`;
-export const CATALOG_EDIT = (id: number, storeId?: number) => `${appRoute(`dashboard/catalog/${id}/edit`)}${storeQuery(storeId)}`;
+export const CATALOG_ADD = (storeId?: number) => `${appRoute('dashboard/article/new')}${storeQuery(storeId)}`;
+export const CATALOG_VIEW = (id: number, storeId?: number) => `${appRoute(`dashboard/article/${id}`)}${storeQuery(storeId)}`;
+export const CATALOG_EDIT = (id: number, storeId?: number) => `${appRoute(`dashboard/article/${id}/edit`)}${storeQuery(storeId)}`;
 // Stock
 export const STOCK_LIST = DASHBOARD_STOCK;
 export const STOCK_ADD = (storeId?: number) => `${appRoute('dashboard/stock/new')}${storeQuery(storeId)}`;
