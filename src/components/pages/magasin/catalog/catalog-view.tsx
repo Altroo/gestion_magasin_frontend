@@ -29,7 +29,6 @@ import {
 	Inventory2 as InventoryIcon,
 	QrCodeScanner as QrCodeScannerIcon,
 	Straighten as StraightenIcon,
-	Warning as WarningIcon,
 } from '@mui/icons-material';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
@@ -150,7 +149,6 @@ const CatalogViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
 												) : (
 													<Chip label={t.users.inactive} color="default" size="small" variant="outlined" />
 												)}
-												{product.compliance_required && <Chip icon={<WarningIcon />} label={t.magasin.complianceRequired} color="warning" size="small" />}
 											</Stack>
 										</CardContent>
 									</Card>

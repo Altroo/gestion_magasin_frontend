@@ -260,7 +260,6 @@ export type TranslationDictionary = {
     defaultStockAlert: string;
     expirationDate: string;
     shelfLifeDays: string;
-    complianceRequired: string;
     activeProduct: string;
     productCreated: string;
     productUpdated: string;

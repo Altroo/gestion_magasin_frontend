@@ -260,7 +260,6 @@ export const en: TranslationDictionary = {
     defaultStockAlert: 'Default minimum stock',
     expirationDate: 'Expiration date',
     shelfLifeDays: 'Shelf life days',
-    complianceRequired: 'Requires control',
     activeProduct: 'Active product',
     productCreated: 'Product created successfully.',
     productUpdated: 'Product updated successfully.',

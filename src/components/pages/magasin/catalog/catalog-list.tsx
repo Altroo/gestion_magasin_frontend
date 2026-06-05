@@ -149,14 +149,8 @@ const CatalogClient = ({ session }: SessionProps) => {
 					{ id: 'false', nom: t.users.inactive },
 				],
 			},
-			{
-				key: 'compliance',
-				label: t.magasin.complianceRequired,
-				paramName: 'compliance_required',
-				options: [{ id: 'true', nom: t.magasin.complianceRequired }],
-			},
 		],
-		[t.magasin.complianceRequired, t.users.active, t.users.inactive],
+		[t.users.active, t.users.inactive],
 	);
 
 	const columns: GridColDef[] = [

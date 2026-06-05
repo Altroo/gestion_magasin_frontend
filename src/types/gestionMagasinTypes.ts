@@ -91,7 +91,6 @@ export type ProductType = {
 	default_stock_alert: string;
 	expiration_date: string | null;
 	shelf_life_days?: number | null;
-	compliance_required: boolean;
 	is_active: boolean;
 	available_stock: string | null;
 	min_stock: string | null;
@@ -112,7 +111,6 @@ export type ProductPayload = {
 	default_stock_alert: string;
 	expiration_date?: string | null;
 	shelf_life_days?: number | null;
-	compliance_required: boolean;
 	is_active: boolean;
 };
 
@@ -569,7 +567,6 @@ export type ProductFormValues = {
 	default_stock_alert: string;
 	expiration_date: string;
 	shelf_life_days: string;
-	compliance_required: boolean;
 	is_active: boolean;
 	globalError: string;
 };

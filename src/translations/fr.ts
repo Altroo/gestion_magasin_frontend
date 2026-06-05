@@ -260,7 +260,6 @@ export const fr: TranslationDictionary = {
     defaultStockAlert: 'Stock minimum par défaut',
     expirationDate: "Date d'expiration",
     shelfLifeDays: 'Durée de vie (jours)',
-    complianceRequired: 'Article à contrôler',
     activeProduct: 'Article actif',
     productCreated: 'Article ajouté avec succès.',
     productUpdated: 'Article modifié avec succès.',

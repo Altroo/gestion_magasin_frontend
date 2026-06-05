@@ -375,7 +375,6 @@ describe('Zod Schema Validation', () => {
 					default_stock_alert: '0',
 					expiration_date: '',
 					shelf_life_days: '',
-					compliance_required: false,
 					is_active: true,
 				}),
 			).toThrow();
@@ -396,7 +395,6 @@ describe('Zod Schema Validation', () => {
 					default_stock_alert: '',
 					expiration_date: '',
 					shelf_life_days: '',
-					compliance_required: false,
 					is_active: true,
 				}),
 			).toThrow();
@@ -417,7 +415,6 @@ describe('Zod Schema Validation', () => {
 					default_stock_alert: '3',
 					expiration_date: '',
 					shelf_life_days: '',
-					compliance_required: false,
 					is_active: true,
 				}),
 			).toThrow();

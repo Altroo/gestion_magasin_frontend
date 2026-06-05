@@ -85,7 +85,6 @@ const toPayload = (values: ProductFormValues): ProductPayload => ({
 	default_stock_alert: values.default_stock_alert,
 	expiration_date: values.expiration_date || null,
 	shelf_life_days: values.shelf_life_days ? Number(values.shelf_life_days) : null,
-	compliance_required: values.compliance_required,
 	is_active: values.is_active,
 });
 
@@ -137,7 +136,6 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 			default_stock_alert: product?.default_stock_alert ?? '',
 			expiration_date: product?.expiration_date ?? '',
 			shelf_life_days: product?.shelf_life_days ? String(product.shelf_life_days) : '',
-			compliance_required: product?.compliance_required ?? false,
 			is_active: product?.is_active ?? true,
 			globalError: '',
 		},
@@ -180,7 +178,6 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 			default_stock_alert: t.magasin.defaultStockAlert,
 			expiration_date: t.magasin.expirationDate,
 			shelf_life_days: t.magasin.shelfLifeDays,
-			compliance_required: t.magasin.complianceRequired,
 			is_active: t.magasin.activeProduct,
 			globalError: t.errors.globalError,
 		}),
@@ -447,10 +444,6 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														size="small"
 														theme={inputTheme}
 														startIcon={<EventIcon fontSize="small" />}
-													/>
-													<FormControlLabel
-														control={<Checkbox checked={formik.values.compliance_required} onChange={formik.handleChange} name="compliance_required" />}
-														label={<Stack direction="row" spacing={1} alignItems="center"><WarningIcon fontSize="small" /> <Typography>{t.magasin.complianceRequired}</Typography></Stack>}
 													/>
 													<FormControlLabel
 														control={<Checkbox checked={formik.values.is_active} onChange={formik.handleChange} name="is_active" />}

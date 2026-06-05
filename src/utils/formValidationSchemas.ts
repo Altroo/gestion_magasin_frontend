@@ -172,7 +172,6 @@ export const productSchema = z.object({
 	default_stock_alert: requiredNumberTextField(),
 	expiration_date: optionalTextField(1, 20),
 	shelf_life_days: optionalTextField(1, 10),
-	compliance_required: z.boolean(),
 	is_active: z.boolean(),
 	globalError: optionalTextField(1, 500),
 });
