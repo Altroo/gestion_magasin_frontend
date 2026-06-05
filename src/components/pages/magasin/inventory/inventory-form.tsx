@@ -2,12 +2,15 @@
 
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert, Box, Button, Card, CardContent, Divider, IconButton, InputAdornment, MenuItem, Stack, TextField, ThemeProvider, Typography } from '@mui/material';
-import { Add as AddIcon, ArrowBack as ArrowBackIcon, Close as CloseIcon, Description as DescriptionIcon, Edit as EditIcon, Inventory2 as InventoryIcon, Numbers as NumbersIcon, Storefront as StorefrontIcon, Warning as WarningIcon } from '@mui/icons-material';
+import { Alert, Autocomplete, Box, Button, Card, CardContent, Divider, IconButton, InputAdornment, MenuItem, Stack, TextField, ThemeProvider, Typography } from '@mui/material';
+import { Add as AddIcon, ArrowBack as ArrowBackIcon, Delete as DeleteIcon, Description as DescriptionIcon, Edit as EditIcon, Inventory2 as InventoryIcon, Remove as RemoveIcon, Storefront as StorefrontIcon, Warning as WarningIcon } from '@mui/icons-material';
+import { DataGrid, type GridColDef, type GridPaginationModel, type GridRenderCellParams } from '@mui/x-data-grid';
+import { frFR } from '@mui/x-data-grid/locales';
 import { getIn, useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
+import { MuiFormikDatePicker } from '@/components/formikElements/muiPickers/muiPickers';
 import CustomTextInput from '@/components/formikElements/customTextInput/customTextInput';
 import PrimaryLoadingButton from '@/components/htmlElements/buttons/primaryLoadingButton/primaryLoadingButton';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
@@ -40,6 +43,11 @@ type InventoryFormValues = {
 	globalError: string;
 };
 
+type InventoryLineGridRow = typeof emptyLine & {
+	id: number;
+	index: number;
+};
+
 type Props = SessionProps & { id?: number; storeId?: number };
 
 const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
@@ -51,6 +59,7 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 	const { defaultStore } = useSelectedStore(token);
 	const storeId = initialStoreId ?? defaultStore?.id;
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+	const [linePaginationModel, setLinePaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 5 });
 	const [addInventory, addState] = useAddInventorySessionMutation();
 	const [editInventory, editState] = useEditInventorySessionMutation();
 	const { data: inventory, isLoading: isInventoryLoading, error: inventoryError } = useGetInventorySessionQuery(
@@ -142,11 +151,172 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 	};
 
 	const isLoading = addState.isLoading || editState.isLoading || isInventoryLoading || areProductsLoading;
+	const productOptions = products?.results ?? [];
+	const productLabel = (product: { id: number; reference: string | null; barcode: string | null; name: string }) =>
+		`${product.reference ?? product.barcode ?? product.id} - ${product.name}`;
 	const lineError = (index: number, field: string) => {
 		const error = getIn(formik.errors, `lines.${index}.${field}`);
 		const touched = getIn(formik.touched, `lines.${index}.${field}`);
 		return (touched || hasAttemptedSubmit) && typeof error === 'string' ? error : '';
 	};
+	const formatQuantityValue = (value: number) => {
+		if (!Number.isFinite(value)) return '0';
+		const rounded = Math.round(value * 1000) / 1000;
+		return Number.isInteger(rounded) ? String(rounded) : String(rounded).replace(/0+$/, '').replace(/\.$/, '');
+	};
+	const updateLineQuantity = (index: number, field: 'expected_quantity' | 'counted_quantity', delta: number) => {
+		const current = Number(formik.values.lines[index]?.[field] || 0);
+		const next = Math.max(0, (Number.isFinite(current) ? current : 0) + delta);
+		void formik.setFieldValue(`lines.${index}.${field}`, formatQuantityValue(next));
+		void formik.setFieldTouched(`lines.${index}.${field}`, true, false);
+	};
+	const lineRows = formik.values.lines.map((line, index) => ({ id: index + 1, index, ...line }));
+	const gridPlainInputSx = {
+		'& .MuiInputBase-root': {
+			fontFamily: 'Poppins',
+			fontSize: '14px',
+		},
+		'& .MuiInputBase-input': {
+			py: 0,
+		},
+		'& .MuiInputBase-input::placeholder': {
+			opacity: 0.7,
+		},
+	};
+	const renderQuantityStepper = (
+		params: GridRenderCellParams<InventoryLineGridRow>,
+		field: 'expected_quantity' | 'counted_quantity',
+	) => (
+		<Stack
+			direction="row"
+			spacing={0.5}
+			justifyContent="center"
+			alignItems="center"
+			sx={{ width: '100%', height: '100%' }}
+		>
+			<IconButton size="small" onClick={() => updateLineQuantity(params.row.index, field, -1)} aria-label="Diminuer">
+				<RemoveIcon fontSize="small" />
+			</IconButton>
+			<Typography variant="body2" sx={{ width: 42, textAlign: 'center', fontWeight: 600 }}>
+				{params.row[field] || '0'}
+			</Typography>
+			<IconButton size="small" onClick={() => updateLineQuantity(params.row.index, field, 1)} aria-label="Augmenter">
+				<AddIcon fontSize="small" />
+			</IconButton>
+		</Stack>
+	);
+	const lineColumns: GridColDef<InventoryLineGridRow>[] = [
+		{
+			field: 'product',
+			headerName: t.magasin.product,
+			flex: 1.5,
+			minWidth: 260,
+			sortable: false,
+			filterable: false,
+			renderCell: (params: GridRenderCellParams<InventoryLineGridRow>) => (
+				<Box sx={{ width: '100%', minWidth: 0, height: '100%', display: 'flex', alignItems: 'center' }}>
+					<Autocomplete
+						size="small"
+						options={productOptions}
+						value={productOptions.find((product) => String(product.id) === params.row.product) ?? null}
+						onChange={(_, nextProduct) => void formik.setFieldValue(`lines.${params.row.index}.product`, nextProduct ? String(nextProduct.id) : '')}
+						onBlur={() => void formik.setFieldTouched(`lines.${params.row.index}.product`, true)}
+						getOptionLabel={productLabel}
+						isOptionEqualToValue={(option, value) => option.id === value.id}
+						noOptionsText={t.common.noOptions}
+						sx={{
+							width: '100%',
+							height: '100%',
+							display: 'flex',
+							alignItems: 'center',
+							'& .MuiFormControl-root': {
+								width: '100%',
+							},
+							'& .MuiInputBase-root': {
+								alignItems: 'center',
+							},
+							'& .MuiAutocomplete-endAdornment': {
+								top: '50%',
+								transform: 'translateY(-50%)',
+							},
+						}}
+						renderInput={(inputParams) => (
+							<TextField
+								{...inputParams}
+								placeholder={`${t.magasin.product} *`}
+								error={Boolean(lineError(params.row.index, 'product'))}
+								variant="standard"
+								InputProps={{ ...inputParams.InputProps, disableUnderline: true }}
+								fullWidth
+								sx={{
+									...gridPlainInputSx,
+									'& .MuiInputBase-input::placeholder': {
+										color: lineError(params.row.index, 'product') ? 'error.main' : 'inherit',
+										opacity: 0.7,
+									},
+								}}
+							/>
+						)}
+					/>
+				</Box>
+			),
+		},
+		{
+			field: 'expected_quantity',
+			headerName: t.magasin.expectedQuantity,
+			width: 170,
+			align: 'center',
+			headerAlign: 'center',
+			sortable: false,
+			filterable: false,
+			renderCell: (params: GridRenderCellParams<InventoryLineGridRow>) => renderQuantityStepper(params, 'expected_quantity'),
+		},
+		{
+			field: 'counted_quantity',
+			headerName: t.magasin.countedQuantity,
+			width: 170,
+			align: 'center',
+			headerAlign: 'center',
+			sortable: false,
+			filterable: false,
+			renderCell: (params: GridRenderCellParams<InventoryLineGridRow>) => renderQuantityStepper(params, 'counted_quantity'),
+		},
+		{
+			field: 'note',
+			headerName: t.magasin.note,
+			flex: 1,
+			minWidth: 200,
+			sortable: false,
+			filterable: false,
+			renderCell: (params: GridRenderCellParams<InventoryLineGridRow>) => (
+				<TextField
+					type="text"
+					size="small"
+					placeholder={t.magasin.note}
+					value={params.row.note}
+					onChange={(event) => void formik.setFieldValue(`lines.${params.row.index}.note`, event.target.value)}
+					onBlur={() => void formik.setFieldTouched(`lines.${params.row.index}.note`, true)}
+					fullWidth
+					variant="standard"
+					InputProps={{ disableUnderline: true }}
+					sx={gridPlainInputSx}
+				/>
+			),
+		},
+		{
+			field: 'actions',
+			headerName: t.common.actions,
+			width: 95,
+			sortable: false,
+			filterable: false,
+			disableColumnMenu: true,
+			renderCell: (params: GridRenderCellParams<InventoryLineGridRow>) => (
+				<IconButton color="error" size="small" onClick={() => removeLine(params.row.index)}>
+					<DeleteIcon fontSize="small" />
+				</IconButton>
+			),
+		},
+	];
 
 	return (
 		<NavigationBar title={isEditMode ? t.magasin.editInventory : t.magasin.newInventory}>
@@ -172,7 +342,7 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 												<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2.5 }}>
 													<CustomTextInput id="code" type="text" label={`${t.magasin.inventoryCode} *`} value={formik.values.code} onChange={formik.handleChange('code')} onBlur={formik.handleBlur('code')} error={(formik.touched.code || hasAttemptedSubmit) && Boolean(formik.errors.code)} helperText={(formik.touched.code || hasAttemptedSubmit) ? formik.errors.code : ''} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
 													<CustomTextInput id="title" type="text" label={`${t.magasin.inventoryTitle} *`} value={formik.values.title} onChange={formik.handleChange('title')} onBlur={formik.handleBlur('title')} error={(formik.touched.title || hasAttemptedSubmit) && Boolean(formik.errors.title)} helperText={(formik.touched.title || hasAttemptedSubmit) ? formik.errors.title : ''} fullWidth size="small" theme={inputTheme} startIcon={<InventoryIcon fontSize="small" />} />
-													<CustomTextInput id="inventory_date" type="date" label={`${t.magasin.date} *`} value={formik.values.inventory_date} onChange={formik.handleChange('inventory_date')} onBlur={formik.handleBlur('inventory_date')} error={(formik.touched.inventory_date || hasAttemptedSubmit) && Boolean(formik.errors.inventory_date)} helperText={(formik.touched.inventory_date || hasAttemptedSubmit) ? formik.errors.inventory_date : ''} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
+													<MuiFormikDatePicker id="inventory_date" label={`${t.magasin.date} *`} value={formik.values.inventory_date} onChange={(value) => void formik.setFieldValue('inventory_date', value)} onBlur={formik.handleBlur('inventory_date')} error={(formik.touched.inventory_date || hasAttemptedSubmit) && Boolean(formik.errors.inventory_date)} helperText={(formik.touched.inventory_date || hasAttemptedSubmit) ? formik.errors.inventory_date : ''} fullWidth size="small" startIcon={<DescriptionIcon fontSize="small" />} />
 													<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={`${t.magasin.status} *`} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} onBlur={formik.handleBlur('status')} error={(formik.touched.status || hasAttemptedSubmit) && Boolean(formik.errors.status)} helperText={(formik.touched.status || hasAttemptedSubmit) ? formik.errors.status : ''} InputProps={{ startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> }} fullWidth>{stockWorkflowStatusOptions(t).map((option) => <MenuItem key={option.id} value={option.id}>{option.nom}</MenuItem>)}</TextField></ThemeProvider>
 												</Box>
 												<Box sx={{ mt: 2.5 }}><CustomTextInput id="note" type="text" label={t.magasin.note} value={formik.values.note} onChange={formik.handleChange('note')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} /></Box>
@@ -182,15 +352,43 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 											<CardContent sx={{ p: 3 }}>
 												<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}><Stack direction="row" spacing={2}><InventoryIcon color="primary" /><Typography variant="h6" fontWeight={700}>{t.magasin.inventoryLines}</Typography></Stack><Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={addLine}>{t.common.add}</Button></Stack>
 												<Divider sx={{ mb: 3 }} />
-												<Stack spacing={2}>{formik.values.lines.map((line, index) => (
-													<Box key={index} sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 150px 150px 1fr 44px' }, gap: 2 }}>
-														<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={`${t.magasin.product} *`} value={line.product} onChange={(event) => void formik.setFieldValue(`lines.${index}.product`, event.target.value)} onBlur={formik.handleBlur(`lines.${index}.product`)} error={Boolean(lineError(index, 'product'))} helperText={lineError(index, 'product')} InputProps={{ startAdornment: <InputAdornment position="start"><InventoryIcon fontSize="small" /></InputAdornment> }} fullWidth><MenuItem value="">{t.common.selectValue}</MenuItem>{products?.results.map((product) => <MenuItem key={product.id} value={String(product.id)}>{product.reference ?? product.barcode ?? product.id} - {product.name}</MenuItem>)}</TextField></ThemeProvider>
-														<CustomTextInput id={`lines.${index}.expected_quantity`} type="number" label={`${t.magasin.expectedQuantity} *`} value={line.expected_quantity} onChange={formik.handleChange(`lines.${index}.expected_quantity`)} onBlur={formik.handleBlur(`lines.${index}.expected_quantity`)} error={Boolean(lineError(index, 'expected_quantity'))} helperText={lineError(index, 'expected_quantity')} fullWidth size="small" theme={inputTheme} startIcon={<NumbersIcon fontSize="small" />} />
-														<CustomTextInput id={`lines.${index}.counted_quantity`} type="number" label={`${t.magasin.countedQuantity} *`} value={line.counted_quantity} onChange={formik.handleChange(`lines.${index}.counted_quantity`)} onBlur={formik.handleBlur(`lines.${index}.counted_quantity`)} error={Boolean(lineError(index, 'counted_quantity'))} helperText={lineError(index, 'counted_quantity')} fullWidth size="small" theme={inputTheme} startIcon={<NumbersIcon fontSize="small" />} />
-														<CustomTextInput id={`lines.${index}.note`} type="text" label={t.magasin.note} value={line.note} onChange={formik.handleChange(`lines.${index}.note`)} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
-														<IconButton color="error" onClick={() => removeLine(index)} sx={{ height: 40, width: 40 }}><CloseIcon /></IconButton>
-													</Box>
-												))}</Stack>
+												<Box sx={{ width: '100%' }}>
+													<DataGrid
+														rows={lineRows}
+														columns={lineColumns}
+														showToolbar
+														slotProps={{
+															toolbar: {
+																showQuickFilter: true,
+																quickFilterProps: { debounceMs: 500 },
+															},
+														}}
+														localeText={frFR.components.MuiDataGrid.defaultProps.localeText}
+														disableRowSelectionOnClick
+														paginationModel={linePaginationModel}
+														onPaginationModelChange={setLinePaginationModel}
+														pageSizeOptions={[5, 10, 25]}
+														getRowHeight={() => 64}
+														sx={{
+															border: 'none',
+															'& .MuiDataGrid-columnHeaderTitle': {
+																fontWeight: 700,
+															},
+															'& .MuiDataGrid-cell': {
+																display: 'flex',
+																alignItems: 'center',
+															},
+															'& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus': {
+																outline: 'none',
+															},
+															'& .MuiDataGrid-toolbarContainer': {
+																px: 0,
+																pt: 0,
+																pb: 1,
+															},
+														}}
+													/>
+												</Box>
 											</CardContent>
 										</Card>
 										<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}><PrimaryLoadingButton type="submit" buttonText={isEditMode ? t.magasin.editInventory : t.magasin.newInventory} active={!addState.isLoading && !editState.isLoading} loading={addState.isLoading || editState.isLoading} startIcon={isEditMode ? <EditIcon /> : <AddIcon />} onClick={(event: React.MouseEvent<HTMLButtonElement>) => { setHasAttemptedSubmit(true); if (!formik.isValid) { event.preventDefault(); formik.handleSubmit(); onError(t.magasin.fixValidationErrors); window.scrollTo({ top: 0, behavior: 'smooth' }); } }} cssClass={`${Styles.maxWidth} ${Styles.mobileButton} ${Styles.submitButton}`} /></Box>

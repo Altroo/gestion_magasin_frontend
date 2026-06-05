@@ -11,9 +11,9 @@ import {
 	CalendarMonth as CalendarIcon,
 	Close as CloseIcon,
 	Delete as DeleteIcon,
-	Description as DescriptionIcon,
 	Edit as EditIcon,
 	Storefront as StorefrontIcon,
+	Subject as RemarkIcon,
 	Timer as TimerIcon,
 	Warning as WarningIcon,
 } from '@mui/icons-material';
@@ -159,6 +159,8 @@ const AttendanceViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 											<Divider />
 											<InfoRow icon={<AccessTimeIcon />} label={t.magasin.clockOut} value={attendance.clock_out} />
 											<Divider />
+											<InfoRow icon={<AccessTimeIcon />} label={t.magasin.shift} value={magasinStatusLabel(t, attendance.shift)} />
+											<Divider />
 											<InfoRow icon={<TimerIcon />} label={t.magasin.hours} value={formatNumber(attendance.hours_worked)} />
 											<Divider />
 											<InfoRow icon={<WarningIcon />} label={t.magasin.delayMinutes} value={attendance.delay_minutes} />
@@ -167,8 +169,8 @@ const AttendanceViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 									<Card elevation={2} sx={{ borderRadius: 2 }}>
 										<CardContent sx={{ p: 3 }}>
 											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-												<DescriptionIcon color="primary" />
-												<Typography variant="h6" fontWeight={700}>{t.magasin.observations}</Typography>
+												<RemarkIcon color="primary" />
+												<Typography variant="h6" fontWeight={700}>{t.magasin.movementNote}</Typography>
 											</Stack>
 											<Divider sx={{ mb: 2 }} />
 											<Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>

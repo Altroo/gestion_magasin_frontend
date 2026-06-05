@@ -22,6 +22,7 @@ import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiP
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
+import { expensePaymentModeLabel } from '@/components/pages/magasin/shared/status-labels';
 import { DetailCard, DetailHeaderCard, InfoRow, StatusChip } from '@/components/pages/magasin/shared/view-components';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeleteExpenseMutation, useGetExpenseQuery } from '@/store/services/magasin';
@@ -89,13 +90,13 @@ const ExpensesViewClient = ({ session, id }: Props) => {
 										<Divider />
 										<InfoRow icon={<CalendarIcon />} label={t.magasin.date} value={formatDate(expense.expense_date)} />
 										<Divider />
-										<InfoRow icon={<PaymentIcon />} label={t.magasin.paymentMode} value={expense.payment_mode} />
+										<InfoRow icon={<PaymentIcon />} label={t.magasin.paymentMode} value={expense.payment_mode_name ?? expensePaymentModeLabel(t, expense.payment_mode)} />
 										<Divider />
 										<InfoRow icon={<NumbersIcon />} label={t.magasin.expenseAmount} value={`${formatNumber(expense.amount)} Dhs`} />
 										<Divider />
 										<InfoRow icon={<PersonIcon />} label={t.magasin.responsible} value={expense.created_by_email} />
 										<Divider />
-										<InfoRow icon={<DescriptionIcon />} label={t.magasin.note} value={expense.note} />
+										<InfoRow icon={<DescriptionIcon />} label={t.magasin.movementNote} value={expense.note} />
 									</DetailCard>
 								</Stack>
 							)}

@@ -3,7 +3,15 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Chip, Stack, Typography } from '@mui/material';
-import { Add as AddIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
+import {
+	Add as AddIcon,
+	Cancel as CancelIcon,
+	CheckCircle as CheckCircleIcon,
+	Close as CloseIcon,
+	Delete as DeleteIcon,
+	Edit as EditIcon,
+	Visibility as VisibilityIcon,
+} from '@mui/icons-material';
 import { GridLogicOperator, type GridColDef, type GridFilterModel, type GridRenderCellParams } from '@mui/x-data-grid';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
@@ -76,10 +84,17 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 		}
 	};
 
+	const renderStatusChip = (status?: string | null) => {
+		if (status === 'active') {
+			return <Chip size="small" color="success" variant="outlined" icon={<CheckCircleIcon fontSize="small" />} label={t.magasin.activePromotion} sx={{ fontWeight: 600 }} />;
+		}
+		return <Chip size="small" color="error" variant="outlined" icon={<CancelIcon fontSize="small" />} label={t.magasin.expiredPromotion} sx={{ fontWeight: 600 }} />;
+	};
+
 	const columns: GridColDef[] = [
 		{ field: 'name', headerName: t.magasin.promotionName, flex: 1.4, minWidth: 180, renderCell: (params: GridRenderCellParams<PromotionType>) => <Typography fontWeight={600}>{params.value}</Typography> },
 		{ field: 'selling_price', headerName: t.magasin.sellingPrice, flex: 0.8, minWidth: 130, renderCell: (params: GridRenderCellParams<PromotionType>) => <Typography color="primary" fontWeight={600}>{formatNumber(params.value as string)} Dhs</Typography> },
-		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 110, renderCell: (params: GridRenderCellParams<PromotionType>) => <Chip size="small" color={params.value === 'active' ? 'success' : 'default'} label={params.value === 'active' ? t.magasin.activePromotion : t.magasin.expiredPromotion} /> },
+		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 130, renderCell: (params: GridRenderCellParams<PromotionType>) => renderStatusChip(params.value as string) },
 		{ field: 'start_date', headerName: t.magasin.startDate, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<PromotionType>) => <Typography>{params.value ? formatDate(params.value as string) : '-'}</Typography> },
 		{ field: 'end_date', headerName: t.magasin.endDate, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<PromotionType>) => <Typography>{params.value ? formatDate(params.value as string) : '-'}</Typography> },
 		{
@@ -110,7 +125,7 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 							{permissions.can_create_promotion && <Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => router.push(PROMOTIONS_ADD(storeId))}>{t.magasin.newPromotion}</Button>}
 						</Stack>
 					</Box>
-					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} columns={1} />
+					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} />
 					<PaginatedDataGrid
 						data={data}
 						isLoading={isLoading}

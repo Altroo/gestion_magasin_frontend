@@ -3,7 +3,16 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Chip, Stack, Typography } from '@mui/material';
-import { Add as AddIcon, CheckCircle as ValidateIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
+import {
+	Add as AddIcon,
+	Cancel as CancelIcon,
+	CheckCircle as ValidateIcon,
+	Close as CloseIcon,
+	Delete as DeleteIcon,
+	Description as DraftIcon,
+	Edit as EditIcon,
+	Visibility as VisibilityIcon,
+} from '@mui/icons-material';
 import { GridLogicOperator, type GridColDef, type GridFilterModel, type GridRenderCellParams } from '@mui/x-data-grid';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
@@ -52,6 +61,17 @@ const InventoryListClient = ({ session }: SessionProps) => {
 	const chipFilters = useMemo(() => [{ key: 'status', label: t.magasin.status, paramName: 'status', options: stockWorkflowStatusOptions(t) }], [t]);
 	const handleChipFilterChange = useCallback((params: Record<string, string>) => { setChipFilterParams(params); setPaginationModel((current) => ({ ...current, page: 0 })); }, []);
 
+	const renderStatusChip = (status?: string | null) => {
+		const label = magasinStatusLabel(t, status);
+		if (status === 'validated') {
+			return <Chip size="small" color="success" variant="outlined" icon={<ValidateIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
+		}
+		if (status === 'cancelled') {
+			return <Chip size="small" color="error" variant="outlined" icon={<CancelIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
+		}
+		return <Chip size="small" color="default" variant="outlined" icon={<DraftIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
+	};
+
 	const handleDelete = async () => {
 		if (!deleteTarget) return;
 		try {
@@ -97,7 +117,7 @@ const InventoryListClient = ({ session }: SessionProps) => {
 		{ field: 'title', headerName: t.magasin.inventory, flex: 1.4, minWidth: 180, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <Typography fontWeight={600}>{params.value}</Typography> },
 		{ field: 'store_name', headerName: t.magasin.store, flex: 1, minWidth: 140 },
 		{ field: 'inventory_date', headerName: t.magasin.date, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <Typography>{formatDate(params.value as string)}</Typography> },
-		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 110, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <Chip size="small" color={params.value === 'validated' ? 'success' : 'default'} label={magasinStatusLabel(t, params.value as string)} /> },
+		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 140, renderCell: (params: GridRenderCellParams<InventorySessionType>) => renderStatusChip(params.value as string) },
 		{
 			field: 'actions',
 			headerName: t.common.actions,
@@ -128,7 +148,7 @@ const InventoryListClient = ({ session }: SessionProps) => {
 							{permissions.can_delete && selectedIds.length > 0 && <Button variant="outlined" color="error" startIcon={<DeleteIcon fontSize="small" />} onClick={() => setShowBulkDeleteModal(true)}>{t.common.delete} ({selectedIds.length})</Button>}
 						</Stack>
 					</Box>
-					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} columns={1} />
+					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} />
 					<PaginatedDataGrid
 						data={data}
 						isLoading={isLoading}

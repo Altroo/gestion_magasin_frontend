@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Box, Button, Chip, Stack, Typography } from '@mui/material';
 import {
 	Add as AddIcon,
+	CheckCircle as CheckCircleIcon,
 	Close as CloseIcon,
 	Delete as DeleteIcon,
 	Edit as EditIcon,
@@ -27,6 +28,8 @@ import { useInitAccessToken } from '@/contexts/InitContext';
 import {
 	useBulkDeleteStockBalancesMutation,
 	useDeleteStockBalanceMutation,
+	useGetCategoriesQuery,
+	useGetProductUnitsQuery,
 	useGetStockBalancesQuery,
 } from '@/store/services/magasin';
 import { STOCK_ADD, STOCK_EDIT, STOCK_VIEW } from '@/utils/routes';
@@ -75,6 +78,8 @@ const StockClient = ({ session }: SessionProps) => {
 	);
 	const [deleteStockBalance] = useDeleteStockBalanceMutation();
 	const [bulkDeleteStockBalances] = useBulkDeleteStockBalancesMutation();
+	const { data: categories } = useGetCategoriesQuery(undefined, { skip: !token });
+	const { data: productUnits } = useGetProductUnitsQuery(undefined, { skip: !token });
 
 	const resetSelection = () => setSelectedIds([]);
 
@@ -107,22 +112,34 @@ const StockClient = ({ session }: SessionProps) => {
 
 	const booleanFilterOptions = useMemo(
 		() => [
-			{ value: 'true', label: t.common.yes },
-			{ value: 'false', label: t.common.no },
+			{ value: 'true', label: t.magasin.lowStockReached },
+			{ value: 'false', label: t.magasin.stockSufficient },
 		],
-		[t.common.no, t.common.yes],
+		[t.magasin.lowStockReached, t.magasin.stockSufficient],
 	);
 
 	const chipFilters = useMemo(
 		() => [
 			{
+				key: 'category',
+				label: t.magasin.category,
+				paramName: 'category_ids',
+				options: (categories?.results ?? []).map((category) => ({ id: String(category.id), nom: category.name })),
+			},
+			{
+				key: 'unit',
+				label: t.magasin.unit,
+				paramName: 'unit_ids',
+				options: (productUnits?.results ?? []).map((unit) => ({ id: String(unit.id), nom: unit.name })),
+			},
+			{
 				key: 'stock',
 				label: t.magasin.lowStockStatus,
 				paramName: 'low',
-				options: [{ id: 'true', nom: t.magasin.lowStock }],
+				options: [{ id: 'true', nom: t.magasin.lowStockReached }],
 			},
 		],
-		[t.magasin.lowStock, t.magasin.lowStockStatus],
+		[categories?.results, productUnits?.results, t.magasin.category, t.magasin.lowStockReached, t.magasin.lowStockStatus, t.magasin.unit],
 	);
 
 	const columns: GridColDef[] = [
@@ -153,6 +170,15 @@ const StockClient = ({ session }: SessionProps) => {
 			headerName: t.magasin.category,
 			flex: 1,
 			minWidth: 130,
+			renderCell: (params: GridRenderCellParams<StockBalanceType>) => (
+				<Typography variant="body2" noWrap>{params.value ?? '-'}</Typography>
+			),
+		},
+		{
+			field: 'unit_name',
+			headerName: t.magasin.unit,
+			flex: 0.8,
+			minWidth: 110,
 			renderCell: (params: GridRenderCellParams<StockBalanceType>) => (
 				<Typography variant="body2" noWrap>{params.value ?? '-'}</Typography>
 			),
@@ -206,9 +232,9 @@ const StockClient = ({ session }: SessionProps) => {
 			filterOperators: createBooleanFilterOperators(booleanFilterOptions, t.common.all),
 			renderCell: (params: GridRenderCellParams<StockBalanceType>) =>
 				params.value ? (
-					<Chip icon={<WarningIcon />} label={t.magasin.lowStock} color="warning" size="small" />
+					<Chip icon={<WarningIcon />} label={t.magasin.lowStockReached} color="warning" size="small" />
 				) : (
-					<Chip label={t.common.no} color="default" size="small" variant="outlined" />
+					<Chip icon={<CheckCircleIcon />} label={t.magasin.stockSufficient} color="success" size="small" variant="outlined" />
 				),
 		},
 		{
@@ -275,7 +301,7 @@ const StockClient = ({ session }: SessionProps) => {
 							)}
 						</Stack>
 					</Box>
-					<ChipSelectFilterBar filters={chipFilters} onFilterChange={setChipFilterParams} columns={1} />
+					<ChipSelectFilterBar filters={chipFilters} onFilterChange={setChipFilterParams} columns={2} />
 					<PaginatedDataGrid
 						data={data}
 						isLoading={isLoading}

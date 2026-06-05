@@ -501,6 +501,7 @@ describe('Zod Schema Validation', () => {
 					break_start: '',
 					break_end: '',
 					clock_out: '',
+					shift: 'morning',
 					hours_worked: '0',
 					delay_minutes: '0',
 					status: 'present',

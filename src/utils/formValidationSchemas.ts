@@ -189,6 +189,7 @@ export const storeSchema = z.object({
 
 export const saleSchema = z.object({
 	payment_status: requiredChoiceTextField(),
+	payment_mode: requiredNumberTextField(),
 	paid_amount: requiredNumberTextField(),
 	discount_amount: requiredNumberTextField(),
 	note: optionalTextField(1, 500),
@@ -320,8 +321,9 @@ export const attendanceSchema = z.object({
 	break_start: optionalTextField(1, 20),
 	break_end: optionalTextField(1, 20),
 	clock_out: optionalTextField(1, 20),
-	hours_worked: requiredNumberTextField(),
-	delay_minutes: requiredNumberTextField(),
+	shift: requiredChoiceTextField(),
+	hours_worked: optionalTextField(1, 20),
+	delay_minutes: optionalTextField(1, 20),
 	status: requiredChoiceTextField(),
 	responsible: optionalTextField(1, 160),
 	observations: optionalTextField(1, 500),

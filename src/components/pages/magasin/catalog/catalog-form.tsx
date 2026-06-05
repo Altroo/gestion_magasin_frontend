@@ -36,6 +36,7 @@ import { toFormikValidationSchema } from 'zod-formik-adapter';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
 import CustomAutoCompleteSelect from '@/components/formikElements/customAutoCompleteSelect/customAutoCompleteSelect';
+import { MuiFormikDatePicker } from '@/components/formikElements/muiPickers/muiPickers';
 import CustomTextInput from '@/components/formikElements/customTextInput/customTextInput';
 import PrimaryLoadingButton from '@/components/htmlElements/buttons/primaryLoadingButton/primaryLoadingButton';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
@@ -416,20 +417,17 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														theme={inputTheme}
 														startIcon={<InventoryIcon fontSize="small" />}
 													/>
-													<CustomTextInput
+													<MuiFormikDatePicker
 														id="expiration_date"
-														type="date"
 														label={t.magasin.expirationDate}
 														value={formik.values.expiration_date}
-														onChange={formik.handleChange('expiration_date')}
+														onChange={(value) => void formik.setFieldValue('expiration_date', value)}
 														onBlur={formik.handleBlur('expiration_date')}
 														error={Boolean(fieldError('expiration_date'))}
 														helperText={fieldError('expiration_date')}
 														fullWidth
 														size="small"
-														theme={inputTheme}
 														startIcon={<EventIcon fontSize="small" />}
-														shrink
 													/>
 													<CustomTextInput
 														id="shelf_life_days"

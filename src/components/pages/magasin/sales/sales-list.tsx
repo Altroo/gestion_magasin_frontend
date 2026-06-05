@@ -3,7 +3,13 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Chip, Stack, Typography } from '@mui/material';
-import { Add as AddIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
+import {
+	Add as AddIcon,
+	Cancel as CancelIcon,
+	CheckCircle as CheckCircleIcon,
+	PendingActions as PendingActionsIcon,
+	Visibility as VisibilityIcon,
+} from '@mui/icons-material';
 import { GridColDef, GridFilterModel, GridLogicOperator, GridRenderCellParams } from '@mui/x-data-grid';
 import DarkTooltip from '@/components/htmlElements/tooltip/darkTooltip/darkTooltip';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
@@ -18,7 +24,7 @@ import { createDropdownFilterOperators } from '@/components/shared/dropdownFilte
 import { createNumericFilterOperators } from '@/components/shared/numericFilter/numericFilterOperator';
 import { createDateRangeFilterOperator } from '@/components/shared/dateRangeFilter/dateRangeFilterOperator';
 import { useInitAccessToken } from '@/contexts/InitContext';
-import { useGetSalesQuery } from '@/store/services/magasin';
+import { useGetPaymentModesQuery, useGetSalesQuery } from '@/store/services/magasin';
 import { SALES_ADD, SALES_VIEW } from '@/utils/routes';
 import { formatDate, formatNumber } from '@/utils/helpers';
 import { useLanguage, usePermission } from '@/utils/hooks';
@@ -54,6 +60,7 @@ const SalesClient = ({ session }: SessionProps) => {
 		},
 		{ skip: !token || !storeId },
 	);
+	const { data: paymentModes } = useGetPaymentModesQuery({ page: 1, pageSize: 100, is_active: 'true' }, { skip: !token });
 
 	const statusOptions = [
 		{ value: 'confirmed', label: t.magasin.confirmed },
@@ -74,18 +81,40 @@ const SalesClient = ({ session }: SessionProps) => {
 					{ id: 'void', nom: magasinStatusLabel(t, 'void') },
 				],
 			},
+			{
+				key: 'payment_status',
+				label: t.magasin.paymentStatus,
+				paramName: 'payment_status',
+				options: [
+					{ id: 'paid', nom: magasinStatusLabel(t, 'paid') },
+					{ id: 'credit', nom: magasinStatusLabel(t, 'credit') },
+				],
+			},
+			{
+				key: 'payment_mode',
+				label: t.magasin.paymentMode,
+				paramName: 'payment_mode',
+				options: (paymentModes?.results ?? []).map((mode) => ({ id: String(mode.id), nom: mode.name })),
+			},
 		],
-		[t],
+		[paymentModes?.results, t],
 	);
 
+	const renderStatusChip = (status?: string | null) => {
+		const label = magasinStatusLabel(t, status);
+		if (status === 'confirmed' || status === 'paid') {
+			return <Chip size="small" color="success" variant="outlined" icon={<CheckCircleIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
+		}
+		if (status === 'void') {
+			return <Chip size="small" color="error" variant="outlined" icon={<CancelIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
+		}
+		if (status === 'credit') {
+			return <Chip size="small" color="warning" variant="outlined" icon={<PendingActionsIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
+		}
+		return <Chip size="small" color="default" variant="outlined" label={label} sx={{ fontWeight: 600 }} />;
+	};
+
 	const columns: GridColDef[] = [
-		{
-			field: 'id',
-			headerName: '#',
-			flex: 0.5,
-			minWidth: 80,
-			filterOperators: createNumericFilterOperators(),
-		},
 		{
 			field: 'date_created',
 			headerName: t.magasin.date,
@@ -122,7 +151,7 @@ const SalesClient = ({ session }: SessionProps) => {
 			flex: 0.9,
 			minWidth: 130,
 			filterOperators: createDropdownFilterOperators(paymentStatusOptions, t.common.all),
-			renderCell: (params: GridRenderCellParams<SaleType>) => <Chip size="small" label={magasinStatusLabel(t, params.value as string)} />,
+			renderCell: (params: GridRenderCellParams<SaleType>) => renderStatusChip(params.value as string),
 		},
 		{
 			field: 'status',
@@ -130,9 +159,7 @@ const SalesClient = ({ session }: SessionProps) => {
 			flex: 0.8,
 			minWidth: 120,
 			filterOperators: createDropdownFilterOperators(statusOptions, t.common.all),
-			renderCell: (params: GridRenderCellParams<SaleType>) => (
-				<Chip size="small" color={params.value === 'void' ? 'default' : 'success'} label={magasinStatusLabel(t, params.value as string)} />
-			),
+			renderCell: (params: GridRenderCellParams<SaleType>) => renderStatusChip(params.value as string),
 		},
 		{
 			field: 'total',
@@ -190,7 +217,7 @@ const SalesClient = ({ session }: SessionProps) => {
 							)}
 						</Stack>
 					</Box>
-					<ChipSelectFilterBar filters={chipFilters} onFilterChange={setChipFilterParams} columns={1} />
+					<ChipSelectFilterBar filters={chipFilters} onFilterChange={setChipFilterParams} columns={2} />
 					<PaginatedDataGrid
 						data={data}
 						isLoading={isLoading}

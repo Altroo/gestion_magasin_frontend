@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
+	Autocomplete,
 	Box,
 	Button,
 	Card,
@@ -22,12 +23,14 @@ import {
 	ArrowBack as ArrowBackIcon,
 	CreditCard as CreditCardIcon,
 	Delete as DeleteIcon,
-	Description as DescriptionIcon,
 	Inventory2 as InventoryIcon,
-	LocalOffer as LocalOfferIcon,
 	ReceiptLong as ReceiptLongIcon,
+	Remove as RemoveIcon,
+	Subject as RemarkIcon,
 	Warning as WarningIcon,
 } from '@mui/icons-material';
+import { DataGrid, type GridColDef, type GridPaginationModel, type GridRenderCellParams } from '@mui/x-data-grid';
+import { frFR } from '@mui/x-data-grid/locales';
 import { getIn, useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
@@ -38,10 +41,10 @@ import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
-import { useCreateSaleMutation, useGetProductsQuery, useGetPromotionsQuery } from '@/store/services/magasin';
+import { useCreateSaleMutation, useGetPaymentModesQuery, useGetProductsQuery, useGetPromotionsQuery } from '@/store/services/magasin';
 import Styles from '@/styles/dashboard/dashboard.module.sass';
 import type { SessionProps } from '@/types/_initTypes';
-import type { SaleCreatePayload, SaleFormValues } from '@/types/gestionMagasinTypes';
+import type { SaleCreatePayload, SaleFormLineValues, SaleFormValues } from '@/types/gestionMagasinTypes';
 import { extractApiErrorMessage, formatNumber, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
 import { saleSchema } from '@/utils/formValidationSchemas';
 import { SALES_LIST, SALES_VIEW } from '@/utils/routes';
@@ -56,6 +59,11 @@ type Props = SessionProps & {
 };
 
 const emptyLine = { type: 'product' as const, product: '', promotion: '', quantity: '1', unit_price: '0' };
+
+type SaleLineGridRow = SaleFormLineValues & {
+	id: number;
+	index: number;
+};
 
 const firstFormikError = (value: unknown): string | undefined => {
 	if (typeof value === 'string') return value;
@@ -84,6 +92,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 	const storeId = initialStoreId ?? defaultStore?.id;
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [isPending, setIsPending] = useState(false);
+	const [linePaginationModel, setLinePaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 5 });
 	const { data: products } = useGetProductsQuery(
 		{ store: storeId, page: 1, pageSize: 100, is_active: 'true' },
 		{ skip: !token || !storeId },
@@ -92,20 +101,28 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 		{ store: storeId, page: 1, pageSize: 100, status: 'active' },
 		{ skip: !token || !storeId },
 	);
+	const { data: paymentModes } = useGetPaymentModesQuery(
+		{ page: 1, pageSize: 100, is_active: 'true' },
+		{ skip: !token },
+	);
 	const [createSale] = useCreateSaleMutation();
 
 	const productOptions = products?.results ?? [];
 	const promotionOptions = promotions?.results ?? [];
+	const paymentModeOptions = paymentModes?.results ?? [];
+	const defaultPaymentMode = paymentModeOptions.find((mode) => mode.code === 'cash') ?? paymentModeOptions.find((mode) => !mode.is_credit) ?? paymentModeOptions[0];
 
 	const formik = useFormik<SaleFormValues>({
 		initialValues: {
 			payment_status: 'paid',
-			paid_amount: '0',
-			discount_amount: '0',
+			payment_mode: defaultPaymentMode ? String(defaultPaymentMode.id) : '',
+			paid_amount: '',
+			discount_amount: '',
 			note: '',
 			lines: [{ ...emptyLine }],
 			globalError: '',
 		},
+		enableReinitialize: true,
 		validateOnMount: true,
 		validationSchema: toFormikValidationSchema(saleSchema),
 		onSubmit: async (values, { setFieldError }) => {
@@ -118,7 +135,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 			const payload: SaleCreatePayload = {
 				store: storeId,
 				payment_status: values.payment_status,
-				payment_mode_code: values.payment_status === 'credit' ? 'credit' : 'cash',
+				payment_mode: Number(values.payment_mode),
 				paid_amount: values.paid_amount,
 				discount_amount: values.discount_amount,
 				note: values.note.trim(),
@@ -164,6 +181,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 	const fieldLabels = useMemo<Record<string, string>>(
 		() => ({
 			payment_status: t.magasin.paymentStatus,
+			payment_mode: t.magasin.paymentMode,
 			paid_amount: t.magasin.paidAmount,
 			discount_amount: t.magasin.discountAmount,
 			note: t.magasin.movementNote,
@@ -191,10 +209,29 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 		const touched = getIn(formik.touched, `lines.${index}.${field}`);
 		return (touched || hasAttemptedSubmit) && typeof error === 'string' ? error : '';
 	};
-	const fieldError = (field: 'payment_status' | 'paid_amount' | 'discount_amount' | 'note') =>
+	const fieldError = (field: 'payment_status' | 'payment_mode' | 'paid_amount' | 'discount_amount' | 'note') =>
 		(formik.touched[field] || hasAttemptedSubmit) && typeof formik.errors[field] === 'string'
 			? formik.errors[field]
 			: '';
+	const handlePaymentStatusChange = (nextStatus: 'paid' | 'credit') => {
+		void formik.setFieldValue('payment_status', nextStatus);
+		const selectedMode = paymentModeOptions.find((mode) => String(mode.id) === formik.values.payment_mode);
+		if (nextStatus === 'credit' && !selectedMode?.is_credit) {
+			const creditMode = paymentModeOptions.find((mode) => mode.is_credit);
+			if (creditMode) void formik.setFieldValue('payment_mode', String(creditMode.id));
+		}
+		if (nextStatus === 'paid' && selectedMode?.is_credit) {
+			const paidMode = paymentModeOptions.find((mode) => !mode.is_credit && mode.code === 'cash') ?? paymentModeOptions.find((mode) => !mode.is_credit);
+			if (paidMode) void formik.setFieldValue('payment_mode', String(paidMode.id));
+		}
+	};
+	const handlePaymentModeChange = (paymentModeId: string) => {
+		void formik.setFieldValue('payment_mode', paymentModeId);
+		const selectedMode = paymentModeOptions.find((mode) => String(mode.id) === paymentModeId);
+		if (selectedMode) {
+			void formik.setFieldValue('payment_status', selectedMode.is_credit ? 'credit' : 'paid');
+		}
+	};
 
 	const setLineProduct = (index: number, productId: string) => {
 		const product = productOptions.find((item) => item.id === Number(productId));
@@ -224,6 +261,195 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 		if (formik.values.lines.length === 1) return;
 		void formik.setFieldValue('lines', formik.values.lines.filter((_, lineIndex) => lineIndex !== index));
 	};
+	const formatQuantityValue = (value: number) => {
+		if (!Number.isFinite(value)) return '0';
+		const rounded = Math.round(value * 1000) / 1000;
+		return Number.isInteger(rounded) ? String(rounded) : String(rounded).replace(/0+$/, '').replace(/\.$/, '');
+	};
+	const updateLineQuantity = (index: number, delta: number) => {
+		const current = Number(formik.values.lines[index]?.quantity || 0);
+		const next = Math.max(1, (Number.isFinite(current) ? current : 0) + delta);
+		void formik.setFieldValue(`lines.${index}.quantity`, formatQuantityValue(next));
+		void formik.setFieldTouched(`lines.${index}.quantity`, true, false);
+	};
+	const lineRows = formik.values.lines.map((line, index) => ({ id: index + 1, index, ...line }));
+	const productLabel = (product: { id: number; reference: string | null; barcode: string | null; name: string }) =>
+		`${product.reference ?? product.barcode ?? product.id} - ${product.name}`;
+	const gridPlainInputSx = {
+		'& .MuiInputBase-root': {
+			fontFamily: 'Poppins',
+			fontSize: '14px',
+		},
+		'& .MuiInputBase-input': {
+			py: 0,
+		},
+		'& .MuiInputBase-input::placeholder': {
+			opacity: 0.7,
+		},
+	};
+	const renderQuantityStepper = (params: GridRenderCellParams<SaleLineGridRow>) => (
+		<Stack direction="row" spacing={0.5} justifyContent="center" alignItems="center" sx={{ width: '100%', height: '100%' }}>
+			<IconButton size="small" onClick={() => updateLineQuantity(params.row.index, -1)} aria-label="Diminuer">
+				<RemoveIcon fontSize="small" />
+			</IconButton>
+			<Typography variant="body2" sx={{ width: 42, textAlign: 'center', fontWeight: 600 }}>
+				{params.row.quantity || '1'}
+			</Typography>
+			<IconButton size="small" onClick={() => updateLineQuantity(params.row.index, 1)} aria-label="Augmenter">
+				<AddIcon fontSize="small" />
+			</IconButton>
+		</Stack>
+	);
+	const lineColumns: GridColDef<SaleLineGridRow>[] = [
+		{
+			field: 'type',
+			headerName: t.magasin.lineType,
+			width: 145,
+			sortable: false,
+			filterable: false,
+			renderCell: (params: GridRenderCellParams<SaleLineGridRow>) => (
+				<TextField
+					select
+					size="small"
+					value={params.row.type}
+					onChange={(event) => {
+						const type = event.target.value as 'product' | 'promotion';
+						void formik.setFieldValue(`lines.${params.row.index}.type`, type);
+						void formik.setFieldValue(`lines.${params.row.index}.product`, '');
+						void formik.setFieldValue(`lines.${params.row.index}.promotion`, '');
+						void formik.setFieldValue(`lines.${params.row.index}.unit_price`, '0');
+					}}
+					onBlur={() => void formik.setFieldTouched(`lines.${params.row.index}.type`, true)}
+					variant="standard"
+					InputProps={{ disableUnderline: true }}
+					fullWidth
+					sx={gridPlainInputSx}
+				>
+					<MenuItem value="product">{t.magasin.product}</MenuItem>
+					<MenuItem value="promotion">{t.magasin.promotion}</MenuItem>
+				</TextField>
+			),
+		},
+		{
+			field: 'item',
+			headerName: t.magasin.product,
+			flex: 1.5,
+			minWidth: 260,
+			sortable: false,
+			filterable: false,
+			renderCell: (params: GridRenderCellParams<SaleLineGridRow>) => {
+				const field = params.row.type === 'promotion' ? 'promotion' : 'product';
+				const error = getLineFieldError(params.row.index, field);
+				return (
+					<Box sx={{ width: '100%', minWidth: 0, height: '100%', display: 'flex', alignItems: 'center' }}>
+						{params.row.type === 'promotion' ? (
+							<Autocomplete
+								size="small"
+								options={promotionOptions}
+								value={promotionOptions.find((promotion) => String(promotion.id) === params.row.promotion) ?? null}
+								onChange={(_, nextPromotion) => setLinePromotion(params.row.index, nextPromotion ? String(nextPromotion.id) : '')}
+								onBlur={() => void formik.setFieldTouched(`lines.${params.row.index}.promotion`, true)}
+								getOptionLabel={(promotion) => promotion.name}
+								isOptionEqualToValue={(option, value) => option.id === value.id}
+								noOptionsText={t.common.noOptions}
+								sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', '& .MuiFormControl-root': { width: '100%' } }}
+								renderInput={(inputParams) => (
+									<TextField
+										{...inputParams}
+										placeholder={`${t.magasin.promotion} *`}
+										error={Boolean(error)}
+										variant="standard"
+										InputProps={{ ...inputParams.InputProps, disableUnderline: true }}
+										fullWidth
+										sx={gridPlainInputSx}
+									/>
+								)}
+							/>
+						) : (
+							<Autocomplete
+								size="small"
+								options={productOptions}
+								value={productOptions.find((product) => String(product.id) === params.row.product) ?? null}
+								onChange={(_, nextProduct) => setLineProduct(params.row.index, nextProduct ? String(nextProduct.id) : '')}
+								onBlur={() => void formik.setFieldTouched(`lines.${params.row.index}.product`, true)}
+								getOptionLabel={productLabel}
+								isOptionEqualToValue={(option, value) => option.id === value.id}
+								noOptionsText={t.common.noOptions}
+								sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', '& .MuiFormControl-root': { width: '100%' } }}
+								renderInput={(inputParams) => (
+									<TextField
+										{...inputParams}
+										placeholder={`${t.magasin.product} *`}
+										error={Boolean(error)}
+										variant="standard"
+										InputProps={{ ...inputParams.InputProps, disableUnderline: true }}
+										fullWidth
+										sx={gridPlainInputSx}
+									/>
+								)}
+							/>
+						)}
+					</Box>
+				);
+			},
+		},
+		{
+			field: 'quantity',
+			headerName: t.magasin.quantity,
+			width: 170,
+			align: 'center',
+			headerAlign: 'center',
+			sortable: false,
+			filterable: false,
+			renderCell: renderQuantityStepper,
+		},
+		{
+			field: 'unit_price',
+			headerName: t.magasin.unitPrice,
+			width: 130,
+			sortable: false,
+			filterable: false,
+			renderCell: (params: GridRenderCellParams<SaleLineGridRow>) => (
+				<TextField
+					type="number"
+					size="small"
+					value={params.row.unit_price}
+					onChange={(event) => void formik.setFieldValue(`lines.${params.row.index}.unit_price`, event.target.value)}
+					onBlur={() => void formik.setFieldTouched(`lines.${params.row.index}.unit_price`, true)}
+					variant="standard"
+					InputProps={{ disableUnderline: true }}
+					fullWidth
+					sx={gridPlainInputSx}
+				/>
+			),
+		},
+		{
+			field: 'total',
+			headerName: t.magasin.total,
+			width: 120,
+			align: 'left',
+			headerAlign: 'left',
+			valueGetter: (_value, row) => Number(row.quantity || 0) * Number(row.unit_price || 0),
+			renderCell: (params: GridRenderCellParams<SaleLineGridRow>) => (
+				<Typography variant="body2" fontWeight={600}>
+					{formatNumber(String(Number(params.row.quantity || 0) * Number(params.row.unit_price || 0)))} Dhs
+				</Typography>
+			),
+		},
+		{
+			field: 'actions',
+			headerName: t.common.actions,
+			width: 95,
+			sortable: false,
+			filterable: false,
+			disableColumnMenu: true,
+			renderCell: (params: GridRenderCellParams<SaleLineGridRow>) => (
+				<IconButton color="error" size="small" onClick={() => removeLine(params.row.index)} aria-label={t.magasin.removeSaleLine}>
+					<DeleteIcon fontSize="small" />
+				</IconButton>
+			),
+		},
+	];
 
 	return (
 		<NavigationBar title={t.magasin.newSale}>
@@ -270,7 +496,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 															id="payment_status"
 															label={`${t.magasin.paymentStatus} *`}
 															value={formik.values.payment_status}
-															onChange={(event) => void formik.setFieldValue('payment_status', event.target.value)}
+															onChange={(event) => handlePaymentStatusChange(event.target.value as 'paid' | 'credit')}
 															onBlur={formik.handleBlur('payment_status')}
 															error={Boolean(fieldError('payment_status'))}
 															helperText={fieldError('payment_status')}
@@ -279,6 +505,25 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 														>
 															<MenuItem value="paid">{t.magasin.paidAmount}</MenuItem>
 															<MenuItem value="credit">{t.magasin.credit}</MenuItem>
+														</TextField>
+													</ThemeProvider>
+													<ThemeProvider theme={dropdownTheme}>
+														<TextField
+															select
+															size="small"
+															id="payment_mode"
+															label={`${t.magasin.paymentMode} *`}
+															value={formik.values.payment_mode}
+															onChange={(event) => handlePaymentModeChange(event.target.value)}
+															onBlur={formik.handleBlur('payment_mode')}
+															error={Boolean(fieldError('payment_mode'))}
+															helperText={fieldError('payment_mode')}
+															InputProps={{ startAdornment: <InputAdornment position="start"><CreditCardIcon fontSize="small" /></InputAdornment> }}
+															fullWidth
+														>
+															{paymentModeOptions.map((mode) => (
+																<MenuItem key={mode.id} value={String(mode.id)}>{mode.name}</MenuItem>
+															))}
 														</TextField>
 													</ThemeProvider>
 													<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2.5 }}>
@@ -311,20 +556,6 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 															startIcon={<CreditCardIcon fontSize="small" />}
 														/>
 													</Box>
-													<CustomTextInput
-														id="note"
-														type="text"
-														label={t.magasin.movementNote}
-														value={formik.values.note}
-														onChange={formik.handleChange('note')}
-														onBlur={formik.handleBlur('note')}
-														error={Boolean(fieldError('note'))}
-														helperText={fieldError('note')}
-														fullWidth
-														size="small"
-														theme={inputTheme}
-														startIcon={<DescriptionIcon fontSize="small" />}
-													/>
 												</Stack>
 											</CardContent>
 										</Card>
@@ -340,92 +571,43 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 													</Button>
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
-												<Stack spacing={2}>
-													{formik.values.lines.map((line, index) => (
-														<Box
-															key={index}
-															sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '150px minmax(0, 1.5fr) 140px 160px 48px' }, gap: 2, alignItems: 'flex-start' }}
-														>
-															<ThemeProvider theme={dropdownTheme}>
-																<TextField
-																	select
-																	size="small"
-																	label={`${t.magasin.lineType} *`}
-																	value={line.type}
-																	onChange={(event) => {
-																		const type = event.target.value as 'product' | 'promotion';
-																		void formik.setFieldValue(`lines.${index}.type`, type);
-																		void formik.setFieldValue(`lines.${index}.product`, '');
-																		void formik.setFieldValue(`lines.${index}.promotion`, '');
-																		void formik.setFieldValue(`lines.${index}.unit_price`, '0');
-																	}}
-																	onBlur={formik.handleBlur(`lines.${index}.type`)}
-																	error={Boolean(getLineFieldError(index, 'type'))}
-																	helperText={getLineFieldError(index, 'type')}
-																	InputProps={{ startAdornment: <InputAdornment position="start">{line.type === 'promotion' ? <LocalOfferIcon fontSize="small" /> : <InventoryIcon fontSize="small" />}</InputAdornment> }}
-																	fullWidth
-																>
-																	<MenuItem value="product">{t.magasin.product}</MenuItem>
-																	<MenuItem value="promotion">{t.magasin.promotion}</MenuItem>
-																</TextField>
-															</ThemeProvider>
-															<ThemeProvider theme={dropdownTheme}>
-																<TextField
-																	select
-																	size="small"
-																	label={`${line.type === 'promotion' ? t.magasin.promotion : t.magasin.product} *`}
-																	value={line.type === 'promotion' ? line.promotion : line.product}
-																	onChange={(event) => (line.type === 'promotion' ? setLinePromotion(index, event.target.value) : setLineProduct(index, event.target.value))}
-																	onBlur={formik.handleBlur(`lines.${index}.${line.type === 'promotion' ? 'promotion' : 'product'}`)}
-																	InputProps={{ startAdornment: <InputAdornment position="start">{line.type === 'promotion' ? <LocalOfferIcon fontSize="small" /> : <InventoryIcon fontSize="small" />}</InputAdornment> }}
-																	error={Boolean(getLineFieldError(index, line.type === 'promotion' ? 'promotion' : 'product'))}
-																	helperText={getLineFieldError(index, line.type === 'promotion' ? 'promotion' : 'product')}
-																	fullWidth
-																>
-																	<MenuItem value="">{t.common.selectValue}</MenuItem>
-																	{line.type === 'promotion'
-																		? promotionOptions.map((promotion) => (
-																			<MenuItem key={promotion.id} value={String(promotion.id)}>{promotion.name}</MenuItem>
-																		))
-																		: productOptions.map((product) => (
-																			<MenuItem key={product.id} value={String(product.id)}>{product.name}</MenuItem>
-																		))}
-																</TextField>
-															</ThemeProvider>
-															<CustomTextInput
-																id={`lines.${index}.quantity`}
-																type="number"
-																label={`${t.magasin.quantity} *`}
-																value={line.quantity}
-																onChange={formik.handleChange(`lines.${index}.quantity`)}
-																onBlur={formik.handleBlur(`lines.${index}.quantity`)}
-																error={Boolean(getLineFieldError(index, 'quantity'))}
-																helperText={getLineFieldError(index, 'quantity')}
-																fullWidth
-																size="small"
-																theme={inputTheme}
-																startIcon={<InventoryIcon fontSize="small" />}
-															/>
-															<CustomTextInput
-																id={`lines.${index}.unit_price`}
-																type="number"
-																label={`${t.magasin.unitPrice} *`}
-																value={line.unit_price}
-																onChange={formik.handleChange(`lines.${index}.unit_price`)}
-																onBlur={formik.handleBlur(`lines.${index}.unit_price`)}
-																error={Boolean(getLineFieldError(index, 'unit_price'))}
-																helperText={getLineFieldError(index, 'unit_price')}
-																fullWidth
-																size="small"
-																theme={inputTheme}
-																startIcon={<CreditCardIcon fontSize="small" />}
-															/>
-															<IconButton color="error" onClick={() => removeLine(index)} aria-label={t.magasin.removeSaleLine}>
-																<DeleteIcon />
-															</IconButton>
-														</Box>
-													))}
-												</Stack>
+												<Box sx={{ width: '100%' }}>
+													<DataGrid
+														rows={lineRows}
+														columns={lineColumns}
+														showToolbar
+														slotProps={{
+															toolbar: {
+																showQuickFilter: true,
+																quickFilterProps: { debounceMs: 500 },
+															},
+														}}
+														localeText={frFR.components.MuiDataGrid.defaultProps.localeText}
+														disableRowSelectionOnClick
+														paginationModel={linePaginationModel}
+														onPaginationModelChange={setLinePaginationModel}
+														pageSizeOptions={[5, 10, 25]}
+														getRowHeight={() => 64}
+														sx={{
+															border: 'none',
+															'& .MuiDataGrid-columnHeaderTitle': {
+																fontWeight: 700,
+															},
+															'& .MuiDataGrid-cell': {
+																display: 'flex',
+																alignItems: 'center',
+															},
+															'& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus': {
+																outline: 'none',
+															},
+															'& .MuiDataGrid-toolbarContainer': {
+																px: 0,
+																pt: 0,
+																pb: 1,
+															},
+														}}
+													/>
+												</Box>
 											</CardContent>
 										</Card>
 										<Card elevation={1} sx={{ borderRadius: 2 }}>
@@ -434,6 +616,29 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 													<Typography fontWeight={600}>{t.magasin.subtotal}: {formatNumber(String(subtotal))} Dhs</Typography>
 													<Typography fontWeight={700} color="primary">{t.magasin.total}: {formatNumber(String(total))} Dhs</Typography>
 												</Stack>
+											</CardContent>
+										</Card>
+										<Card elevation={2} sx={{ borderRadius: 2 }}>
+											<CardContent sx={{ p: 3 }}>
+												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+													<RemarkIcon color="primary" />
+													<Typography variant="h6" fontWeight={700}>{t.magasin.movementNote}</Typography>
+												</Stack>
+												<Divider sx={{ mb: 3 }} />
+												<CustomTextInput
+													id="note"
+													type="text"
+													label={t.magasin.movementNote}
+													value={formik.values.note}
+													onChange={formik.handleChange('note')}
+													onBlur={formik.handleBlur('note')}
+													error={Boolean(fieldError('note'))}
+													helperText={fieldError('note')}
+													fullWidth
+													size="small"
+													theme={inputTheme}
+													startIcon={<RemarkIcon fontSize="small" />}
+												/>
 											</CardContent>
 										</Card>
 										<Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 2 }}>

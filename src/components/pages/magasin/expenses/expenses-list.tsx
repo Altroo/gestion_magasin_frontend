@@ -3,19 +3,38 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Chip, Stack, Typography } from '@mui/material';
-import { Add as AddIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
+import {
+	Add as AddIcon,
+	CheckCircle as CheckCircleIcon,
+	Close as CloseIcon,
+	Delete as DeleteIcon,
+	Edit as EditIcon,
+	PendingActions as PendingActionsIcon,
+	Visibility as VisibilityIcon,
+} from '@mui/icons-material';
 import { GridLogicOperator, type GridColDef, type GridFilterModel, type GridRenderCellParams } from '@mui/x-data-grid';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import StoreTabs, { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
-import { expensePaymentStatusOptions, magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
+import {
+	expensePaymentModeLabel,
+	expensePaymentModeOptions,
+	expensePaymentStatusOptions,
+	magasinStatusLabel,
+} from '@/components/pages/magasin/shared/status-labels';
 import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelectFilterBar';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
 import { useInitAccessToken } from '@/contexts/InitContext';
-import { useBulkDeleteExpensesMutation, useDeleteExpenseMutation, useGetExpensesQuery } from '@/store/services/magasin';
+import {
+	useBulkDeleteExpensesMutation,
+	useDeleteExpenseMutation,
+	useGetExpenseCategoriesQuery,
+	useGetExpensesQuery,
+	useGetPaymentModesQuery,
+} from '@/store/services/magasin';
 import type { SessionProps } from '@/types/_initTypes';
 import type { ExpenseType } from '@/types/gestionMagasinTypes';
 import { extractApiErrorMessage, formatDate, formatNumber } from '@/utils/helpers';
@@ -28,7 +47,7 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 	const permissions = usePermission();
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
-	const { defaultStore } = useSelectedStore(token);
+	const { defaultStore, memberships } = useSelectedStore(token);
 	const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
 	const storeId = selectedStoreId ?? defaultStore?.id;
 	const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
@@ -40,15 +59,53 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 	const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 	const mergedFilterParams = useMemo(() => ({ ...chipFilterParams, ...customFilterParams }), [chipFilterParams, customFilterParams]);
+	const storeFilterActive = Boolean(chipFilterParams.store_ids);
 	const { data, isLoading, refetch } = useGetExpensesQuery(
-		{ store: storeId, search: searchTerm, page: paginationModel.page + 1, pageSize: paginationModel.pageSize, ...mergedFilterParams },
-		{ skip: !token || !storeId },
+		{
+			store: storeFilterActive ? undefined : storeId,
+			search: searchTerm,
+			page: paginationModel.page + 1,
+			pageSize: paginationModel.pageSize,
+			...mergedFilterParams,
+		},
+		{ skip: !token || (!storeId && !storeFilterActive) },
 	);
 	const [deleteExpense] = useDeleteExpenseMutation();
 	const [bulkDeleteExpenses] = useBulkDeleteExpensesMutation();
+	const { data: paymentModes } = useGetPaymentModesQuery({ page: 1, pageSize: 100, is_active: 'true' }, { skip: !token });
+	const { data: expenseCategories } = useGetExpenseCategoriesQuery({ page: 1, pageSize: 100 }, { skip: !token });
 
-	const chipFilters = useMemo(() => [{ key: 'payment_status', label: t.magasin.paymentStatus, paramName: 'payment_status', options: expensePaymentStatusOptions(t) }], [t]);
+	const chipFilters = useMemo(
+		() => [
+			{
+				key: 'store',
+				label: t.magasin.store,
+				paramName: 'store_ids',
+				options: memberships.map((membership) => ({ id: String(membership.store.id), nom: membership.store.name })),
+			},
+			{
+				key: 'category',
+				label: t.magasin.expenseCategory,
+				paramName: 'category_ids',
+				options: (expenseCategories?.results ?? []).map((category) => ({ id: String(category.id), nom: category.name })),
+			},
+			{ key: 'payment_status', label: t.magasin.paymentStatus, paramName: 'payment_status', options: expensePaymentStatusOptions(t) },
+			{ key: 'payment_mode', label: t.magasin.paymentMode, paramName: 'payment_mode', options: expensePaymentModeOptions(t, paymentModes?.results) },
+		],
+		[expenseCategories?.results, memberships, paymentModes?.results, t],
+	);
 	const handleChipFilterChange = useCallback((params: Record<string, string>) => { setChipFilterParams(params); setPaginationModel((current) => ({ ...current, page: 0 })); }, []);
+
+	const renderPaymentStatusChip = (status?: string | null) => {
+		const label = magasinStatusLabel(t, status);
+		if (status === 'paid') {
+			return <Chip size="small" color="success" variant="outlined" icon={<CheckCircleIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
+		}
+		if (status === 'payable') {
+			return <Chip size="small" color="warning" variant="outlined" icon={<PendingActionsIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
+		}
+		return <Chip size="small" color="default" variant="outlined" label={label} sx={{ fontWeight: 600 }} />;
+	};
 
 	const handleDelete = async () => {
 		if (!deleteTarget) return;
@@ -82,7 +139,8 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 		{ field: 'store_name', headerName: t.magasin.store, flex: 1, minWidth: 140 },
 		{ field: 'category_name', headerName: t.magasin.expenseCategory, flex: 1, minWidth: 140 },
 		{ field: 'expense_date', headerName: t.magasin.date, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<ExpenseType>) => <Typography>{formatDate(params.value as string)}</Typography> },
-		{ field: 'payment_status', headerName: t.magasin.paymentStatus, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<ExpenseType>) => <Chip size="small" color={params.value === 'paid' ? 'success' : 'warning'} label={magasinStatusLabel(t, params.value as string)} /> },
+		{ field: 'payment_mode', headerName: t.magasin.paymentMode, flex: 0.9, minWidth: 130, renderCell: (params: GridRenderCellParams<ExpenseType>) => <Typography>{params.row.payment_mode_name ?? expensePaymentModeLabel(t, params.value as string, paymentModes?.results)}</Typography> },
+		{ field: 'payment_status', headerName: t.magasin.paymentStatus, flex: 0.8, minWidth: 140, renderCell: (params: GridRenderCellParams<ExpenseType>) => renderPaymentStatusChip(params.value as string) },
 		{ field: 'amount', headerName: t.magasin.expenseAmount, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<ExpenseType>) => <Typography fontWeight={600}>{formatNumber(params.value as string)} Dhs</Typography> },
 		{
 			field: 'actions',
@@ -113,7 +171,7 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 							{permissions.can_delete && selectedIds.length > 0 && <Button variant="outlined" color="error" startIcon={<DeleteIcon fontSize="small" />} onClick={() => setShowBulkDeleteModal(true)}>{t.common.delete} ({selectedIds.length})</Button>}
 						</Stack>
 					</Box>
-					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} columns={1} />
+					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} columns={2} />
 					<PaginatedDataGrid
 						data={data}
 						isLoading={isLoading}

@@ -1,9 +1,19 @@
 'use client';
 
-import { ChangeEvent, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Chip, IconButton, Stack, Typography } from '@mui/material';
-import { Add as AddIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, FileUpload as FileUploadIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
+import {
+	Add as AddIcon,
+	Cancel as CancelIcon,
+	CheckCircle as CheckCircleIcon,
+	Close as CloseIcon,
+	Delete as DeleteIcon,
+	Edit as EditIcon,
+	FileUpload as FileUploadIcon,
+	PendingActions as PendingActionsIcon,
+	Visibility as VisibilityIcon,
+} from '@mui/icons-material';
 import { GridColDef, GridFilterModel, GridLogicOperator, GridRenderCellParams } from '@mui/x-data-grid';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import DarkTooltip from '@/components/htmlElements/tooltip/darkTooltip/darkTooltip';
@@ -19,7 +29,7 @@ import { createDropdownFilterOperators } from '@/components/shared/dropdownFilte
 import { createNumericFilterOperators } from '@/components/shared/numericFilter/numericFilterOperator';
 import { createDateRangeFilterOperator } from '@/components/shared/dateRangeFilter/dateRangeFilterOperator';
 import { useInitAccessToken } from '@/contexts/InitContext';
-import { useDeleteAttendanceRecordMutation, useGetAttendanceRecordsQuery, useImportAttendanceMutation } from '@/store/services/magasin';
+import { useDeleteAttendanceRecordMutation, useGetAttendanceRecordsQuery, useGetEmployeesQuery, useImportAttendanceMutation } from '@/store/services/magasin';
 import { ATTENDANCE_ADD, ATTENDANCE_EDIT, ATTENDANCE_VIEW } from '@/utils/routes';
 import { extractApiErrorMessage, formatNumber } from '@/utils/helpers';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
@@ -39,7 +49,6 @@ const AttendanceClient = ({ session }: SessionProps) => {
 	const storeId = selectedStoreId ?? defaultStore?.id;
 	const selectedMembership = memberships.find((membership) => membership.store.id === storeId);
 	const canManageStore = roleCanManage(selectedMembership?.role.code);
-	const fileInputRef = useRef<HTMLInputElement | null>(null);
 	const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
@@ -47,17 +56,19 @@ const AttendanceClient = ({ session }: SessionProps) => {
 	const [chipFilterParams, setChipFilterParams] = useState<Record<string, string>>({});
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
+	const storeFilterActive = Boolean(chipFilterParams.store_ids);
 	const { data, isLoading, refetch } = useGetAttendanceRecordsQuery(
 		{
-			store: storeId,
+			store: storeFilterActive ? undefined : storeId,
 			search: searchTerm,
 			page: paginationModel.page + 1,
 			pageSize: paginationModel.pageSize,
 			...customFilterParams,
 			...chipFilterParams,
 		},
-		{ skip: !token || !storeId },
+		{ skip: !token || (!storeId && !storeFilterActive) },
 	);
+	const { data: employees } = useGetEmployeesQuery({ pageSize: 200 }, { skip: !token });
 	const [importAttendance, importState] = useImportAttendanceMutation();
 	const [deleteAttendanceRecord] = useDeleteAttendanceRecordMutation();
 
@@ -66,8 +77,25 @@ const AttendanceClient = ({ session }: SessionProps) => {
 		{ value: 'off', label: t.magasin.off },
 		{ value: 'absent', label: t.magasin.absent },
 	];
+	const shiftOptions = [
+		{ value: 'morning', label: t.magasin.morningShift },
+		{ value: 'evening', label: t.magasin.eveningShift },
+		{ value: 'off', label: t.magasin.off },
+	];
 	const chipFilters = useMemo(
 		() => [
+			{
+				key: 'store',
+				label: t.magasin.store,
+				paramName: 'store_ids',
+				options: memberships.map((membership) => ({ id: String(membership.store.id), nom: membership.store.name })),
+			},
+			{
+				key: 'employee',
+				label: t.magasin.employee,
+				paramName: 'employee_ids',
+				options: (employees?.results ?? []).map((employee) => ({ id: String(employee.id), nom: employee.full_name })),
+			},
 			{
 				key: 'status',
 				label: t.magasin.status,
@@ -79,8 +107,26 @@ const AttendanceClient = ({ session }: SessionProps) => {
 				],
 			},
 		],
-		[t.magasin.absent, t.magasin.off, t.magasin.present, t.magasin.status],
+		[employees?.results, memberships, t.magasin.absent, t.magasin.employee, t.magasin.off, t.magasin.present, t.magasin.status, t.magasin.store],
 	);
+	const handleChipFilterChange = (params: Record<string, string>) => {
+		setChipFilterParams(params);
+		setPaginationModel((current) => ({ ...current, page: 0 }));
+	};
+
+	const renderStatusChip = (status?: string | null) => {
+		const label = magasinStatusLabel(t, status);
+		if (status === 'present') {
+			return <Chip size="small" color="success" variant="outlined" icon={<CheckCircleIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
+		}
+		if (status === 'absent') {
+			return <Chip size="small" color="error" variant="outlined" icon={<CancelIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
+		}
+		if (status === 'off') {
+			return <Chip size="small" color="warning" variant="outlined" icon={<PendingActionsIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
+		}
+		return <Chip size="small" color="default" variant="outlined" label={label} sx={{ fontWeight: 600 }} />;
+	};
 
 	const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
@@ -125,6 +171,14 @@ const AttendanceClient = ({ session }: SessionProps) => {
 		{ field: 'clock_in', headerName: t.magasin.clockIn, flex: 0.8, minWidth: 110 },
 		{ field: 'clock_out', headerName: t.magasin.clockOut, flex: 0.8, minWidth: 110 },
 		{
+			field: 'shift',
+			headerName: t.magasin.shift,
+			flex: 0.8,
+			minWidth: 120,
+			filterOperators: createDropdownFilterOperators(shiftOptions, t.common.all),
+			renderCell: (params: GridRenderCellParams<AttendanceRecordType>) => <Typography variant="body2">{magasinStatusLabel(t, params.value as string)}</Typography>,
+		},
+		{
 			field: 'hours_worked',
 			headerName: t.magasin.hours,
 			flex: 0.8,
@@ -138,7 +192,7 @@ const AttendanceClient = ({ session }: SessionProps) => {
 			flex: 0.8,
 			minWidth: 120,
 			filterOperators: createDropdownFilterOperators(statusOptions, t.common.all),
-			renderCell: (params: GridRenderCellParams<AttendanceRecordType>) => <Chip size="small" label={magasinStatusLabel(t, params.value as string)} />,
+			renderCell: (params: GridRenderCellParams<AttendanceRecordType>) => renderStatusChip(params.value as string),
 		},
 		{
 			field: 'actions',
@@ -173,8 +227,7 @@ const AttendanceClient = ({ session }: SessionProps) => {
 							)}
 						</Stack>
 					</Box>
-					<ChipSelectFilterBar filters={chipFilters} onFilterChange={setChipFilterParams} columns={1} />
-					<input ref={fileInputRef} hidden type="file" accept=".xlsx,.xls" onChange={handleImport} />
+					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} columns={2} />
 					<PaginatedDataGrid
 						data={data}
 						isLoading={isLoading}
@@ -190,8 +243,9 @@ const AttendanceClient = ({ session }: SessionProps) => {
 						toolbarActions={
 							permissions.can_create && canManageStore ? (
 								<DarkTooltip title={t.magasin.importPointage}>
-									<IconButton size="small" disabled={importState.isLoading} onClick={() => fileInputRef.current?.click()}>
+									<IconButton size="small" disabled={importState.isLoading} component="label">
 										<FileUploadIcon />
+										<input hidden type="file" accept=".xlsx,.xls" onChange={handleImport} disabled={importState.isLoading} />
 									</IconButton>
 								</DarkTooltip>
 							) : undefined

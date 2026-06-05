@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Alert, Box, Button, Card, CardContent, Chip, Divider, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import {
 	ArrowBack as ArrowBackIcon,
+	CheckCircle as CheckCircleIcon,
 	Close as CloseIcon,
 	Delete as DeleteIcon,
 	Edit as EditIcon,
@@ -128,9 +129,9 @@ const StockViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
 											<Stack direction="row" spacing={1} flexWrap="wrap">
 												<Chip label={`ID: ${stockBalance.id}`} size="small" variant="outlined" />
 												{stockBalance.is_low_stock ? (
-													<Chip icon={<WarningIcon />} label={t.magasin.lowStock} color="warning" size="small" />
+													<Chip icon={<WarningIcon />} label={t.magasin.lowStockReached} color="warning" size="small" />
 												) : (
-													<Chip label={t.common.no} color="default" size="small" variant="outlined" />
+													<Chip icon={<CheckCircleIcon />} label={t.magasin.stockSufficient} color="success" size="small" variant="outlined" />
 												)}
 											</Stack>
 										</CardContent>
@@ -164,7 +165,7 @@ const StockViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
 											<Divider />
 											<InfoRow icon={<NumbersIcon />} label={t.magasin.averageCost} value={`${formatNumber(stockBalance.average_cost)} Dhs`} />
 											<Divider />
-											<InfoRow icon={<WarningIcon />} label={t.magasin.lowStockStatus} value={stockBalance.is_low_stock ? t.magasin.lowStock : t.common.no} />
+											<InfoRow icon={<WarningIcon />} label={t.magasin.lowStockStatus} value={stockBalance.is_low_stock ? t.magasin.lowStockReached : t.magasin.stockSufficient} />
 											<Divider />
 											<InfoRow icon={<WarningIcon />} label={t.magasin.notifications} value={formatDateShort(stockBalance.low_stock_notified_at ?? null)} />
 										</CardContent>

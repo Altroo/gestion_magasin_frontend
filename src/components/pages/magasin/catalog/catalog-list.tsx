@@ -37,7 +37,9 @@ import { useInitAccessToken } from '@/contexts/InitContext';
 import {
 	useBulkDeleteProductsMutation,
 	useDeleteProductMutation,
+	useGetCategoriesQuery,
 	useGetProductsQuery,
+	useGetProductUnitsQuery,
 	useImportProductsMutation,
 	useSendCSVExampleEmailMutation,
 } from '@/store/services/magasin';
@@ -91,6 +93,8 @@ const CatalogClient = ({ session }: SessionProps) => {
 	const [bulkDeleteProducts] = useBulkDeleteProductsMutation();
 	const [importProducts, importState] = useImportProductsMutation();
 	const [sendCSVExampleEmail, sendGuideState] = useSendCSVExampleEmailMutation();
+	const { data: categories } = useGetCategoriesQuery(undefined, { skip: !token });
+	const { data: productUnits } = useGetProductUnitsQuery(undefined, { skip: !token });
 
 	const resetSelection = () => setSelectedIds([]);
 
@@ -156,6 +160,18 @@ const CatalogClient = ({ session }: SessionProps) => {
 	const chipFilters = useMemo(
 		() => [
 			{
+				key: 'category',
+				label: t.magasin.category,
+				paramName: 'category_ids',
+				options: (categories?.results ?? []).map((category) => ({ id: String(category.id), nom: category.name })),
+			},
+			{
+				key: 'unit',
+				label: t.magasin.unit,
+				paramName: 'unit_ids',
+				options: (productUnits?.results ?? []).map((unit) => ({ id: String(unit.id), nom: unit.name })),
+			},
+			{
 				key: 'active',
 				label: t.users.active,
 				paramName: 'is_active',
@@ -165,7 +181,7 @@ const CatalogClient = ({ session }: SessionProps) => {
 				],
 			},
 		],
-		[t.users.active, t.users.inactive],
+		[categories?.results, productUnits?.results, t.magasin.category, t.magasin.unit, t.users.active, t.users.inactive],
 	);
 
 	const columns: GridColDef[] = [
@@ -207,6 +223,15 @@ const CatalogClient = ({ session }: SessionProps) => {
 			headerName: t.magasin.category,
 			flex: 1,
 			minWidth: 130,
+			renderCell: (params: GridRenderCellParams<ProductType>) => (
+				<Typography variant="body2" noWrap>{params.value ?? '-'}</Typography>
+			),
+		},
+		{
+			field: 'unit_name',
+			headerName: t.magasin.unit,
+			flex: 0.8,
+			minWidth: 110,
 			renderCell: (params: GridRenderCellParams<ProductType>) => (
 				<Typography variant="body2" noWrap>{params.value ?? '-'}</Typography>
 			),

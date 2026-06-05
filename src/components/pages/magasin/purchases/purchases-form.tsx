@@ -8,6 +8,7 @@ import { getIn, useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
+import { MuiFormikDatePicker } from '@/components/formikElements/muiPickers/muiPickers';
 import CustomTextInput from '@/components/formikElements/customTextInput/customTextInput';
 import PrimaryLoadingButton from '@/components/htmlElements/buttons/primaryLoadingButton/primaryLoadingButton';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
@@ -203,7 +204,7 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 													/>
 													<CustomTextInput id="supplier_name" type="text" label={t.magasin.supplier} value={formik.values.supplier_name} onChange={formik.handleChange('supplier_name')} onBlur={formik.handleBlur('supplier_name')} error={Boolean(fieldError('supplier_name'))} helperText={fieldError('supplier_name')} fullWidth size="small" theme={inputTheme} startIcon={<StorefrontIcon fontSize="small" />} />
 													<CustomTextInput id="reference" type="text" label={t.magasin.reference} value={formik.values.reference} onChange={formik.handleChange('reference')} onBlur={formik.handleBlur('reference')} error={Boolean(fieldError('reference'))} helperText={fieldError('reference')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
-													<CustomTextInput id="purchase_date" type="date" label={`${t.magasin.date} *`} value={formik.values.purchase_date} onChange={formik.handleChange('purchase_date')} onBlur={formik.handleBlur('purchase_date')} error={Boolean(fieldError('purchase_date'))} helperText={fieldError('purchase_date')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
+													<MuiFormikDatePicker id="purchase_date" label={`${t.magasin.date} *`} value={formik.values.purchase_date} onChange={(value) => void formik.setFieldValue('purchase_date', value)} onBlur={formik.handleBlur('purchase_date')} error={Boolean(fieldError('purchase_date'))} helperText={fieldError('purchase_date')} fullWidth size="small" startIcon={<DescriptionIcon fontSize="small" />} />
 													<ThemeProvider theme={dropdownTheme}>
 														<TextField select size="small" label={`${t.magasin.status} *`} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} onBlur={formik.handleBlur('status')} error={Boolean(fieldError('status'))} helperText={fieldError('status')} InputProps={{ startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> }} fullWidth>
 															{purchaseStatusOptions(t).map((option) => <MenuItem key={option.id} value={option.id}>{option.nom}</MenuItem>)}

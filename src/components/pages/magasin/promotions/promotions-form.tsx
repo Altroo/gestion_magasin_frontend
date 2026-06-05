@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
+	Autocomplete,
 	Box,
 	Button,
 	Card,
@@ -23,18 +24,22 @@ import {
 	Add as AddIcon,
 	ArrowBack as ArrowBackIcon,
 	CalendarMonth as CalendarIcon,
-	Close as CloseIcon,
-	Description as DescriptionIcon,
+	Delete as DeleteIcon,
 	Edit as EditIcon,
 	Inventory2 as InventoryIcon,
 	LocalOffer as LocalOfferIcon,
 	Numbers as NumbersIcon,
+	Remove as RemoveIcon,
+	Subject as RemarkIcon,
 	Warning as WarningIcon,
 } from '@mui/icons-material';
+import { DataGrid, type GridColDef, type GridPaginationModel, type GridRenderCellParams } from '@mui/x-data-grid';
+import { frFR } from '@mui/x-data-grid/locales';
 import { getIn, useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
+import { MuiFormikDatePicker } from '@/components/formikElements/muiPickers/muiPickers';
 import CustomTextInput from '@/components/formikElements/customTextInput/customTextInput';
 import PrimaryLoadingButton from '@/components/htmlElements/buttons/primaryLoadingButton/primaryLoadingButton';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
@@ -73,6 +78,11 @@ type PromotionFormValues = {
 
 const emptyLine = { product: '', quantity: '1' };
 
+type PromotionLineGridRow = typeof emptyLine & {
+	id: number;
+	index: number;
+};
+
 const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 	const token = useInitAccessToken(session);
 	const { t } = useLanguage();
@@ -85,6 +95,7 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 	const storeId = initialStoreId ?? defaultStore?.id;
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [isPending, setIsPending] = useState(false);
+	const [linePaginationModel, setLinePaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 5 });
 
 	const { data: promotion, isLoading: isPromotionLoading, error: promotionError } = useGetPromotionQuery(
 		{ id: id! },
@@ -120,7 +131,7 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 	const formik = useFormik<PromotionFormValues>({
 		initialValues: {
 			name: promotion?.name ?? '',
-			selling_price: promotion?.selling_price ?? '0',
+			selling_price: promotion?.selling_price ?? '',
 			status: promotion?.status ?? 'active',
 			start_date: promotion?.start_date ?? '',
 			end_date: promotion?.end_date ?? '',
@@ -201,6 +212,109 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 		const nextLines = formik.values.lines.filter((_, lineIndex) => lineIndex !== index);
 		void formik.setFieldValue('lines', nextLines.length ? nextLines : [{ ...emptyLine }]);
 	};
+
+	const productOptions = products?.results ?? [];
+	const productLabel = (product: { id: number; reference: string | null; barcode: string | null; name: string }) =>
+		`${product.reference ?? product.barcode ?? product.id} - ${product.name}`;
+	const formatQuantityValue = (value: number) => {
+		if (!Number.isFinite(value)) return '0';
+		const rounded = Math.round(value * 1000) / 1000;
+		return Number.isInteger(rounded) ? String(rounded) : String(rounded).replace(/0+$/, '').replace(/\.$/, '');
+	};
+	const updateLineQuantity = (index: number, delta: number) => {
+		const current = Number(formik.values.lines[index]?.quantity || 0);
+		const next = Math.max(1, (Number.isFinite(current) ? current : 0) + delta);
+		void formik.setFieldValue(`lines.${index}.quantity`, formatQuantityValue(next));
+		void formik.setFieldTouched(`lines.${index}.quantity`, true, false);
+	};
+	const lineRows = formik.values.lines.map((line, index) => ({ id: index + 1, index, ...line }));
+	const gridPlainInputSx = {
+		'& .MuiInputBase-root': {
+			fontFamily: 'Poppins',
+			fontSize: '14px',
+		},
+		'& .MuiInputBase-input': {
+			py: 0,
+		},
+		'& .MuiInputBase-input::placeholder': {
+			opacity: 0.7,
+		},
+	};
+	const renderQuantityStepper = (params: GridRenderCellParams<PromotionLineGridRow>) => (
+		<Stack direction="row" spacing={0.5} justifyContent="center" alignItems="center" sx={{ width: '100%', height: '100%' }}>
+			<IconButton size="small" onClick={() => updateLineQuantity(params.row.index, -1)} aria-label="Diminuer">
+				<RemoveIcon fontSize="small" />
+			</IconButton>
+			<Typography variant="body2" sx={{ width: 42, textAlign: 'center', fontWeight: 600 }}>
+				{params.row.quantity || '1'}
+			</Typography>
+			<IconButton size="small" onClick={() => updateLineQuantity(params.row.index, 1)} aria-label="Augmenter">
+				<AddIcon fontSize="small" />
+			</IconButton>
+		</Stack>
+	);
+	const lineColumns: GridColDef<PromotionLineGridRow>[] = [
+		{
+			field: 'product',
+			headerName: t.magasin.product,
+			flex: 1.5,
+			minWidth: 260,
+			sortable: false,
+			filterable: false,
+			renderCell: (params: GridRenderCellParams<PromotionLineGridRow>) => {
+				const error = lineError(params.row.index, 'product');
+				return (
+					<Box sx={{ width: '100%', minWidth: 0, height: '100%', display: 'flex', alignItems: 'center' }}>
+						<Autocomplete
+							size="small"
+							options={productOptions}
+							value={productOptions.find((product) => String(product.id) === params.row.product) ?? null}
+							onChange={(_, nextProduct) => void formik.setFieldValue(`lines.${params.row.index}.product`, nextProduct ? String(nextProduct.id) : '')}
+							onBlur={() => void formik.setFieldTouched(`lines.${params.row.index}.product`, true)}
+							getOptionLabel={productLabel}
+							isOptionEqualToValue={(option, value) => option.id === value.id}
+							noOptionsText={t.common.noOptions}
+							sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', '& .MuiFormControl-root': { width: '100%' } }}
+							renderInput={(inputParams) => (
+								<TextField
+									{...inputParams}
+									placeholder={`${t.magasin.product} *`}
+									error={Boolean(error)}
+									variant="standard"
+									InputProps={{ ...inputParams.InputProps, disableUnderline: true }}
+									fullWidth
+									sx={gridPlainInputSx}
+								/>
+							)}
+						/>
+					</Box>
+				);
+			},
+		},
+		{
+			field: 'quantity',
+			headerName: t.magasin.quantity,
+			width: 170,
+			align: 'center',
+			headerAlign: 'center',
+			sortable: false,
+			filterable: false,
+			renderCell: renderQuantityStepper,
+		},
+		{
+			field: 'actions',
+			headerName: t.common.actions,
+			width: 95,
+			sortable: false,
+			filterable: false,
+			disableColumnMenu: true,
+			renderCell: (params: GridRenderCellParams<PromotionLineGridRow>) => (
+				<IconButton color="error" size="small" onClick={() => removeLine(params.row.index)}>
+					<DeleteIcon fontSize="small" />
+				</IconButton>
+			),
+		},
+	];
 
 	const isLoading = isPending || addState.isLoading || editState.isLoading || areProductsLoading || (isEditMode && isPromotionLoading);
 	const shouldShowError = (axiosError?.status ?? 0) > 400 && !isLoading;
@@ -294,49 +408,29 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 															<MenuItem value="expired">{t.magasin.expiredPromotion}</MenuItem>
 														</TextField>
 													</ThemeProvider>
-													<CustomTextInput
+													<MuiFormikDatePicker
 														id="start_date"
-														type="date"
 														label={t.magasin.startDate}
 														value={formik.values.start_date}
-														onChange={formik.handleChange('start_date')}
+														onChange={(value) => void formik.setFieldValue('start_date', value)}
 														onBlur={formik.handleBlur('start_date')}
 														error={Boolean(fieldError('start_date'))}
 														helperText={fieldError('start_date')}
 														fullWidth
 														size="small"
-														theme={inputTheme}
 														startIcon={<CalendarIcon fontSize="small" />}
 													/>
-													<CustomTextInput
+													<MuiFormikDatePicker
 														id="end_date"
-														type="date"
 														label={t.magasin.endDate}
 														value={formik.values.end_date}
-														onChange={formik.handleChange('end_date')}
+														onChange={(value) => void formik.setFieldValue('end_date', value)}
 														onBlur={formik.handleBlur('end_date')}
 														error={Boolean(fieldError('end_date'))}
 														helperText={fieldError('end_date')}
 														fullWidth
 														size="small"
-														theme={inputTheme}
 														startIcon={<CalendarIcon fontSize="small" />}
-													/>
-												</Box>
-												<Box sx={{ mt: 2.5 }}>
-													<CustomTextInput
-														id="note"
-														type="text"
-														label={t.magasin.note}
-														value={formik.values.note}
-														onChange={formik.handleChange('note')}
-														onBlur={formik.handleBlur('note')}
-														error={Boolean(fieldError('note'))}
-														helperText={fieldError('note')}
-														fullWidth
-														size="small"
-														theme={inputTheme}
-														startIcon={<DescriptionIcon fontSize="small" />}
 													/>
 												</Box>
 											</CardContent>
@@ -353,50 +447,66 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 													</Button>
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
-												<Stack spacing={2}>
-													{formik.values.lines.map((line, index) => (
-														<Box key={index} sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 180px 44px' }, gap: 2, alignItems: 'flex-start' }}>
-															<ThemeProvider theme={dropdownTheme}>
-																<TextField
-																	select
-																	size="small"
-																	label={`${t.magasin.product} *`}
-																	value={line.product}
-																	onChange={(event) => void formik.setFieldValue(`lines.${index}.product`, event.target.value)}
-																	onBlur={formik.handleBlur(`lines.${index}.product`)}
-																	InputProps={{ startAdornment: <InputAdornment position="start"><InventoryIcon fontSize="small" /></InputAdornment> }}
-																	error={Boolean(lineError(index, 'product'))}
-																	helperText={lineError(index, 'product')}
-																	fullWidth
-																>
-																	<MenuItem value="">{t.common.selectValue}</MenuItem>
-																	{products?.results.map((product) => (
-																		<MenuItem key={product.id} value={String(product.id)}>
-																			{product.reference ?? product.barcode ?? product.id} - {product.name}
-																		</MenuItem>
-																	))}
-																</TextField>
-															</ThemeProvider>
-															<CustomTextInput
-																id={`lines.${index}.quantity`}
-																type="number"
-																label={`${t.magasin.quantity} *`}
-																value={line.quantity}
-																onChange={formik.handleChange(`lines.${index}.quantity`)}
-																onBlur={formik.handleBlur(`lines.${index}.quantity`)}
-																error={Boolean(lineError(index, 'quantity'))}
-																helperText={lineError(index, 'quantity')}
-																fullWidth
-																size="small"
-																theme={inputTheme}
-																startIcon={<NumbersIcon fontSize="small" />}
-															/>
-															<IconButton color="error" onClick={() => removeLine(index)} sx={{ height: 40, width: 40 }}>
-																<CloseIcon />
-															</IconButton>
-														</Box>
-													))}
+												<Box sx={{ width: '100%' }}>
+													<DataGrid
+														rows={lineRows}
+														columns={lineColumns}
+														showToolbar
+														slotProps={{
+															toolbar: {
+																showQuickFilter: true,
+																quickFilterProps: { debounceMs: 500 },
+															},
+														}}
+														localeText={frFR.components.MuiDataGrid.defaultProps.localeText}
+														disableRowSelectionOnClick
+														paginationModel={linePaginationModel}
+														onPaginationModelChange={setLinePaginationModel}
+														pageSizeOptions={[5, 10, 25]}
+														getRowHeight={() => 64}
+														sx={{
+															border: 'none',
+															'& .MuiDataGrid-columnHeaderTitle': {
+																fontWeight: 700,
+															},
+															'& .MuiDataGrid-cell': {
+																display: 'flex',
+																alignItems: 'center',
+															},
+															'& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus': {
+																outline: 'none',
+															},
+															'& .MuiDataGrid-toolbarContainer': {
+																px: 0,
+																pt: 0,
+																pb: 1,
+															},
+														}}
+													/>
+												</Box>
+											</CardContent>
+										</Card>
+										<Card elevation={2} sx={{ borderRadius: 2 }}>
+											<CardContent sx={{ p: 3 }}>
+												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+													<RemarkIcon color="primary" />
+													<Typography variant="h6" fontWeight={700}>{t.magasin.movementNote}</Typography>
 												</Stack>
+												<Divider sx={{ mb: 3 }} />
+												<CustomTextInput
+													id="note"
+													type="text"
+													label={t.magasin.movementNote}
+													value={formik.values.note}
+													onChange={formik.handleChange('note')}
+													onBlur={formik.handleBlur('note')}
+													error={Boolean(fieldError('note'))}
+													helperText={fieldError('note')}
+													fullWidth
+													size="small"
+													theme={inputTheme}
+													startIcon={<RemarkIcon fontSize="small" />}
+												/>
 											</CardContent>
 										</Card>
 										<Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 2 }}>

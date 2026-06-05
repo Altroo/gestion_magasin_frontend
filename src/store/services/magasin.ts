@@ -18,6 +18,7 @@ import type {
 	ActivityHistoryType,
 	InventoryPayload,
 	InventorySessionType,
+	PaymentModeType,
 	ProductPayload,
 	ProductType,
 	ProductUnitType,
@@ -46,7 +47,7 @@ type ListParams = {
 
 export const magasinApi = createApi({
 	reducerPath: 'magasinApi',
-	tagTypes: ['Stores', 'Products', 'Stock', 'Sales', 'Attendance', 'Expenses', 'Purchases', 'Inventory', 'Transfers', 'Promotions', 'Reports'],
+	tagTypes: ['Stores', 'Products', 'Stock', 'Sales', 'Attendance', 'Expenses', 'Purchases', 'Inventory', 'Transfers', 'Promotions', 'PaymentModes', 'Reports'],
 	baseQuery: axiosBaseQuery((api) =>
 		isAuthenticatedInstance(
 			() => getInitStateToken(api.getState() as RootState),
@@ -546,6 +547,19 @@ export const magasinApi = createApi({
 			}),
 			invalidatesTags: ['Promotions', 'Reports'],
 		}),
+		getPaymentModes: builder.query<PaginationResponseType<PaymentModeType>, { page?: number; pageSize?: number; search?: string; is_active?: string | boolean } | void>({
+			query: (params) => ({
+				url: process.env.NEXT_PUBLIC_SALES_PAYMENT_MODES,
+				method: 'GET',
+				params: {
+					search: params?.search,
+					is_active: params?.is_active,
+					page: params?.page ?? 1,
+					page_size: params?.pageSize ?? 100,
+				},
+			}),
+			providesTags: ['PaymentModes'],
+		}),
 		createSale: builder.mutation<SaleType, SaleCreatePayload>({
 			query: (data) => ({
 				url: process.env.NEXT_PUBLIC_SALES_ROOT,
@@ -593,6 +607,29 @@ export const magasinApi = createApi({
 				params: { page: params?.page ?? 1, page_size: params?.pageSize ?? 100, search: params?.search },
 			}),
 			providesTags: ['Expenses'],
+		}),
+		addExpenseCategory: builder.mutation<ExpenseCategoryType, { code: string; name: string; is_active?: boolean }>({
+			query: (data) => ({
+				url: process.env.NEXT_PUBLIC_FINANCE_CATEGORIES,
+				method: 'POST',
+				data,
+			}),
+			invalidatesTags: ['Expenses'],
+		}),
+		editExpenseCategory: builder.mutation<ExpenseCategoryType, { id: number; data: Partial<{ code: string; name: string; is_active: boolean }> }>({
+			query: ({ id, data }) => ({
+				url: `${process.env.NEXT_PUBLIC_FINANCE_CATEGORIES}${id}/`,
+				method: 'PATCH',
+				data,
+			}),
+			invalidatesTags: ['Expenses'],
+		}),
+		deleteExpenseCategory: builder.mutation<void, { id: number }>({
+			query: ({ id }) => ({
+				url: `${process.env.NEXT_PUBLIC_FINANCE_CATEGORIES}${id}/`,
+				method: 'DELETE',
+			}),
+			invalidatesTags: ['Expenses'],
 		}),
 		getExpenses: builder.query<PaginationResponseType<ExpenseType>, ListParams>({
 			query: ({ store, search, page = 1, pageSize = 10, ...filters }) => ({
@@ -704,6 +741,7 @@ export const magasinApi = createApi({
 
 export const {
 	useAddCategoryMutation,
+	useAddExpenseCategoryMutation,
 	useAddExpenseMutation,
 	useAddInventorySessionMutation,
 	useAddAttendanceRecordMutation,
@@ -724,6 +762,7 @@ export const {
 	useCreateSaleMutation,
 	useDeleteAttendanceRecordMutation,
 	useDeleteCategoryMutation,
+	useDeleteExpenseCategoryMutation,
 	useDeleteExpenseMutation,
 	useDeleteInventorySessionMutation,
 	useDeleteProductMutation,
@@ -735,6 +774,7 @@ export const {
 	useDeleteStockTransferMutation,
 	useEditAttendanceRecordMutation,
 	useEditCategoryMutation,
+	useEditExpenseCategoryMutation,
 	useEditExpenseMutation,
 	useEditInventorySessionMutation,
 	useEditProductMutation,
@@ -756,6 +796,7 @@ export const {
 	useGetInventorySessionQuery,
 	useGetInventorySessionsQuery,
 	useGetMyStoresQuery,
+	useGetPaymentModesQuery,
 	useGetProductQuery,
 	useGetProductUnitsQuery,
 	useGetProductsQuery,

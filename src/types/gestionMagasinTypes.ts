@@ -123,6 +123,7 @@ export type StockBalanceType = {
 	product_reference: string | null;
 	product_barcode: string | null;
 	category_name: string | null;
+	unit_name: string | null;
 	quantity: string;
 	min_stock: string | null;
 	effective_min_stock: string;
@@ -151,6 +152,14 @@ export type SalePromotionLineType = {
 	quantity: string;
 	unit_price: string;
 	total: string;
+};
+
+export type PaymentModeType = {
+	id: number;
+	code: string;
+	name: string;
+	is_credit: boolean;
+	is_active: boolean;
 };
 
 export type SaleType = {
@@ -194,6 +203,7 @@ export type SaleCreatePayload = {
 		quantity: string;
 		unit_price?: string;
 	}>;
+	payment_mode?: number;
 	payment_mode_code?: string;
 	payment_status?: 'paid' | 'credit';
 	discount_amount?: string;
@@ -212,6 +222,7 @@ export type SaleFormLineValues = {
 
 export type SaleFormValues = {
 	payment_status: 'paid' | 'credit';
+	payment_mode: string;
 	paid_amount: string;
 	discount_amount: string;
 	note: string;
@@ -275,6 +286,7 @@ export type ExpenseType = {
 	amount: string;
 	payment_status: 'paid' | 'payable';
 	payment_mode: 'cash' | 'card' | 'transfer' | 'other';
+	payment_mode_name?: string | null;
 	expense_date: string;
 	note: string;
 	created_by?: number | null;
@@ -481,6 +493,7 @@ export type AttendanceRecordType = {
 	break_start: string | null;
 	break_end: string | null;
 	clock_out: string | null;
+	shift: AttendanceShiftType;
 	hours_worked: string;
 	delay_minutes: number;
 	status: 'present' | 'off' | 'absent';
@@ -500,12 +513,13 @@ export type AttendancePayload = {
 	break_start?: string | null;
 	break_end?: string | null;
 	clock_out?: string | null;
-	hours_worked: string;
-	delay_minutes: number;
+	shift: AttendanceShiftType;
 	status: 'present' | 'off' | 'absent';
 	responsible?: string;
 	observations?: string;
 };
+
+export type AttendanceShiftType = 'morning' | 'evening' | 'off';
 
 export type NotificationType = {
 	id: number;
@@ -546,6 +560,7 @@ export type AttendanceFormValues = {
 	break_start: string;
 	break_end: string;
 	clock_out: string;
+	shift: AttendanceShiftType | '';
 	hours_worked: string;
 	delay_minutes: string;
 	status: 'present' | 'off' | 'absent' | '';

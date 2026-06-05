@@ -189,6 +189,9 @@ export type TranslationDictionary = {
     breakStart: string;
     breakEnd: string;
     clockOut: string;
+    shift: string;
+    morningShift: string;
+    eveningShift: string;
     delayMinutes: string;
     responsible: string;
     observations: string;
@@ -223,6 +226,10 @@ export type TranslationDictionary = {
     seller: string;
     paymentStatus: string;
     paymentMode: string;
+    paymentCash: string;
+    paymentCard: string;
+    paymentTransfer: string;
+    paymentOther: string;
     subtotal: string;
     note: string;
     discountAmount: string;
@@ -288,6 +295,8 @@ export type TranslationDictionary = {
     movementNote: string;
     averageCost: string;
     lowStockStatus: string;
+    lowStockReached: string;
+    stockSufficient: string;
     stockAdjusted: string;
     stockUpdated: string;
     stockDeleted: string;
