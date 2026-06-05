@@ -145,7 +145,7 @@ export const magasinApi = createApi({
 		}),
 		getCategories: builder.query<PaginationResponseType<CategoryType>, { search?: string; page?: number; pageSize?: number } | void>({
 			query: (params) => ({
-				url: process.env.NEXT_PUBLIC_CATALOG_CATEGORIES,
+				url: process.env.NEXT_PUBLIC_ARTICLE_CATEGORIES,
 				method: 'GET',
 				params: {
 					search: params?.search,
@@ -157,7 +157,7 @@ export const magasinApi = createApi({
 		}),
 		addCategory: builder.mutation<CategoryType, { code: string; name: string; is_active?: boolean }>({
 			query: (data) => ({
-				url: process.env.NEXT_PUBLIC_CATALOG_CATEGORIES,
+				url: process.env.NEXT_PUBLIC_ARTICLE_CATEGORIES,
 				method: 'POST',
 				data,
 			}),
@@ -165,7 +165,7 @@ export const magasinApi = createApi({
 		}),
 		editCategory: builder.mutation<CategoryType, { id: number; data: Partial<{ code: string; name: string; is_active: boolean }> }>({
 			query: ({ id, data }) => ({
-				url: `${process.env.NEXT_PUBLIC_CATALOG_CATEGORIES}${id}/`,
+				url: `${process.env.NEXT_PUBLIC_ARTICLE_CATEGORIES}${id}/`,
 				method: 'PATCH',
 				data,
 			}),
@@ -173,14 +173,14 @@ export const magasinApi = createApi({
 		}),
 		deleteCategory: builder.mutation<void, { id: number }>({
 			query: ({ id }) => ({
-				url: `${process.env.NEXT_PUBLIC_CATALOG_CATEGORIES}${id}/`,
+				url: `${process.env.NEXT_PUBLIC_ARTICLE_CATEGORIES}${id}/`,
 				method: 'DELETE',
 			}),
 			invalidatesTags: ['Products'],
 		}),
 		getProductUnits: builder.query<PaginationResponseType<ProductUnitType>, { search?: string; page?: number; pageSize?: number } | void>({
 			query: (params) => ({
-				url: process.env.NEXT_PUBLIC_CATALOG_UNITS,
+				url: process.env.NEXT_PUBLIC_ARTICLE_UNITS,
 				method: 'GET',
 				params: {
 					search: params?.search,
@@ -192,7 +192,7 @@ export const magasinApi = createApi({
 		}),
 		addProductUnit: builder.mutation<ProductUnitType, { code: string; name: string; is_active?: boolean }>({
 			query: (data) => ({
-				url: process.env.NEXT_PUBLIC_CATALOG_UNITS,
+				url: process.env.NEXT_PUBLIC_ARTICLE_UNITS,
 				method: 'POST',
 				data,
 			}),
@@ -200,7 +200,7 @@ export const magasinApi = createApi({
 		}),
 		editProductUnit: builder.mutation<ProductUnitType, { id: number; data: Partial<{ code: string; name: string; is_active: boolean }> }>({
 			query: ({ id, data }) => ({
-				url: `${process.env.NEXT_PUBLIC_CATALOG_UNITS}${id}/`,
+				url: `${process.env.NEXT_PUBLIC_ARTICLE_UNITS}${id}/`,
 				method: 'PATCH',
 				data,
 			}),
@@ -208,14 +208,14 @@ export const magasinApi = createApi({
 		}),
 		deleteProductUnit: builder.mutation<void, { id: number }>({
 			query: ({ id }) => ({
-				url: `${process.env.NEXT_PUBLIC_CATALOG_UNITS}${id}/`,
+				url: `${process.env.NEXT_PUBLIC_ARTICLE_UNITS}${id}/`,
 				method: 'DELETE',
 			}),
 			invalidatesTags: ['Products'],
 		}),
 		getProducts: builder.query<PaginationResponseType<ProductType>, ListParams>({
 			query: ({ store, search, page = 1, pageSize = 10, ...filters }) => ({
-				url: process.env.NEXT_PUBLIC_CATALOG_PRODUCTS,
+				url: process.env.NEXT_PUBLIC_ARTICLE_PRODUCTS,
 				method: 'GET',
 				params: { store, search, page, page_size: pageSize, ...filters },
 			}),
@@ -223,7 +223,7 @@ export const magasinApi = createApi({
 		}),
 		getProduct: builder.query<ProductType, { id: number; store?: number }>({
 			query: ({ id, store }) => ({
-				url: `${process.env.NEXT_PUBLIC_CATALOG_PRODUCTS}${id}/`,
+				url: `${process.env.NEXT_PUBLIC_ARTICLE_PRODUCTS}${id}/`,
 				method: 'GET',
 				params: { store },
 			}),
@@ -231,7 +231,7 @@ export const magasinApi = createApi({
 		}),
 		addProduct: builder.mutation<ProductType, { store?: number; data: ProductPayload }>({
 			query: ({ store, data }) => ({
-				url: process.env.NEXT_PUBLIC_CATALOG_PRODUCTS,
+				url: process.env.NEXT_PUBLIC_ARTICLE_PRODUCTS,
 				method: 'POST',
 				params: { store },
 				data,
@@ -240,7 +240,7 @@ export const magasinApi = createApi({
 		}),
 		editProduct: builder.mutation<ProductType, { id: number; store?: number; data: ProductPayload }>({
 			query: ({ id, store, data }) => ({
-				url: `${process.env.NEXT_PUBLIC_CATALOG_PRODUCTS}${id}/`,
+				url: `${process.env.NEXT_PUBLIC_ARTICLE_PRODUCTS}${id}/`,
 				method: 'PUT',
 				params: { store },
 				data,
@@ -249,7 +249,7 @@ export const magasinApi = createApi({
 		}),
 		deleteProduct: builder.mutation<void, { id: number; store?: number }>({
 			query: ({ id, store }) => ({
-				url: `${process.env.NEXT_PUBLIC_CATALOG_PRODUCTS}${id}/`,
+				url: `${process.env.NEXT_PUBLIC_ARTICLE_PRODUCTS}${id}/`,
 				method: 'DELETE',
 				params: { store },
 			}),
@@ -257,7 +257,7 @@ export const magasinApi = createApi({
 		}),
 		bulkDeleteProducts: builder.mutation<{ deleted: number }, { ids: number[]; store?: number }>({
 			query: ({ ids, store }) => ({
-				url: `${process.env.NEXT_PUBLIC_CATALOG_PRODUCTS}bulk-delete/`,
+				url: `${process.env.NEXT_PUBLIC_ARTICLE_PRODUCTS}bulk-delete/`,
 				method: 'DELETE',
 				params: { store },
 				data: { ids },
@@ -266,7 +266,7 @@ export const magasinApi = createApi({
 		}),
 		scanProduct: builder.query<ProductType, { store: number; code: string }>({
 			query: ({ store, code }) => ({
-				url: `${process.env.NEXT_PUBLIC_CATALOG_PRODUCTS}scan/`,
+				url: `${process.env.NEXT_PUBLIC_ARTICLE_PRODUCTS}scan/`,
 				method: 'GET',
 				params: { store, code },
 			}),
@@ -278,7 +278,7 @@ export const magasinApi = createApi({
 				data.append('store', String(store));
 				data.append('file', file);
 				return {
-					url: `${process.env.NEXT_PUBLIC_CATALOG_PRODUCTS}import-workbook/`,
+					url: `${process.env.NEXT_PUBLIC_ARTICLE_PRODUCTS}import-workbook/`,
 					method: 'POST',
 					data,
 				};
