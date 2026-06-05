@@ -285,6 +285,13 @@ export const magasinApi = createApi({
 			},
 			invalidatesTags: ['Products', 'Stock'],
 		}),
+		sendCSVExampleEmail: builder.mutation<{ message: string }, { store: number }>({
+			query: ({ store }) => ({
+				url: process.env.NEXT_PUBLIC_ARTICLE_SEND_CSV_EXAMPLE_EMAIL,
+				method: 'POST',
+				data: { store },
+			}),
+		}),
 		getPurchases: builder.query<PaginationResponseType<PurchaseType>, ListParams>({
 			query: ({ store, search, page = 1, pageSize = 10, ...filters }) => ({
 				url: process.env.NEXT_PUBLIC_STOCK_PURCHASES,
@@ -769,6 +776,7 @@ export const {
 	useImportProductsMutation,
 	useLazyScanProductQuery,
 	useReceivePurchaseMutation,
+	useSendCSVExampleEmailMutation,
 	useSyncOfflineSalesMutation,
 	useValidateStockTransferMutation,
 	useUpdateStockThresholdMutation,

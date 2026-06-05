@@ -22,6 +22,7 @@ describe('routes', () => {
 		expect(routes.AUTH_RESET_PASSWORD_SET_PASSWORD).toBe('/reset-password/set-password');
 		expect(routes.AUTH_RESET_PASSWORD_COMPLETE).toBe('/reset-password/set-password-complete');
 		expect(routes.DASHBOARD).toBe('/dashboard');
+		expect(routes.DASHBOARD_POS).toBe('/dashboard/caise');
 		expect(routes.DASHBOARD_EDIT_PROFILE).toBe('/dashboard/settings/edit-profile');
 		expect(routes.DASHBOARD_PASSWORD).toBe('/dashboard/settings/password');
 	});

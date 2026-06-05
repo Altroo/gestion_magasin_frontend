@@ -143,6 +143,9 @@ export type TranslationDictionary = {
     offlineQueue: string;
     catalog: string;
     importArticles: string;
+    importArticlesGuideEmail: string;
+    importArticlesGuideEmailSent: string;
+    importArticlesGuideEmailError: string;
     stock: string;
     lowStock: string;
     currentStock: string;

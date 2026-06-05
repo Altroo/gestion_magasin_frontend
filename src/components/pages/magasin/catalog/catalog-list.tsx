@@ -17,6 +17,7 @@ import {
 	Close as CloseIcon,
 	Delete as DeleteIcon,
 	Edit as EditIcon,
+	Email as EmailIcon,
 	FileUpload as FileUploadIcon,
 	Visibility as VisibilityIcon,
 } from '@mui/icons-material';
@@ -38,6 +39,7 @@ import {
 	useDeleteProductMutation,
 	useGetProductsQuery,
 	useImportProductsMutation,
+	useSendCSVExampleEmailMutation,
 } from '@/store/services/magasin';
 import { CATALOG_ADD, CATALOG_EDIT, CATALOG_VIEW } from '@/utils/routes';
 import { extractApiErrorMessage, formatNumber } from '@/utils/helpers';
@@ -88,6 +90,7 @@ const CatalogClient = ({ session }: SessionProps) => {
 	const [deleteProduct] = useDeleteProductMutation();
 	const [bulkDeleteProducts] = useBulkDeleteProductsMutation();
 	const [importProducts, importState] = useImportProductsMutation();
+	const [sendCSVExampleEmail, sendGuideState] = useSendCSVExampleEmailMutation();
 
 	const resetSelection = () => setSelectedIds([]);
 
@@ -103,6 +106,18 @@ const CatalogClient = ({ session }: SessionProps) => {
 			refetch();
 		} catch (error) {
 			onError(extractApiErrorMessage(error, t.errors.genericError));
+		}
+	};
+
+	const handleSendImportGuide = async () => {
+		if (!storeId) {
+			return;
+		}
+		try {
+			await sendCSVExampleEmail({ store: storeId }).unwrap();
+			onSuccess(t.magasin.importArticlesGuideEmailSent);
+		} catch (error) {
+			onError(extractApiErrorMessage(error, t.magasin.importArticlesGuideEmailError));
 		}
 	};
 
@@ -336,16 +351,28 @@ const CatalogClient = ({ session }: SessionProps) => {
 						selectedIds={selectedIds}
 						toolbarActions={
 							permissions.can_create && canManageStore ? (
-								<DarkTooltip title={t.magasin.importArticles}>
-									<IconButton
-										size="small"
-										color="default"
-										disabled={importState.isLoading}
-										onClick={() => fileInputRef.current?.click()}
-									>
-										{importState.isLoading ? <CircularProgress size={20} /> : <FileUploadIcon />}
-									</IconButton>
-								</DarkTooltip>
+								<>
+									<DarkTooltip title={t.magasin.importArticlesGuideEmail}>
+										<IconButton
+											size="small"
+											color="default"
+											disabled={sendGuideState.isLoading}
+											onClick={handleSendImportGuide}
+										>
+											{sendGuideState.isLoading ? <CircularProgress size={20} /> : <EmailIcon />}
+										</IconButton>
+									</DarkTooltip>
+									<DarkTooltip title={t.magasin.importArticles}>
+										<IconButton
+											size="small"
+											color="default"
+											disabled={importState.isLoading}
+											onClick={() => fileInputRef.current?.click()}
+										>
+											{importState.isLoading ? <CircularProgress size={20} /> : <FileUploadIcon />}
+										</IconButton>
+									</DarkTooltip>
+								</>
 							) : undefined
 						}
 					/>

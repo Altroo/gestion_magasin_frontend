@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	Alert,
 	Box,
@@ -9,14 +9,10 @@ import {
 	Divider,
 	IconButton,
 	Stack,
-	Table,
-	TableBody,
-	TableCell,
-	TableContainer,
-	TableHead,
-	TableRow,
 	Typography,
 } from '@mui/material';
+import { DataGrid, type GridColDef, type GridPaginationModel, type GridRenderCellParams } from '@mui/x-data-grid';
+import { frFR } from '@mui/x-data-grid/locales';
 import {
 	Add as AddIcon,
 	Delete as DeleteIcon,
@@ -69,6 +65,16 @@ type PromotionCartLine = {
 
 type CartLine = ProductCartLine | PromotionCartLine;
 
+type CartGridRow = {
+	id: string;
+	name: string;
+	reference: string;
+	typeLabel: string;
+	quantity: number;
+	unitPrice: number;
+	total: number;
+};
+
 const OFFLINE_KEY = 'gestion-magasin-offline-sales';
 const inputTheme = textInputTheme();
 const actionButtonSx = {
@@ -106,6 +112,7 @@ const PosClient = ({ session }: SessionProps) => {
 	const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>(undefined);
 	const storeId = selectedStoreId ?? defaultStore?.id;
 	const [cart, setCart] = useState<CartLine[]>([]);
+	const [cartPaginationModel, setCartPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
 	const [offlineQueue, setOfflineQueue] = useState<SaleCreatePayload[]>(() => readOfflineQueue());
 	const [cameraActive, setCameraActive] = useState(false);
 	const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -198,9 +205,12 @@ const PosClient = ({ session }: SessionProps) => {
 		},
 	});
 
-	const lineKey = (line: CartLine) => `${line.type}-${line.type === 'product' ? line.product.id : line.promotion.id}`;
+	const lineKey = useCallback(
+		(line: CartLine) => `${line.type}-${line.type === 'product' ? line.product.id : line.promotion.id}`,
+		[],
+	);
 
-	const updateQuantity = (targetKey: string, delta: number) => {
+	const updateQuantity = useCallback((targetKey: string, delta: number) => {
 		setCart((current) =>
 			current
 				.map((line) =>
@@ -210,7 +220,114 @@ const PosClient = ({ session }: SessionProps) => {
 				)
 				.filter((line) => line.quantity > 0),
 		);
-	};
+	}, [lineKey]);
+
+	const cartRows = useMemo<CartGridRow[]>(
+		() =>
+			cart.map((line) => {
+				const isProduct = line.type === 'product';
+				const name = isProduct ? line.product.name : line.promotion.name;
+				const reference = isProduct ? (line.product.reference ?? line.product.barcode ?? '') : t.magasin.promotion;
+				return {
+					id: lineKey(line),
+					name,
+					reference,
+					typeLabel: isProduct ? t.magasin.product : t.magasin.promotion,
+					quantity: line.quantity,
+					unitPrice: line.unitPrice,
+					total: line.quantity * line.unitPrice,
+				};
+			}),
+		[cart, lineKey, t.magasin.product, t.magasin.promotion],
+	);
+
+	const cartColumns = useMemo<GridColDef<CartGridRow>[]>(
+		() => [
+			{
+				field: 'name',
+				headerName: t.magasin.product,
+				flex: 1.4,
+				minWidth: 180,
+				renderCell: (params: GridRenderCellParams<CartGridRow>) => (
+					<Box sx={{ minWidth: 0, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+						<Typography variant="body2" fontWeight={600} noWrap>
+							{params.row.name}
+						</Typography>
+						<Typography variant="caption" color="text.secondary" noWrap>
+							{params.row.reference || params.row.typeLabel}
+						</Typography>
+					</Box>
+				),
+			},
+			{
+				field: 'typeLabel',
+				headerName: 'Type',
+				width: 105,
+				renderCell: (params: GridRenderCellParams<CartGridRow>) => (
+					<Chip label={params.row.typeLabel} size="small" variant="outlined" />
+				),
+			},
+			{
+				field: 'unitPrice',
+				headerName: t.magasin.unitPrice,
+				width: 110,
+				align: 'left',
+				headerAlign: 'left',
+				valueFormatter: (value: number) => money(value),
+			},
+			{
+				field: 'quantity',
+				headerName: t.magasin.quantity,
+				width: 170,
+				align: 'center',
+				headerAlign: 'center',
+				sortable: false,
+				filterable: false,
+				renderCell: (params: GridRenderCellParams<CartGridRow>) => (
+					<Stack
+						direction="row"
+						spacing={0.5}
+						justifyContent="center"
+						alignItems="center"
+						sx={{ width: '100%', height: '100%' }}
+					>
+						<IconButton size="small" onClick={() => updateQuantity(params.row.id, -1)} aria-label="Diminuer">
+							<RemoveIcon fontSize="small" />
+						</IconButton>
+						<Typography variant="body2" sx={{ width: 42, textAlign: 'center', fontWeight: 600 }}>
+							{params.row.quantity}
+						</Typography>
+						<IconButton size="small" onClick={() => updateQuantity(params.row.id, 1)} aria-label="Augmenter">
+							<AddIcon fontSize="small" />
+						</IconButton>
+					</Stack>
+				),
+			},
+			{
+				field: 'total',
+				headerName: t.magasin.total,
+				width: 120,
+				align: 'left',
+				headerAlign: 'left',
+				valueFormatter: (value: number) => money(value),
+			},
+			{
+				field: 'actions',
+				headerName: t.common.actions,
+				width: 95,
+				sortable: false,
+				filterable: false,
+				disableColumnMenu: true,
+				align: 'left',
+				renderCell: (params: GridRenderCellParams<CartGridRow>) => (
+					<IconButton color="error" size="small" onClick={() => setCart((current) => current.filter((item) => lineKey(item) !== params.row.id))}>
+						<DeleteIcon fontSize="small" />
+					</IconButton>
+				),
+			},
+		],
+		[lineKey, t.common.actions, t.magasin.product, t.magasin.quantity, t.magasin.total, t.magasin.unitPrice, updateQuantity],
+	);
 
 	const payload = (): SaleCreatePayload | null => {
 		if (!storeId || !cart.length) {
@@ -447,12 +564,14 @@ const PosClient = ({ session }: SessionProps) => {
 								title={t.magasin.cart}
 								icon={<PointOfSaleIcon fontSize="small" />}
 								action={
-									<Stack direction="row" spacing={1}>
-										<Chip label={`${t.magasin.offlineQueue}: ${offlineQueue.length}`} size="small" />
-										<IconButton onClick={() => void syncQueue()} disabled={!offlineQueue.length || syncState.isLoading} aria-label={t.magasin.syncOffline}>
-											<SyncIcon />
-										</IconButton>
-									</Stack>
+									offlineQueue.length > 0 ? (
+										<Stack direction="row" spacing={1}>
+											<Chip label={`${t.magasin.offlineQueue}: ${offlineQueue.length}`} size="small" />
+											<IconButton onClick={() => void syncQueue()} disabled={syncState.isLoading} aria-label={t.magasin.syncOffline}>
+												<SyncIcon />
+											</IconButton>
+										</Stack>
+									) : undefined
 								}
 								sx={{ width: '100%' }}
 								contentSx={{ p: 2, '&:last-child': { pb: 2 } }}
@@ -460,50 +579,54 @@ const PosClient = ({ session }: SessionProps) => {
 								{cart.length === 0 ? (
 									<Alert severity="info">{t.magasin.emptyCart}</Alert>
 								) : (
-									<TableContainer>
-										<Table size="small">
-											<TableHead>
-												<TableRow>
-													<TableCell>{t.magasin.product}</TableCell>
-													<TableCell align="right">{t.magasin.quantity}</TableCell>
-													<TableCell align="right">{t.magasin.total}</TableCell>
-													<TableCell />
-												</TableRow>
-											</TableHead>
-											<TableBody>
-												{cart.map((line) => {
-													const key = lineKey(line);
-													const name = line.type === 'product' ? line.product.name : line.promotion.name;
-													const sub = line.type === 'product' ? (line.product.reference ?? line.product.barcode) : t.magasin.promotion;
-													return (
-													<TableRow key={key}>
-														<TableCell>
-															<Typography variant="body2" fontWeight={600}>{name}</Typography>
-															<Typography variant="caption" color="text.secondary">{sub}</Typography>
-														</TableCell>
-														<TableCell align="right">
-															<Stack direction="row" spacing={0.5} justifyContent="flex-end" alignItems="center">
-																<IconButton size="small" onClick={() => updateQuantity(key, -1)}><RemoveIcon fontSize="small" /></IconButton>
-																<Typography sx={{ minWidth: 28, textAlign: 'center' }}>{line.quantity}</Typography>
-																<IconButton size="small" onClick={() => updateQuantity(key, 1)}><AddIcon fontSize="small" /></IconButton>
-															</Stack>
-														</TableCell>
-														<TableCell align="right">{money(line.quantity * line.unitPrice)}</TableCell>
-														<TableCell align="right">
-															<IconButton color="error" size="small" onClick={() => setCart((current) => current.filter((item) => lineKey(item) !== key))}>
-																<DeleteIcon fontSize="small" />
-															</IconButton>
-														</TableCell>
-													</TableRow>
-												);
-												})}
-											</TableBody>
-										</Table>
-									</TableContainer>
+									<Box sx={{ width: '100%' }}>
+										<DataGrid
+											rows={cartRows}
+											columns={cartColumns}
+											showToolbar
+											slotProps={{
+												toolbar: {
+													showQuickFilter: true,
+													quickFilterProps: { debounceMs: 500 },
+												},
+											}}
+											localeText={frFR.components.MuiDataGrid.defaultProps.localeText}
+											disableRowSelectionOnClick
+											paginationModel={cartPaginationModel}
+											onPaginationModelChange={setCartPaginationModel}
+											pageSizeOptions={[5, 10, 25]}
+											getRowHeight={() => 64}
+											sx={{
+												border: 'none',
+												'& .MuiDataGrid-columnHeaderTitle': {
+													fontWeight: 700,
+												},
+												'& .MuiDataGrid-cell': {
+													display: 'flex',
+													alignItems: 'center',
+												},
+												'& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus': {
+													outline: 'none',
+												},
+												'& .MuiDataGrid-toolbarContainer': {
+													px: 0,
+													pt: 0,
+													pb: 1,
+												},
+											}}
+										/>
+									</Box>
 								)}
 								<Divider sx={{ my: 2 }} />
-								<Stack direction="row" justifyContent="space-between" alignItems="center">
-									<Typography variant="h6">{money(total)}</Typography>
+								<Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'center' }}>
+									<Stack spacing={0.25}>
+										<Typography variant="caption" color="text.secondary">
+											{t.magasin.total}
+										</Typography>
+										<Typography variant="h6" fontWeight={700}>
+											{money(total)}
+										</Typography>
+									</Stack>
 									<Button
 										variant="contained"
 										size="large"

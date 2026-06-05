@@ -16,7 +16,7 @@ export const AUTH_RESET_PASSWORD_SET_PASSWORD = appRoute('reset-password/set-pas
 export const AUTH_RESET_PASSWORD_COMPLETE = appRoute('reset-password/set-password-complete');
 // Dashboard
 export const DASHBOARD = appRoute('dashboard');
-export const DASHBOARD_POS = appRoute('dashboard/pos');
+export const DASHBOARD_POS = appRoute('dashboard/caise');
 export const DASHBOARD_CATALOG = appRoute('dashboard/article');
 export const DASHBOARD_STOCK = appRoute('dashboard/stock');
 export const DASHBOARD_STOCK_TRANSFERS = appRoute('dashboard/stock-transfers');
