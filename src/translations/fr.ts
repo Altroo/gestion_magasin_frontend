@@ -282,7 +282,7 @@ export const fr: TranslationDictionary = {
     stockThreshold: 'Seuil de stock',
     selectProduct: 'Sélectionner un article',
     adjustmentQuantity: "Quantité d'ajustement",
-    movementNote: 'Note',
+    movementNote: 'Remarque',
     averageCost: 'Coût moyen',
     lowStockStatus: 'Statut stock minimum',
     stockAdjusted: 'Stock ajusté avec succès.',

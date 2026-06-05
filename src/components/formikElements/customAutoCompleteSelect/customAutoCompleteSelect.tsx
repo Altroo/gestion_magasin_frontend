@@ -64,14 +64,14 @@ const CustomAutoCompleteSelect: React.FC<Props> = ({
 				noOptionsText={noOptionsText}
 				options={items}
 				getOptionLabel={(option) => option.value}
-				getOptionKey={(option) => option.value}
+				getOptionKey={(option) => option.code || option.value}
 				filterOptions={(options, state) =>
 					options.filter((option) => option.value.toLowerCase().includes(state.inputValue.toLowerCase()))
 				}
 				value={value}
 				onChange={onChange}
 				disabled={disabled}
-				isOptionEqualToValue={(option, val) => option.value === val.value}
+				isOptionEqualToValue={(option, val) => option.code === val.code}
 				onBlur={onBlur}
 				renderOption={(props, option) =>
 					(renderOptionProp || defaultRenderOption)(props as React.HTMLAttributes<HTMLLIElement> & { key: Key }, option)
@@ -84,7 +84,17 @@ const CustomAutoCompleteSelect: React.FC<Props> = ({
 						helperText={helperText}
 						sx={{
 							'& .MuiOutlinedInput-root': {
-								borderRadius: '12px',
+								borderRadius: '16px',
+								minHeight: 40,
+								fontFamily: 'Poppins',
+								fontSize: '16px',
+								'& fieldset': {
+									borderRadius: '16px',
+								},
+							},
+							'& .MuiAutocomplete-input': {
+								fontFamily: 'Poppins',
+								fontSize: '16px',
 							},
 						}}
 						InputProps={{

@@ -146,6 +146,43 @@ export const customDropdownTheme = (primaryColor: string | undefined = undefined
 	return createTheme({
 		...defaultTheme,
 		components: {
+			MuiAutocomplete: {
+				styleOverrides: {
+					root: {
+						'& .MuiOutlinedInput-root': {
+							borderRadius: '16px',
+							minHeight: 40,
+							fontFamily: 'Poppins',
+							fontSize: '16px',
+							'& fieldset': {
+								borderRadius: '16px',
+								borderColor: '#A3A3AD',
+							},
+							'&:hover fieldset': {
+								borderColor: blueColor,
+							},
+							'&.Mui-focused fieldset': {
+								borderColor: blueColor,
+							},
+						},
+						'& .MuiAutocomplete-input': {
+							fontFamily: 'Poppins',
+							fontSize: '16px',
+							caretColor: blueColor,
+						},
+					},
+					paper: {
+						borderRadius: '16px',
+						border: `1px solid ${blueColor}`,
+						boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.1)',
+						marginTop: '4px',
+					},
+					option: {
+						fontFamily: 'Poppins',
+						fontSize: '16px',
+					},
+				},
+			},
 			MuiInputBase: {
 				styleOverrides: {
 					root: {

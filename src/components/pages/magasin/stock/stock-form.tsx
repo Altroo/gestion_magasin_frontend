@@ -9,28 +9,25 @@ import {
 	Card,
 	CardContent,
 	Divider,
-	InputAdornment,
-	MenuItem,
 	Stack,
-	TextField,
-	ThemeProvider,
 	Typography,
 	useMediaQuery,
 	useTheme,
 } from '@mui/material';
 import {
 	ArrowBack as ArrowBackIcon,
-	Description as DescriptionIcon,
 	Edit as EditIcon,
 	Inventory2 as InventoryIcon,
 	Numbers as NumbersIcon,
 	Save as SaveIcon,
+	Subject as RemarkIcon,
 	Warning as WarningIcon,
 } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
+import CustomAutoCompleteSelect from '@/components/formikElements/customAutoCompleteSelect/customAutoCompleteSelect';
 import CustomTextInput from '@/components/formikElements/customTextInput/customTextInput';
 import PrimaryLoadingButton from '@/components/htmlElements/buttons/primaryLoadingButton/primaryLoadingButton';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
@@ -164,6 +161,15 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 
 	const isLoading = isPending || adjustState.isLoading || thresholdState.isLoading || areProductsLoading || (isEditMode && isStockLoading);
 	const shouldShowError = (axiosError?.status ?? 0) > 400 && !isLoading;
+	const productItems = useMemo(
+		() =>
+			(products?.results ?? []).map((product) => ({
+				code: String(product.id),
+				value: `${product.reference ?? product.barcode ?? product.id} - ${product.name}`,
+			})),
+		[products?.results],
+	);
+	const selectedProduct = productItems.find((product) => product.code === formik.values.product) ?? null;
 	const fieldError = (field: keyof StockAdjustmentFormValues) =>
 		(formik.touched[field] || hasAttemptedSubmit) && typeof formik.errors[field] === 'string'
 			? (formik.errors[field] as string)
@@ -212,29 +218,22 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Stack spacing={2.5}>
-													<ThemeProvider theme={dropdownTheme}>
-														<TextField
-															select
-															size="small"
-															id="product"
-															label={`${t.magasin.selectProduct} *`}
-															value={formik.values.product}
-															onChange={(event) => void formik.setFieldValue('product', event.target.value)}
-															onBlur={formik.handleBlur('product')}
-															error={Boolean(fieldError('product'))}
-															helperText={fieldError('product')}
-															InputProps={{ startAdornment: <InputAdornment position="start"><InventoryIcon fontSize="small" /></InputAdornment> }}
-															fullWidth
-															disabled={isEditMode}
-														>
-															<MenuItem value="">{t.common.selectValue}</MenuItem>
-															{products?.results.map((product) => (
-																<MenuItem key={product.id} value={String(product.id)}>
-																	{product.reference ?? product.barcode ?? product.id} - {product.name}
-																</MenuItem>
-															))}
-														</TextField>
-													</ThemeProvider>
+													<CustomAutoCompleteSelect
+														id="product"
+														label={`${t.magasin.selectProduct} *`}
+														items={productItems}
+														theme={dropdownTheme}
+														size="small"
+														value={selectedProduct}
+														onChange={(_, nextProduct) => void formik.setFieldValue('product', nextProduct ? nextProduct.code : '')}
+														onBlur={formik.handleBlur('product')}
+														noOptionsText={t.common.noOptions}
+														error={Boolean(fieldError('product'))}
+														helperText={fieldError('product')}
+														startIcon={<InventoryIcon fontSize="small" />}
+														disabled={isEditMode}
+														fullWidth
+													/>
 													<CustomTextInput
 														id="quantity"
 														type="number"
@@ -248,20 +247,6 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														size="small"
 														theme={inputTheme}
 														startIcon={<NumbersIcon fontSize="small" />}
-													/>
-													<CustomTextInput
-														id="note"
-														type="text"
-														label={t.magasin.movementNote}
-														value={formik.values.note ?? ''}
-														onChange={formik.handleChange('note')}
-														onBlur={formik.handleBlur('note')}
-														error={Boolean(fieldError('note'))}
-														helperText={fieldError('note')}
-														fullWidth
-														size="small"
-														theme={inputTheme}
-														startIcon={<DescriptionIcon fontSize="small" />}
 													/>
 												</Stack>
 											</CardContent>
@@ -291,6 +276,29 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 												</CardContent>
 											</Card>
 										)}
+										<Card elevation={2} sx={{ borderRadius: 2 }}>
+											<CardContent sx={{ p: 3 }}>
+												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+													<RemarkIcon color="primary" />
+													<Typography variant="h6" fontWeight={700}>{t.magasin.movementNote}</Typography>
+												</Stack>
+												<Divider sx={{ mb: 3 }} />
+												<CustomTextInput
+													id="note"
+													type="text"
+													label={t.magasin.movementNote}
+													value={formik.values.note ?? ''}
+													onChange={formik.handleChange('note')}
+													onBlur={formik.handleBlur('note')}
+													error={Boolean(fieldError('note'))}
+													helperText={fieldError('note')}
+													fullWidth
+													size="small"
+													theme={inputTheme}
+													startIcon={<RemarkIcon fontSize="small" />}
+												/>
+											</CardContent>
+										</Card>
 										<Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 2 }}>
 											<PrimaryLoadingButton
 												type="submit"
