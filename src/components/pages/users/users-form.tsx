@@ -283,6 +283,10 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 	}, [formik.errors, hasAttemptedSubmit]);
 
 	const hasValidationErrors = Object.keys(validationErrors).length > 0;
+	const fieldError = (field: keyof UserFormValues) =>
+		(formik.touched[field] || hasAttemptedSubmit) && typeof formik.errors[field] === 'string'
+			? (formik.errors[field] as string)
+			: '';
 
 	const isLoading: boolean =
 		isAddLoading ||
@@ -375,8 +379,8 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 										value={formik.values.email}
 										onChange={formik.handleChange('email')}
 										onBlur={formik.handleBlur('email')}
-										error={formik.touched.email && Boolean(formik.errors.email)}
-										helperText={formik.touched.email ? formik.errors.email : ''}
+										error={Boolean(fieldError('email'))}
+										helperText={fieldError('email')}
 										fullWidth={false}
 										size="small"
 										theme={inputTheme}
@@ -389,8 +393,8 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 										value={formik.values.first_name}
 										onChange={formik.handleChange('first_name')}
 										onBlur={formik.handleBlur('first_name')}
-										error={formik.touched.first_name && Boolean(formik.errors.first_name)}
-										helperText={formik.touched.first_name ? formik.errors.first_name : ''}
+										error={Boolean(fieldError('first_name'))}
+										helperText={fieldError('first_name')}
 										fullWidth={false}
 										size="small"
 										theme={inputTheme}
@@ -403,8 +407,8 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 										value={formik.values.last_name}
 										onChange={formik.handleChange('last_name')}
 										onBlur={formik.handleBlur('last_name')}
-										error={formik.touched.last_name && Boolean(formik.errors.last_name)}
-										helperText={formik.touched.last_name ? formik.errors.last_name : ''}
+										error={Boolean(fieldError('last_name'))}
+										helperText={fieldError('last_name')}
 										fullWidth={false}
 										size="small"
 										theme={inputTheme}
@@ -420,8 +424,8 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 										theme={customDropdownTheme()}
 										startIcon={<GroupsIcon fontSize="small" />}
 										onBlur={formik.handleBlur('gender')}
-										error={formik.touched.gender && Boolean(formik.errors.gender)}
-										helperText={formik.touched.gender ? formik.errors.gender : ''}
+										error={Boolean(fieldError('gender'))}
+										helperText={fieldError('gender')}
 									/>
 								</Stack>
 							</CardContent>

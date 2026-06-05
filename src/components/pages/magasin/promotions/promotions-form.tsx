@@ -32,7 +32,7 @@ import {
 	Save as SaveIcon,
 	Warning as WarningIcon,
 } from '@mui/icons-material';
-import { useFormik } from 'formik';
+import { getIn, useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
@@ -184,6 +184,15 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 		}
 		return errors;
 	}, [formik.errors, hasAttemptedSubmit, t.validation.required]);
+	const fieldError = (field: keyof PromotionFormValues) =>
+		(formik.touched[field] || hasAttemptedSubmit) && typeof formik.errors[field] === 'string'
+			? (formik.errors[field] as string)
+			: '';
+	const lineError = (index: number, field: 'product' | 'quantity') => {
+		const error = getIn(formik.errors, `lines.${index}.${field}`);
+		const touched = getIn(formik.touched, `lines.${index}.${field}`);
+		return (touched || hasAttemptedSubmit) && typeof error === 'string' ? error : '';
+	};
 
 	const addLine = () => {
 		void formik.setFieldValue('lines', [...formik.values.lines, { ...emptyLine }]);
@@ -247,8 +256,8 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 														value={formik.values.name}
 														onChange={formik.handleChange('name')}
 														onBlur={formik.handleBlur('name')}
-														error={formik.touched.name && Boolean(formik.errors.name)}
-														helperText={formik.touched.name ? formik.errors.name : ''}
+														error={Boolean(fieldError('name'))}
+														helperText={fieldError('name')}
 														fullWidth
 														size="small"
 														theme={inputTheme}
@@ -261,8 +270,8 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 														value={formik.values.selling_price}
 														onChange={formik.handleChange('selling_price')}
 														onBlur={formik.handleBlur('selling_price')}
-														error={formik.touched.selling_price && Boolean(formik.errors.selling_price)}
-														helperText={formik.touched.selling_price ? formik.errors.selling_price : ''}
+														error={Boolean(fieldError('selling_price'))}
+														helperText={fieldError('selling_price')}
 														fullWidth
 														size="small"
 														theme={inputTheme}
@@ -277,8 +286,8 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 															value={formik.values.status}
 															onChange={(event) => void formik.setFieldValue('status', event.target.value)}
 															onBlur={formik.handleBlur('status')}
-															error={formik.touched.status && Boolean(formik.errors.status)}
-															helperText={formik.touched.status ? formik.errors.status : ''}
+															error={Boolean(fieldError('status'))}
+															helperText={fieldError('status')}
 															InputProps={{ startAdornment: <InputAdornment position="start"><LocalOfferIcon fontSize="small" /></InputAdornment> }}
 															fullWidth
 														>
@@ -293,8 +302,8 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 														value={formik.values.start_date}
 														onChange={formik.handleChange('start_date')}
 														onBlur={formik.handleBlur('start_date')}
-														error={formik.touched.start_date && Boolean(formik.errors.start_date)}
-														helperText={formik.touched.start_date ? formik.errors.start_date : ''}
+														error={Boolean(fieldError('start_date'))}
+														helperText={fieldError('start_date')}
 														fullWidth
 														size="small"
 														theme={inputTheme}
@@ -307,8 +316,8 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 														value={formik.values.end_date}
 														onChange={formik.handleChange('end_date')}
 														onBlur={formik.handleBlur('end_date')}
-														error={formik.touched.end_date && Boolean(formik.errors.end_date)}
-														helperText={formik.touched.end_date ? formik.errors.end_date : ''}
+														error={Boolean(fieldError('end_date'))}
+														helperText={fieldError('end_date')}
 														fullWidth
 														size="small"
 														theme={inputTheme}
@@ -323,8 +332,8 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 														value={formik.values.note}
 														onChange={formik.handleChange('note')}
 														onBlur={formik.handleBlur('note')}
-														error={formik.touched.note && Boolean(formik.errors.note)}
-														helperText={formik.touched.note ? formik.errors.note : ''}
+														error={Boolean(fieldError('note'))}
+														helperText={fieldError('note')}
 														fullWidth
 														size="small"
 														theme={inputTheme}
@@ -355,7 +364,10 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 																	label={`${t.magasin.product} *`}
 																	value={line.product}
 																	onChange={(event) => void formik.setFieldValue(`lines.${index}.product`, event.target.value)}
+																	onBlur={formik.handleBlur(`lines.${index}.product`)}
 																	InputProps={{ startAdornment: <InputAdornment position="start"><InventoryIcon fontSize="small" /></InputAdornment> }}
+																	error={Boolean(lineError(index, 'product'))}
+																	helperText={lineError(index, 'product')}
 																	fullWidth
 																>
 																	<MenuItem value="">{t.common.selectValue}</MenuItem>
@@ -372,6 +384,9 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 																label={`${t.magasin.quantity} *`}
 																value={line.quantity}
 																onChange={formik.handleChange(`lines.${index}.quantity`)}
+																onBlur={formik.handleBlur(`lines.${index}.quantity`)}
+																error={Boolean(lineError(index, 'quantity'))}
+																helperText={lineError(index, 'quantity')}
 																fullWidth
 																size="small"
 																theme={inputTheme}

@@ -121,7 +121,7 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 		inventory_date: t.magasin.date,
 		status: t.magasin.status,
 		note: t.magasin.note,
-		lines: t.magasin.saleLines,
+		lines: t.magasin.inventoryLines,
 		globalError: t.errors.globalError,
 	}), [t]);
 	const validationErrors = useMemo(() => {
@@ -180,7 +180,7 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 										</Card>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}><Stack direction="row" spacing={2}><InventoryIcon color="primary" /><Typography variant="h6" fontWeight={700}>{t.magasin.saleLines}</Typography></Stack><Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={addLine}>{t.common.add}</Button></Stack>
+												<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}><Stack direction="row" spacing={2}><InventoryIcon color="primary" /><Typography variant="h6" fontWeight={700}>{t.magasin.inventoryLines}</Typography></Stack><Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={addLine}>{t.common.add}</Button></Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Stack spacing={2}>{formik.values.lines.map((line, index) => (
 													<Box key={index} sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 150px 150px 1fr 44px' }, gap: 2 }}>

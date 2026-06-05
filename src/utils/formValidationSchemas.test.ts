@@ -11,6 +11,13 @@ import {
 	stockAdjustmentSchema,
 	notificationPreferencesSchema,
 	saleSchema,
+	productSchema,
+	purchaseSchema,
+	inventorySchema,
+	stockTransferSchema,
+	promotionSchema,
+	expenseSchema,
+	attendanceSchema,
 } from './formValidationSchemas';
 
 describe('Zod Schema Validation', () => {
@@ -347,6 +354,115 @@ describe('Zod Schema Validation', () => {
 				saleSchema.parse({
 					...validSale,
 					lines: [],
+				}),
+			).toThrow();
+		});
+	});
+
+	describe('magasin form schemas', () => {
+		it('requires catalog article, family, and unit fields', () => {
+			expect(() =>
+				productSchema.parse({
+					reference: '',
+					barcode: '',
+					name: '',
+					category: '',
+					unit: '',
+					purchase_price: '0',
+					wholesale_price: '0',
+					detail_price: '0',
+					counter_price: '0',
+					default_stock_alert: '0',
+					expiration_date: '',
+					shelf_life_days: '',
+					compliance_required: false,
+					is_active: true,
+				}),
+			).toThrow();
+		});
+
+		it('requires purchase product lines', () => {
+			expect(() =>
+				purchaseSchema.parse({
+					store: '1',
+					supplier_name: '',
+					reference: '',
+					purchase_date: '2026-06-05',
+					status: 'draft',
+					note: '',
+					lines: [{ product: '', quantity: '1', unit_cost: '0' }],
+				}),
+			).toThrow();
+		});
+
+		it('requires inventory header and product lines', () => {
+			expect(() =>
+				inventorySchema.parse({
+					code: '',
+					title: '',
+					inventory_date: '2026-06-05',
+					status: 'draft',
+					note: '',
+					lines: [{ product: '', expected_quantity: '0', counted_quantity: '0', note: '' }],
+				}),
+			).toThrow();
+		});
+
+		it('requires stock transfer destination and product lines', () => {
+			expect(() =>
+				stockTransferSchema.parse({
+					target_store: '',
+					reference: '',
+					transfer_date: '2026-06-05',
+					status: 'draft',
+					note: '',
+					lines: [{ product: '', quantity: '1' }],
+				}),
+			).toThrow();
+		});
+
+		it('requires promotion name and product lines', () => {
+			expect(() =>
+				promotionSchema.parse({
+					name: '',
+					selling_price: '0',
+					status: 'active',
+					start_date: '',
+					end_date: '',
+					note: '',
+					lines: [{ product: '', quantity: '1' }],
+				}),
+			).toThrow();
+		});
+
+		it('requires expense category, label, and amount', () => {
+			expect(() =>
+				expenseSchema.parse({
+					category: '',
+					label: '',
+					amount: '',
+					payment_status: 'payable',
+					payment_mode: 'cash',
+					expense_date: '2026-06-05',
+					note: '',
+				}),
+			).toThrow();
+		});
+
+		it('requires attendance employee and date', () => {
+			expect(() =>
+				attendanceSchema.parse({
+					employee: '',
+					date: '',
+					clock_in: '',
+					break_start: '',
+					break_end: '',
+					clock_out: '',
+					hours_worked: '0',
+					delay_minutes: '0',
+					status: 'present',
+					responsible: '',
+					observations: '',
 				}),
 			).toThrow();
 		});

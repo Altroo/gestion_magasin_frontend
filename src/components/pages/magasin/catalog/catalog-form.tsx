@@ -213,6 +213,10 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 	);
 	const selectedCategory = categoryItems.find((category) => category.value === formik.values.category) ?? null;
 	const selectedUnit = unitItems.find((unit) => unit.value === formik.values.unit) ?? null;
+	const fieldError = (field: keyof ProductFormValues) =>
+		(formik.touched[field] || hasAttemptedSubmit) && typeof formik.errors[field] === 'string'
+			? (formik.errors[field] as string)
+			: '';
 	const categoryError = (formik.touched.category || hasAttemptedSubmit) && Boolean(formik.errors.category);
 	const unitError = (formik.touched.unit || hasAttemptedSubmit) && Boolean(formik.errors.unit);
 
@@ -266,8 +270,8 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														value={formik.values.reference}
 														onChange={formik.handleChange('reference')}
 														onBlur={formik.handleBlur('reference')}
-														error={formik.touched.reference && Boolean(formik.errors.reference)}
-														helperText={formik.touched.reference ? formik.errors.reference : ''}
+														error={Boolean(fieldError('reference'))}
+														helperText={fieldError('reference')}
 														fullWidth
 														size="small"
 														theme={inputTheme}
@@ -280,8 +284,8 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														value={formik.values.barcode}
 														onChange={formik.handleChange('barcode')}
 														onBlur={formik.handleBlur('barcode')}
-														error={formik.touched.barcode && Boolean(formik.errors.barcode)}
-														helperText={formik.touched.barcode ? formik.errors.barcode : ''}
+														error={Boolean(fieldError('barcode'))}
+														helperText={fieldError('barcode')}
 														fullWidth
 														size="small"
 														theme={inputTheme}
@@ -294,8 +298,8 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														value={formik.values.name}
 														onChange={formik.handleChange('name')}
 														onBlur={formik.handleBlur('name')}
-														error={formik.touched.name && Boolean(formik.errors.name)}
-														helperText={formik.touched.name ? formik.errors.name : ''}
+														error={Boolean(fieldError('name'))}
+														helperText={fieldError('name')}
 														fullWidth
 														size="small"
 														theme={inputTheme}
@@ -382,8 +386,8 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 															value={formik.values[field as keyof ProductFormValues] as string}
 															onChange={formik.handleChange(field)}
 															onBlur={formik.handleBlur(field)}
-															error={Boolean(formik.touched[field as keyof ProductFormValues] && formik.errors[field as keyof ProductFormValues])}
-															helperText={formik.touched[field as keyof ProductFormValues] ? (formik.errors[field as keyof ProductFormValues] as string) : ''}
+															error={Boolean(fieldError(field as keyof ProductFormValues))}
+															helperText={fieldError(field as keyof ProductFormValues)}
 															fullWidth
 															size="small"
 															theme={inputTheme}
@@ -408,8 +412,8 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														value={formik.values.default_stock_alert}
 														onChange={formik.handleChange('default_stock_alert')}
 														onBlur={formik.handleBlur('default_stock_alert')}
-														error={formik.touched.default_stock_alert && Boolean(formik.errors.default_stock_alert)}
-														helperText={formik.touched.default_stock_alert ? formik.errors.default_stock_alert : ''}
+														error={Boolean(fieldError('default_stock_alert'))}
+														helperText={fieldError('default_stock_alert')}
 														fullWidth
 														size="small"
 														theme={inputTheme}
@@ -422,8 +426,8 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														value={formik.values.expiration_date}
 														onChange={formik.handleChange('expiration_date')}
 														onBlur={formik.handleBlur('expiration_date')}
-														error={formik.touched.expiration_date && Boolean(formik.errors.expiration_date)}
-														helperText={formik.touched.expiration_date ? formik.errors.expiration_date : ''}
+														error={Boolean(fieldError('expiration_date'))}
+														helperText={fieldError('expiration_date')}
 														fullWidth
 														size="small"
 														theme={inputTheme}
@@ -437,8 +441,8 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														value={formik.values.shelf_life_days}
 														onChange={formik.handleChange('shelf_life_days')}
 														onBlur={formik.handleBlur('shelf_life_days')}
-														error={formik.touched.shelf_life_days && Boolean(formik.errors.shelf_life_days)}
-														helperText={formik.touched.shelf_life_days ? formik.errors.shelf_life_days : ''}
+														error={Boolean(fieldError('shelf_life_days'))}
+														helperText={fieldError('shelf_life_days')}
 														fullWidth
 														size="small"
 														theme={inputTheme}

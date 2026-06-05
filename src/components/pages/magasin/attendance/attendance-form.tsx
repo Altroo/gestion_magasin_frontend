@@ -140,6 +140,10 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 	}, [formik.errors, hasAttemptedSubmit]);
 	const isLoading = isPending || addState.isLoading || editState.isLoading || areEmployeesLoading || (isEditMode && isAttendanceLoading);
 	const shouldShowError = (axiosError?.status ?? 0) > 400 && !isLoading;
+	const fieldError = (field: keyof AttendanceFormValues) =>
+		(formik.touched[field] || hasAttemptedSubmit) && typeof formik.errors[field] === 'string'
+			? (formik.errors[field] as string)
+			: '';
 
 	return (
 		<NavigationBar title={isEditMode ? t.magasin.editAttendance : t.magasin.newAttendance}>
@@ -183,8 +187,8 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 														value={formik.values.employee}
 														onChange={(event) => void formik.setFieldValue('employee', event.target.value)}
 														onBlur={formik.handleBlur('employee')}
-														error={formik.touched.employee && Boolean(formik.errors.employee)}
-														helperText={formik.touched.employee ? formik.errors.employee : ''}
+														error={Boolean(fieldError('employee'))}
+														helperText={fieldError('employee')}
 														InputProps={{ startAdornment: <InputAdornment position="start"><BadgeIcon fontSize="small" /></InputAdornment> }}
 														fullWidth
 													>
@@ -195,22 +199,22 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 													</TextField>
 												</ThemeProvider>
 												<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2.5 }}>
-													<CustomTextInput id="date" type="date" label={`${t.magasin.date} *`} value={formik.values.date} onChange={formik.handleChange('date')} onBlur={formik.handleBlur('date')} error={formik.touched.date && Boolean(formik.errors.date)} helperText={formik.touched.date ? formik.errors.date : ''} fullWidth size="small" theme={inputTheme} startIcon={<EventIcon fontSize="small" />} shrink />
+													<CustomTextInput id="date" type="date" label={`${t.magasin.date} *`} value={formik.values.date} onChange={formik.handleChange('date')} onBlur={formik.handleBlur('date')} error={Boolean(fieldError('date'))} helperText={fieldError('date')} fullWidth size="small" theme={inputTheme} startIcon={<EventIcon fontSize="small" />} shrink />
 													<ThemeProvider theme={dropdownTheme}>
-														<TextField select size="small" id="status" label={`${t.magasin.status} *`} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} fullWidth>
+														<TextField select size="small" id="status" label={`${t.magasin.status} *`} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} onBlur={formik.handleBlur('status')} error={Boolean(fieldError('status'))} helperText={fieldError('status')} fullWidth>
 															<MenuItem value="present">{t.magasin.present}</MenuItem>
 															<MenuItem value="off">{t.magasin.off}</MenuItem>
 															<MenuItem value="absent">{t.magasin.absent}</MenuItem>
 														</TextField>
 													</ThemeProvider>
 													{(['clock_in', 'break_start', 'break_end', 'clock_out'] as const).map((field) => (
-														<CustomTextInput key={field} id={field} type="time" label={fieldLabels[field]} value={formik.values[field]} onChange={formik.handleChange(field)} onBlur={formik.handleBlur(field)} error={Boolean(formik.touched[field] && formik.errors[field])} helperText={formik.touched[field] ? formik.errors[field] : ''} fullWidth size="small" theme={inputTheme} startIcon={<ScheduleIcon fontSize="small" />} shrink />
+														<CustomTextInput key={field} id={field} type="time" label={fieldLabels[field]} value={formik.values[field]} onChange={formik.handleChange(field)} onBlur={formik.handleBlur(field)} error={Boolean(fieldError(field))} helperText={fieldError(field)} fullWidth size="small" theme={inputTheme} startIcon={<ScheduleIcon fontSize="small" />} shrink />
 													))}
-													<CustomTextInput id="hours_worked" type="number" label={`${t.magasin.hours} *`} value={formik.values.hours_worked} onChange={formik.handleChange('hours_worked')} onBlur={formik.handleBlur('hours_worked')} error={formik.touched.hours_worked && Boolean(formik.errors.hours_worked)} helperText={formik.touched.hours_worked ? formik.errors.hours_worked : ''} fullWidth size="small" theme={inputTheme} startIcon={<ScheduleIcon fontSize="small" />} />
-													<CustomTextInput id="delay_minutes" type="number" label={`${t.magasin.delayMinutes} *`} value={formik.values.delay_minutes} onChange={formik.handleChange('delay_minutes')} onBlur={formik.handleBlur('delay_minutes')} error={formik.touched.delay_minutes && Boolean(formik.errors.delay_minutes)} helperText={formik.touched.delay_minutes ? formik.errors.delay_minutes : ''} fullWidth size="small" theme={inputTheme} startIcon={<ScheduleIcon fontSize="small" />} />
+													<CustomTextInput id="hours_worked" type="number" label={`${t.magasin.hours} *`} value={formik.values.hours_worked} onChange={formik.handleChange('hours_worked')} onBlur={formik.handleBlur('hours_worked')} error={Boolean(fieldError('hours_worked'))} helperText={fieldError('hours_worked')} fullWidth size="small" theme={inputTheme} startIcon={<ScheduleIcon fontSize="small" />} />
+													<CustomTextInput id="delay_minutes" type="number" label={`${t.magasin.delayMinutes} *`} value={formik.values.delay_minutes} onChange={formik.handleChange('delay_minutes')} onBlur={formik.handleBlur('delay_minutes')} error={Boolean(fieldError('delay_minutes'))} helperText={fieldError('delay_minutes')} fullWidth size="small" theme={inputTheme} startIcon={<ScheduleIcon fontSize="small" />} />
 												</Box>
-												<CustomTextInput id="responsible" type="text" label={t.magasin.responsible} value={formik.values.responsible} onChange={formik.handleChange('responsible')} onBlur={formik.handleBlur('responsible')} error={formik.touched.responsible && Boolean(formik.errors.responsible)} helperText={formik.touched.responsible ? formik.errors.responsible : ''} fullWidth size="small" theme={inputTheme} startIcon={<BadgeIcon fontSize="small" />} />
-												<CustomTextInput id="observations" type="text" label={t.magasin.observations} value={formik.values.observations} onChange={formik.handleChange('observations')} onBlur={formik.handleBlur('observations')} error={formik.touched.observations && Boolean(formik.errors.observations)} helperText={formik.touched.observations ? formik.errors.observations : ''} fullWidth size="small" theme={inputTheme} startIcon={<BadgeIcon fontSize="small" />} />
+												<CustomTextInput id="responsible" type="text" label={t.magasin.responsible} value={formik.values.responsible} onChange={formik.handleChange('responsible')} onBlur={formik.handleBlur('responsible')} error={Boolean(fieldError('responsible'))} helperText={fieldError('responsible')} fullWidth size="small" theme={inputTheme} startIcon={<BadgeIcon fontSize="small" />} />
+												<CustomTextInput id="observations" type="text" label={t.magasin.observations} value={formik.values.observations} onChange={formik.handleChange('observations')} onBlur={formik.handleBlur('observations')} error={Boolean(fieldError('observations'))} helperText={fieldError('observations')} fullWidth size="small" theme={inputTheme} startIcon={<BadgeIcon fontSize="small" />} />
 											</Stack>
 										</CardContent>
 									</Card>

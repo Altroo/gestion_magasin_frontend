@@ -106,7 +106,7 @@ const StockTransfersFormClient = ({ session, id }: Props) => {
 		},
 	});
 
-	const fieldLabels = useMemo<Record<string, string>>(() => ({ target_store: t.magasin.targetStore, reference: t.magasin.transferReference, transfer_date: t.magasin.transferDate, status: t.magasin.status, note: t.magasin.note, lines: t.magasin.saleLines, globalError: t.errors.globalError }), [t]);
+	const fieldLabels = useMemo<Record<string, string>>(() => ({ target_store: t.magasin.targetStore, reference: t.magasin.transferReference, transfer_date: t.magasin.transferDate, status: t.magasin.status, note: t.magasin.note, lines: t.magasin.stockTransferLines, globalError: t.errors.globalError }), [t]);
 	const validationErrors = useMemo(() => {
 		const errors: Record<string, string> = {};
 		if (hasAttemptedSubmit) Object.entries(formik.errors).forEach(([key, value]) => { if (key !== 'globalError' && typeof value === 'string') errors[key] = value; if (key === 'lines' && value) errors.lines = t.validation.required; });
@@ -188,7 +188,7 @@ const StockTransfersFormClient = ({ session, id }: Props) => {
 										</Card>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}><Stack direction="row" spacing={2}><InventoryIcon color="primary" /><Typography variant="h6" fontWeight={700}>{t.magasin.saleLines}</Typography></Stack><Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={addLine}>{t.common.add}</Button></Stack>
+												<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}><Stack direction="row" spacing={2}><InventoryIcon color="primary" /><Typography variant="h6" fontWeight={700}>{t.magasin.stockTransferLines}</Typography></Stack><Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={addLine}>{t.common.add}</Button></Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Stack spacing={2}>{formik.values.lines.map((line, index) => (
 													<Box key={index} sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 160px 44px' }, gap: 2 }}>

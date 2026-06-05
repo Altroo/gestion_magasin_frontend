@@ -152,6 +152,7 @@ export type TranslationDictionary = {
     newPurchase: string;
     editPurchase: string;
     purchaseDetails: string;
+    purchaseLines: string;
     backToPurchases: string;
     supplier: string;
     receivePurchase: string;
@@ -161,6 +162,7 @@ export type TranslationDictionary = {
     newInventory: string;
     editInventory: string;
     inventoryDetails: string;
+    inventoryLines: string;
     backToInventory: string;
     inventoryCode: string;
     inventoryTitle: string;
@@ -331,6 +333,7 @@ export type TranslationDictionary = {
     newStockTransfer: string;
     editStockTransfer: string;
     stockTransferDetails: string;
+    stockTransferLines: string;
     backToTransfers: string;
     sourceStore: string;
     targetStore: string;

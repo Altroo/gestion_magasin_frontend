@@ -164,6 +164,10 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 
 	const isLoading = isPending || adjustState.isLoading || thresholdState.isLoading || areProductsLoading || (isEditMode && isStockLoading);
 	const shouldShowError = (axiosError?.status ?? 0) > 400 && !isLoading;
+	const fieldError = (field: keyof StockAdjustmentFormValues) =>
+		(formik.touched[field] || hasAttemptedSubmit) && typeof formik.errors[field] === 'string'
+			? (formik.errors[field] as string)
+			: '';
 
 	return (
 		<NavigationBar title={isEditMode ? t.magasin.editStock : t.magasin.newStock}>
@@ -217,8 +221,8 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 															value={formik.values.product}
 															onChange={(event) => void formik.setFieldValue('product', event.target.value)}
 															onBlur={formik.handleBlur('product')}
-															error={formik.touched.product && Boolean(formik.errors.product)}
-															helperText={formik.touched.product ? formik.errors.product : ''}
+															error={Boolean(fieldError('product'))}
+															helperText={fieldError('product')}
 															InputProps={{ startAdornment: <InputAdornment position="start"><InventoryIcon fontSize="small" /></InputAdornment> }}
 															fullWidth
 															disabled={isEditMode}
@@ -238,8 +242,8 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														value={formik.values.quantity}
 														onChange={formik.handleChange('quantity')}
 														onBlur={formik.handleBlur('quantity')}
-														error={formik.touched.quantity && Boolean(formik.errors.quantity)}
-														helperText={formik.touched.quantity ? formik.errors.quantity : ''}
+														error={Boolean(fieldError('quantity'))}
+														helperText={fieldError('quantity')}
 														fullWidth
 														size="small"
 														theme={inputTheme}
@@ -252,8 +256,8 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														value={formik.values.note ?? ''}
 														onChange={formik.handleChange('note')}
 														onBlur={formik.handleBlur('note')}
-														error={formik.touched.note && Boolean(formik.errors.note)}
-														helperText={formik.touched.note ? formik.errors.note : ''}
+														error={Boolean(fieldError('note'))}
+														helperText={fieldError('note')}
 														fullWidth
 														size="small"
 														theme={inputTheme}
@@ -277,8 +281,8 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														value={formik.values.min_stock ?? ''}
 														onChange={formik.handleChange('min_stock')}
 														onBlur={formik.handleBlur('min_stock')}
-														error={formik.touched.min_stock && Boolean(formik.errors.min_stock)}
-														helperText={formik.touched.min_stock ? formik.errors.min_stock : ''}
+														error={Boolean(fieldError('min_stock'))}
+														helperText={fieldError('min_stock')}
 														fullWidth
 														size="small"
 														theme={inputTheme}

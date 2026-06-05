@@ -186,6 +186,10 @@ const StoresFormClient = ({ session, id }: Props) => {
 
 	const isLoading = isPending || addState.isLoading || editState.isLoading || (isEditMode && isStoreLoading);
 	const shouldShowError = (axiosError?.status ?? 0) > 400 && !isLoading;
+	const fieldError = (field: keyof StoreFormValues) =>
+		(formik.touched[field] || hasAttemptedSubmit) && typeof formik.errors[field] === 'string'
+			? (formik.errors[field] as string)
+			: '';
 	const managedByError = (formik.touched.managed_by || hasAttemptedSubmit) && typeof formik.errors.managed_by === 'string'
 		? formik.errors.managed_by
 		: '';
@@ -238,8 +242,8 @@ const StoresFormClient = ({ session, id }: Props) => {
 														value={formik.values.name}
 														onChange={formik.handleChange('name')}
 														onBlur={formik.handleBlur('name')}
-														error={formik.touched.name && Boolean(formik.errors.name)}
-														helperText={formik.touched.name ? formik.errors.name : ''}
+														error={Boolean(fieldError('name'))}
+														helperText={fieldError('name')}
 														fullWidth
 														size="small"
 														theme={inputTheme}
@@ -252,8 +256,8 @@ const StoresFormClient = ({ session, id }: Props) => {
 														value={formik.values.code}
 														onChange={formik.handleChange('code')}
 														onBlur={formik.handleBlur('code')}
-														error={formik.touched.code && Boolean(formik.errors.code)}
-														helperText={formik.touched.code ? formik.errors.code : ''}
+														error={Boolean(fieldError('code'))}
+														helperText={fieldError('code')}
 														fullWidth
 														size="small"
 														theme={inputTheme}
@@ -266,8 +270,8 @@ const StoresFormClient = ({ session, id }: Props) => {
 														value={formik.values.address}
 														onChange={formik.handleChange('address')}
 														onBlur={formik.handleBlur('address')}
-														error={formik.touched.address && Boolean(formik.errors.address)}
-														helperText={formik.touched.address ? formik.errors.address : ''}
+														error={Boolean(fieldError('address'))}
+														helperText={fieldError('address')}
 														fullWidth
 														size="small"
 														theme={inputTheme}
@@ -280,8 +284,8 @@ const StoresFormClient = ({ session, id }: Props) => {
 														value={formik.values.phone}
 														onChange={formik.handleChange('phone')}
 														onBlur={formik.handleBlur('phone')}
-														error={formik.touched.phone && Boolean(formik.errors.phone)}
-														helperText={formik.touched.phone ? formik.errors.phone : ''}
+														error={Boolean(fieldError('phone'))}
+														helperText={fieldError('phone')}
 														fullWidth
 														size="small"
 														theme={inputTheme}
