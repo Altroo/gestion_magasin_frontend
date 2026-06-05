@@ -381,6 +381,27 @@ describe('Zod Schema Validation', () => {
 			).toThrow();
 		});
 
+		it('requires catalog pricing and default minimum stock fields', () => {
+			expect(() =>
+				productSchema.parse({
+					reference: '',
+					barcode: '',
+					name: 'Article test',
+					category: '1',
+					unit: '1',
+					purchase_price: '',
+					wholesale_price: '',
+					detail_price: '',
+					counter_price: '',
+					default_stock_alert: '',
+					expiration_date: '',
+					shelf_life_days: '',
+					compliance_required: false,
+					is_active: true,
+				}),
+			).toThrow();
+		});
+
 		it('requires purchase product lines', () => {
 			expect(() =>
 				purchaseSchema.parse({
