@@ -161,7 +161,7 @@ export const posScanSchema = z.object({
 
 export const productSchema = z.object({
 	reference: optionalTextField(1, 80),
-	barcode: optionalTextField(1, 80),
+	barcode: requiredTextField(1, 80),
 	name: requiredTextField(2, 255),
 	category: requiredNumberTextField(),
 	unit: requiredNumberTextField(),

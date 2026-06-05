@@ -74,7 +74,7 @@ type Props = SessionProps & {
 
 const toPayload = (values: ProductFormValues): ProductPayload => ({
 	reference: values.reference.trim() || null,
-	barcode: values.barcode.trim() || null,
+	barcode: values.barcode.trim(),
 	name: values.name.trim(),
 	category: values.category ? Number(values.category) : null,
 	unit: Number(values.unit),
@@ -204,15 +204,15 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 	const categoryOptions = useMemo(() => categories?.results ?? [], [categories?.results]);
 	const unitOptions = useMemo(() => units?.results ?? [], [units?.results]);
 	const categoryItems = useMemo(
-		() => categoryOptions.map((category) => ({ code: category.name, value: String(category.id) })),
+		() => categoryOptions.map((category) => ({ code: String(category.id), value: category.name })),
 		[categoryOptions],
 	);
 	const unitItems = useMemo(
-		() => unitOptions.map((unit) => ({ code: unit.name, value: String(unit.id) })),
+		() => unitOptions.map((unit) => ({ code: String(unit.id), value: unit.name })),
 		[unitOptions],
 	);
-	const selectedCategory = categoryItems.find((category) => category.value === formik.values.category) ?? null;
-	const selectedUnit = unitItems.find((unit) => unit.value === formik.values.unit) ?? null;
+	const selectedCategory = categoryItems.find((category) => category.code === formik.values.category) ?? null;
+	const selectedUnit = unitItems.find((unit) => unit.code === formik.values.unit) ?? null;
 	const fieldError = (field: keyof ProductFormValues) =>
 		(formik.touched[field] || hasAttemptedSubmit) && typeof formik.errors[field] === 'string'
 			? (formik.errors[field] as string)
@@ -280,7 +280,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 													<CustomTextInput
 														id="barcode"
 														type="text"
-														label={t.magasin.barcodeValue}
+														label={`${t.magasin.barcodeValue} *`}
 														value={formik.values.barcode}
 														onChange={formik.handleChange('barcode')}
 														onBlur={formik.handleBlur('barcode')}
@@ -314,7 +314,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														theme={theme}
 														value={selectedCategory}
 														fullWidth
-														onChange={(_, nextCategory) => void formik.setFieldValue('category', nextCategory ? nextCategory.value : '')}
+														onChange={(_, nextCategory) => void formik.setFieldValue('category', nextCategory ? nextCategory.code : '')}
 														onBlur={formik.handleBlur('category')}
 														error={categoryError}
 														helperText={(formik.touched.category || hasAttemptedSubmit) ? formik.errors.category : ''}
@@ -342,7 +342,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														theme={theme}
 														value={selectedUnit}
 														fullWidth
-														onChange={(_, nextUnit) => void formik.setFieldValue('unit', nextUnit ? nextUnit.value : '')}
+														onChange={(_, nextUnit) => void formik.setFieldValue('unit', nextUnit ? nextUnit.code : '')}
 														onBlur={formik.handleBlur('unit')}
 														error={unitError}
 														helperText={(formik.touched.unit || hasAttemptedSubmit) ? formik.errors.unit : ''}

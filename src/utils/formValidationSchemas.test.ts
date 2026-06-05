@@ -364,7 +364,7 @@ describe('Zod Schema Validation', () => {
 			expect(() =>
 				productSchema.parse({
 					reference: '',
-					barcode: '',
+					barcode: '6111122233344',
 					name: '',
 					category: '',
 					unit: '',
@@ -385,7 +385,7 @@ describe('Zod Schema Validation', () => {
 			expect(() =>
 				productSchema.parse({
 					reference: '',
-					barcode: '',
+					barcode: '6111122233344',
 					name: 'Article test',
 					category: '1',
 					unit: '1',
@@ -394,6 +394,27 @@ describe('Zod Schema Validation', () => {
 					detail_price: '',
 					counter_price: '',
 					default_stock_alert: '',
+					expiration_date: '',
+					shelf_life_days: '',
+					compliance_required: false,
+					is_active: true,
+				}),
+			).toThrow();
+		});
+
+		it('requires a catalog barcode for caisse scanning', () => {
+			expect(() =>
+				productSchema.parse({
+					reference: '',
+					barcode: '',
+					name: 'Article test',
+					category: '1',
+					unit: '1',
+					purchase_price: '10',
+					wholesale_price: '12',
+					detail_price: '14',
+					counter_price: '15',
+					default_stock_alert: '3',
 					expiration_date: '',
 					shelf_life_days: '',
 					compliance_required: false,

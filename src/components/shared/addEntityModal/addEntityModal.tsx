@@ -6,6 +6,7 @@ import { Box, Button, Modal, Stack, Typography } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import CustomTextInput from '@/components/formikElements/customTextInput/customTextInput';
 import { useLanguage } from '@/utils/hooks';
+import type { ApiErrorResponseType } from '@/types/_initTypes';
 
 type EntityPayload = {
 	code: string;
@@ -32,6 +33,20 @@ const normalizeCode = (value: string) =>
 		.replace(/[^a-z0-9]+/g, '-')
 		.replace(/^-+|-+$/g, '')
 		.slice(0, 40);
+
+const getMutationErrorMessage = (error: unknown, fallback: string): string => {
+	const payload =
+		(error as { error?: ApiErrorResponseType; data?: ApiErrorResponseType }).error ??
+		(error as { error?: ApiErrorResponseType; data?: ApiErrorResponseType }).data ??
+		(error as ApiErrorResponseType);
+
+	if (payload?.details && typeof payload.details === 'object') {
+		const firstError = Object.values(payload.details)[0];
+		if (firstError) return String(Array.isArray(firstError) ? firstError[0] : firstError);
+	}
+
+	return fallback;
+};
 
 const AddEntityModal = <T extends { id?: number },>({
 	open,
@@ -65,8 +80,8 @@ const AddEntityModal = <T extends { id?: number },>({
 			});
 			onSuccess?.(entity);
 			close();
-		} catch {
-			setError(t.errors.genericError);
+		} catch (mutationError) {
+			setError(getMutationErrorMessage(mutationError, t.errors.genericError));
 		}
 	};
 

@@ -75,14 +75,14 @@ const EntityCrudControls = <T extends { id?: number },>({
 	const [actionLoading, setActionLoading] = useState(false);
 
 	const selectedId = useMemo(() => {
-		if (!selectedItem?.value) return null;
-		const parsed = Number(selectedItem.value);
+		if (!selectedItem?.code) return null;
+		const parsed = Number(selectedItem.code);
 		return Number.isFinite(parsed) ? parsed : null;
 	}, [selectedItem]);
 
 	const handleEditOpen = () => {
-		if (!selectedItem?.code) return;
-		setEditName(selectedItem.code);
+		if (!selectedItem?.value) return;
+		setEditName(selectedItem.value);
 		setEditError(null);
 		setEditOpen(true);
 	};
@@ -183,7 +183,7 @@ const EntityCrudControls = <T extends { id?: number },>({
 			{deleteOpen && selectedItem && (
 				<ActionModals
 					title={`${t.common.delete} ${label}`}
-					body={`${t.common.delete} ${selectedItem.code} ?`}
+					body={`${t.common.delete} ${selectedItem.value} ?`}
 					actions={[
 						{
 							text: t.common.cancel,
