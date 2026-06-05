@@ -262,10 +262,24 @@ describe('Zod Schema Validation', () => {
 					address: 'Casablanca',
 					phone: '212600000000',
 					is_active: true,
-					managed_by: [],
+					managed_by: [{ pk: 1, role: 'manager' }],
 					globalError: '',
 				}),
 			).not.toThrow();
+		});
+
+		it('requires at least one assigned user', () => {
+			expect(() =>
+				storeSchema.parse({
+					name: 'MBR SOUTH',
+					code: 'MBR_SOUTH',
+					address: 'Casablanca',
+					phone: '212600000000',
+					is_active: true,
+					managed_by: [],
+					globalError: '',
+				}),
+			).toThrow();
 		});
 
 		it('fails with missing name and code', () => {

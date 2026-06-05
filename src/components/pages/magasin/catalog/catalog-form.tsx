@@ -10,11 +10,7 @@ import {
 	Checkbox,
 	Divider,
 	FormControlLabel,
-	InputAdornment,
-	MenuItem,
 	Stack,
-	TextField,
-	ThemeProvider,
 	Typography,
 	useMediaQuery,
 	useTheme,
@@ -39,16 +35,30 @@ import { useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
+import CustomAutoCompleteSelect from '@/components/formikElements/customAutoCompleteSelect/customAutoCompleteSelect';
 import CustomTextInput from '@/components/formikElements/customTextInput/customTextInput';
 import PrimaryLoadingButton from '@/components/htmlElements/buttons/primaryLoadingButton/primaryLoadingButton';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
+import EntityCrudControls from '@/components/shared/entityCrudControls/entityCrudControls';
 import { useInitAccessToken } from '@/contexts/InitContext';
-import { useAddProductMutation, useEditProductMutation, useGetCategoriesQuery, useGetProductQuery } from '@/store/services/magasin';
+import {
+	useAddCategoryMutation,
+	useAddProductMutation,
+	useAddProductUnitMutation,
+	useDeleteCategoryMutation,
+	useDeleteProductUnitMutation,
+	useEditCategoryMutation,
+	useEditProductMutation,
+	useEditProductUnitMutation,
+	useGetCategoriesQuery,
+	useGetProductQuery,
+	useGetProductUnitsQuery,
+} from '@/store/services/magasin';
 import { CATALOG_LIST, CATALOG_VIEW } from '@/utils/routes';
-import { customDropdownTheme, textInputTheme } from '@/utils/themes';
+import { textInputTheme } from '@/utils/themes';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
 import { productSchema } from '@/utils/formValidationSchemas';
 import { useLanguage, useToast } from '@/utils/hooks';
@@ -57,8 +67,6 @@ import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '
 import type { ProductFormValues, ProductPayload } from '@/types/gestionMagasinTypes';
 
 const inputTheme = textInputTheme();
-const dropdownTheme = customDropdownTheme();
-
 type Props = SessionProps & {
 	id?: number;
 	storeId?: number;
@@ -69,7 +77,7 @@ const toPayload = (values: ProductFormValues): ProductPayload => ({
 	barcode: values.barcode.trim() || null,
 	name: values.name.trim(),
 	category: values.category ? Number(values.category) : null,
-	unit: values.unit.trim(),
+	unit: Number(values.unit),
 	purchase_price: values.purchase_price,
 	wholesale_price: values.wholesale_price,
 	detail_price: values.detail_price,
@@ -99,6 +107,13 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 		{ skip: !token || !isEditMode || !storeId },
 	);
 	const { data: categories } = useGetCategoriesQuery(undefined, { skip: !token });
+	const { data: units } = useGetProductUnitsQuery(undefined, { skip: !token });
+	const [addCategory] = useAddCategoryMutation();
+	const [editCategory] = useEditCategoryMutation();
+	const [deleteCategory] = useDeleteCategoryMutation();
+	const [addProductUnit] = useAddProductUnitMutation();
+	const [editProductUnit] = useEditProductUnitMutation();
+	const [deleteProductUnit] = useDeleteProductUnitMutation();
 	const [addProduct, addState] = useAddProductMutation();
 	const [editProduct, editState] = useEditProductMutation();
 
@@ -114,7 +129,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 			barcode: product?.barcode ?? '',
 			name: product?.name ?? '',
 			category: product?.category ? String(product.category) : '',
-			unit: product?.unit ?? 'unité',
+			unit: product?.unit ? String(product.unit) : '',
 			purchase_price: product?.purchase_price ?? '0',
 			wholesale_price: product?.wholesale_price ?? '0',
 			detail_price: product?.detail_price ?? '0',
@@ -186,6 +201,20 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 
 	const isLoading = isPending || addState.isLoading || editState.isLoading || (isEditMode && isProductLoading);
 	const shouldShowError = (axiosError?.status ?? 0) > 400 && !isLoading;
+	const categoryOptions = useMemo(() => categories?.results ?? [], [categories?.results]);
+	const unitOptions = useMemo(() => units?.results ?? [], [units?.results]);
+	const categoryItems = useMemo(
+		() => categoryOptions.map((category) => ({ code: category.name, value: String(category.id) })),
+		[categoryOptions],
+	);
+	const unitItems = useMemo(
+		() => unitOptions.map((unit) => ({ code: unit.name, value: String(unit.id) })),
+		[unitOptions],
+	);
+	const selectedCategory = categoryItems.find((category) => category.value === formik.values.category) ?? null;
+	const selectedUnit = unitItems.find((unit) => unit.value === formik.values.unit) ?? null;
+	const categoryError = (formik.touched.category || hasAttemptedSubmit) && Boolean(formik.errors.category);
+	const unitError = (formik.touched.unit || hasAttemptedSubmit) && Boolean(formik.errors.unit);
 
 	return (
 		<NavigationBar title={isEditMode ? t.magasin.editProduct : t.magasin.newProduct}>
@@ -272,39 +301,61 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														theme={inputTheme}
 														startIcon={<DescriptionIcon fontSize="small" />}
 													/>
-													<ThemeProvider theme={dropdownTheme}>
-														<TextField
-															select
-															size="small"
-															id="category"
-															label={t.magasin.category}
-															value={formik.values.category}
-															onChange={(event) => void formik.setFieldValue('category', event.target.value)}
-															onBlur={formik.handleBlur('category')}
-															error={formik.touched.category && Boolean(formik.errors.category)}
-															helperText={formik.touched.category ? formik.errors.category : ''}
-															InputProps={{ startAdornment: <InputAdornment position="start"><CategoryIcon fontSize="small" /></InputAdornment> }}
-															fullWidth
-														>
-															<MenuItem value="">{t.common.selectValue}</MenuItem>
-															{categories?.results.map((category) => (
-																<MenuItem key={category.id} value={String(category.id)}>{category.name}</MenuItem>
-															))}
-														</TextField>
-													</ThemeProvider>
-													<CustomTextInput
-														id="unit"
-														type="text"
-														label={`${t.magasin.unit} *`}
-														value={formik.values.unit}
-														onChange={formik.handleChange('unit')}
-														onBlur={formik.handleBlur('unit')}
-														error={formik.touched.unit && Boolean(formik.errors.unit)}
-														helperText={formik.touched.unit ? formik.errors.unit : ''}
-														fullWidth
+													<CustomAutoCompleteSelect
+														id="category"
 														size="small"
-														theme={inputTheme}
+														noOptionsText={t.common.noOptions}
+														label={`${t.magasin.category} *`}
+														items={categoryItems}
+														theme={theme}
+														value={selectedCategory}
+														fullWidth
+														onChange={(_, nextCategory) => void formik.setFieldValue('category', nextCategory ? nextCategory.value : '')}
+														onBlur={formik.handleBlur('category')}
+														error={categoryError}
+														helperText={(formik.touched.category || hasAttemptedSubmit) ? formik.errors.category : ''}
+														startIcon={<CategoryIcon fontSize="small" />}
+														endIcon={
+															<EntityCrudControls
+																label={t.magasin.category.toLowerCase()}
+																icon={<CategoryIcon fontSize="small" />}
+																inputTheme={inputTheme}
+																selectedItem={selectedCategory}
+																addEntity={(data) => addCategory(data).unwrap()}
+																editEntity={({ id: entityId, data }) => editCategory({ id: entityId, data }).unwrap()}
+																deleteEntity={({ id: entityId }) => deleteCategory({ id: entityId }).unwrap()}
+																onAddSuccess={(newId) => void formik.setFieldValue('category', String(newId))}
+																onDeleteSuccess={() => void formik.setFieldValue('category', '')}
+															/>
+														}
+													/>
+													<CustomAutoCompleteSelect
+														id="unit"
+														size="small"
+														noOptionsText={t.common.noOptions}
+														label={`${t.magasin.unit} *`}
+														items={unitItems}
+														theme={theme}
+														value={selectedUnit}
+														fullWidth
+														onChange={(_, nextUnit) => void formik.setFieldValue('unit', nextUnit ? nextUnit.value : '')}
+														onBlur={formik.handleBlur('unit')}
+														error={unitError}
+														helperText={(formik.touched.unit || hasAttemptedSubmit) ? formik.errors.unit : ''}
 														startIcon={<StraightenIcon fontSize="small" />}
+														endIcon={
+															<EntityCrudControls
+																label={t.magasin.unit.toLowerCase()}
+																icon={<StraightenIcon fontSize="small" />}
+																inputTheme={inputTheme}
+																selectedItem={selectedUnit}
+																addEntity={(data) => addProductUnit(data).unwrap()}
+																editEntity={({ id: entityId, data }) => editProductUnit({ id: entityId, data }).unwrap()}
+																deleteEntity={({ id: entityId }) => deleteProductUnit({ id: entityId }).unwrap()}
+																onAddSuccess={(newId) => void formik.setFieldValue('unit', String(newId))}
+																onDeleteSuccess={() => void formik.setFieldValue('unit', '')}
+															/>
+														}
 													/>
 												</Stack>
 											</CardContent>

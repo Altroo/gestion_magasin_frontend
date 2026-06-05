@@ -81,7 +81,7 @@ const PurchasesViewClient = ({ session, id }: Props) => {
 								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(PURCHASES_LIST)}>{t.magasin.backToPurchases}</Button>
 								{purchase && (
 									<Stack direction="row" spacing={1}>
-										{permissions.can_create && purchase.status === 'draft' && <Button variant="outlined" color="primary" size="small" startIcon={<EditIcon />} onClick={() => router.push(PURCHASES_EDIT(purchase.id))}>{t.common.edit}</Button>}
+										{permissions.can_edit && purchase.status !== 'received' && <Button variant="outlined" color="primary" size="small" startIcon={<EditIcon />} onClick={() => router.push(PURCHASES_EDIT(purchase.id))}>{t.common.edit}</Button>}
 										{permissions.can_create && purchase.status === 'draft' && <Button variant="outlined" color="success" size="small" startIcon={<ReceiveIcon />} onClick={() => setShowReceiveModal(true)}>{t.magasin.receivePurchase}</Button>}
 										{permissions.can_delete && purchase.status !== 'received' && <Button variant="outlined" color="error" size="small" startIcon={<DeleteIcon />} onClick={() => setShowDeleteModal(true)}>{t.common.delete}</Button>}
 									</Stack>

@@ -1,7 +1,7 @@
 'use client';
 
 import { Alert, Box, Tab, Tabs } from '@mui/material';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useGetMyStoresQuery } from '@/store/services/magasin';
 import { useLanguage } from '@/utils/hooks';
 import type { StoreMembershipType } from '@/types/gestionMagasinTypes';
@@ -18,10 +18,26 @@ const isStoreTabVisible = (membership: StoreMembershipType) =>
 	!membership.store.is_global_stock &&
 	membership.store.code !== 'mbr-south';
 
+const STORE_TAB_STORAGE_KEY = 'gestion-magasin:selected-store-id';
+
+const getPersistedStoreId = () => {
+	if (typeof window === 'undefined') return undefined;
+	const value = window.localStorage.getItem(STORE_TAB_STORAGE_KEY);
+	const parsed = value ? Number(value) : undefined;
+	return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+const setPersistedStoreId = (storeId: number) => {
+	if (typeof window === 'undefined') return;
+	window.localStorage.setItem(STORE_TAB_STORAGE_KEY, String(storeId));
+};
+
 export const useSelectedStore = (token?: string) => {
 	const { data = [], isLoading } = useGetMyStoresQuery(undefined, { skip: !token });
+	const [persistedStoreId] = useState<number | undefined>(() => getPersistedStoreId());
 	const visibleMemberships = useMemo(() => data.filter(isStoreTabVisible), [data]);
-	const defaultStore = visibleMemberships[0]?.store;
+	const persistedStore = visibleMemberships.find((membership) => membership.store.id === persistedStoreId)?.store;
+	const defaultStore = persistedStore ?? visibleMemberships[0]?.store;
 	const globalStore = data.find((membership) => membership.is_active && membership.store.is_active && membership.store.is_global_stock)?.store;
 	return {
 		memberships: visibleMemberships,
@@ -57,7 +73,10 @@ const StoreTabs = ({ selectedStoreId, onChange, token }: Props) => {
 		>
 			<Tabs
 				value={visibleActiveStoreId ?? false}
-				onChange={(_, value: number) => onChange(value)}
+				onChange={(_, value: number) => {
+					setPersistedStoreId(value);
+					onChange(value);
+				}}
 				variant="scrollable"
 				allowScrollButtonsMobile
 				scrollButtons="auto"

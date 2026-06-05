@@ -117,8 +117,13 @@ export type TranslationDictionary = {
     validated: string;
     cancelled: string;
     received: string;
+    confirmed: string;
+    voided: string;
     paid: string;
     payable: string;
+    present: string;
+    off: string;
+    absent: string;
     pos: string;
     barcode: string;
     scan: string;

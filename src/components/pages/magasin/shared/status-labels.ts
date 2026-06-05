@@ -24,13 +24,16 @@ export const magasinStatusLabel = (t: TranslationDictionary, value?: string | nu
 		validated: t.magasin.validated,
 		cancelled: t.magasin.cancelled,
 		received: t.magasin.received,
-		confirmed: t.magasin.validated,
-		void: t.magasin.cancelled,
+		confirmed: t.magasin.confirmed,
+		void: t.magasin.voided,
 		paid: t.magasin.paid,
 		credit: t.magasin.credit,
 		payable: t.magasin.payable,
 		active: t.magasin.activePromotion,
 		expired: t.magasin.expiredPromotion,
+		present: t.magasin.present,
+		off: t.magasin.off,
+		absent: t.magasin.absent,
 	};
 	return labels[value] ?? value;
 };

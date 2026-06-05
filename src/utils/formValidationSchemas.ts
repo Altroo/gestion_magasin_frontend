@@ -163,8 +163,8 @@ export const productSchema = z.object({
 	reference: optionalTextField(1, 80),
 	barcode: optionalTextField(1, 80),
 	name: requiredTextField(2, 255),
-	category: optionalChoiceField(),
-	unit: requiredTextField(1, 40),
+	category: requiredNumberTextField(),
+	unit: requiredNumberTextField(),
 	purchase_price: requiredNumberTextField(),
 	wholesale_price: requiredNumberTextField(),
 	detail_price: requiredNumberTextField(),
@@ -184,7 +184,7 @@ export const storeSchema = z.object({
 	phone: optionalTextField(1, 40),
 	is_active: z.boolean(),
 	is_global_stock: z.boolean().optional(),
-	managed_by: z.array(z.object({ pk: z.number(), role: z.string().min(1) })),
+	managed_by: z.array(z.object({ pk: z.number(), role: z.string().min(1) })).min(1, { error: INPUT_REQUIRED }),
 	globalError: optionalTextField(1, 500),
 });
 

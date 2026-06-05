@@ -102,7 +102,7 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 				<MobileActionsMenu
 					actions={[
 						{ label: t.common.view, icon: <VisibilityIcon />, onClick: () => router.push(PURCHASES_VIEW(params.row.id)), color: 'info', show: permissions.can_view },
-						{ label: t.common.edit, icon: <EditIcon />, onClick: () => router.push(PURCHASES_EDIT(params.row.id)), color: 'primary', show: permissions.can_create && params.row.status === 'draft' },
+						{ label: t.common.edit, icon: <EditIcon />, onClick: () => router.push(PURCHASES_EDIT(params.row.id)), color: 'primary', show: permissions.can_edit && params.row.status !== 'received' },
 						{ label: t.magasin.receivePurchase, icon: <ReceiveIcon />, onClick: () => setReceiveTarget(params.row.id), color: 'success', show: permissions.can_create && params.row.status === 'draft' },
 						{ label: t.common.delete, icon: <DeleteIcon />, onClick: () => setDeleteTarget(params.row.id), color: 'error', show: permissions.can_delete && params.row.status !== 'received' },
 					]}

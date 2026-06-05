@@ -23,6 +23,7 @@ import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiP
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
+import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
 import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeleteAttendanceRecordMutation, useGetAttendanceRecordQuery } from '@/store/services/magasin';
@@ -119,7 +120,7 @@ const AttendanceViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2, flexWrap: 'wrap' }}>
 												<BadgeIcon color="primary" />
 												<Typography variant="h6" fontWeight={700}>{attendance.employee_name}</Typography>
-												<Chip size="small" label={attendance.status} color={attendance.status === 'present' ? 'success' : attendance.status === 'absent' ? 'error' : 'default'} />
+												<Chip size="small" label={magasinStatusLabel(t, attendance.status)} color={attendance.status === 'present' ? 'success' : attendance.status === 'absent' ? 'error' : 'default'} />
 											</Stack>
 											<Stack direction="row" spacing={1} flexWrap="wrap">
 												<Chip label={`ID: ${attendance.id}`} size="small" variant="outlined" />

@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, Box, Button, Card, CardContent, Divider, IconButton, InputAdornment, MenuItem, Stack, TextField, ThemeProvider, Typography } from '@mui/material';
 import { Add as AddIcon, ArrowBack as ArrowBackIcon, Close as CloseIcon, Description as DescriptionIcon, Inventory2 as InventoryIcon, Numbers as NumbersIcon, Save as SaveIcon, Storefront as StorefrontIcon, Warning as WarningIcon } from '@mui/icons-material';
-import { useFormik } from 'formik';
+import { getIn, useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
@@ -142,6 +142,11 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 	};
 
 	const isLoading = addState.isLoading || editState.isLoading || isInventoryLoading || areProductsLoading;
+	const lineError = (index: number, field: string) => {
+		const error = getIn(formik.errors, `lines.${index}.${field}`);
+		const touched = getIn(formik.touched, `lines.${index}.${field}`);
+		return (touched || hasAttemptedSubmit) && typeof error === 'string' ? error : '';
+	};
 
 	return (
 		<NavigationBar title={isEditMode ? t.magasin.editInventory : t.magasin.newInventory}>
@@ -165,10 +170,10 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}><StorefrontIcon color="primary" /><Typography variant="h6" fontWeight={700}>{t.magasin.inventoryDetails}</Typography></Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2.5 }}>
-													<CustomTextInput id="code" type="text" label={t.magasin.inventoryCode} value={formik.values.code} onChange={formik.handleChange('code')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
-													<CustomTextInput id="title" type="text" label={t.magasin.inventoryTitle} value={formik.values.title} onChange={formik.handleChange('title')} fullWidth size="small" theme={inputTheme} startIcon={<InventoryIcon fontSize="small" />} />
-													<CustomTextInput id="inventory_date" type="date" label={t.magasin.date} value={formik.values.inventory_date} onChange={formik.handleChange('inventory_date')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
-													<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={t.magasin.status} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> }} fullWidth>{stockWorkflowStatusOptions(t).map((option) => <MenuItem key={option.id} value={option.id}>{option.nom}</MenuItem>)}</TextField></ThemeProvider>
+													<CustomTextInput id="code" type="text" label={`${t.magasin.inventoryCode} *`} value={formik.values.code} onChange={formik.handleChange('code')} onBlur={formik.handleBlur('code')} error={(formik.touched.code || hasAttemptedSubmit) && Boolean(formik.errors.code)} helperText={(formik.touched.code || hasAttemptedSubmit) ? formik.errors.code : ''} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
+													<CustomTextInput id="title" type="text" label={`${t.magasin.inventoryTitle} *`} value={formik.values.title} onChange={formik.handleChange('title')} onBlur={formik.handleBlur('title')} error={(formik.touched.title || hasAttemptedSubmit) && Boolean(formik.errors.title)} helperText={(formik.touched.title || hasAttemptedSubmit) ? formik.errors.title : ''} fullWidth size="small" theme={inputTheme} startIcon={<InventoryIcon fontSize="small" />} />
+													<CustomTextInput id="inventory_date" type="date" label={`${t.magasin.date} *`} value={formik.values.inventory_date} onChange={formik.handleChange('inventory_date')} onBlur={formik.handleBlur('inventory_date')} error={(formik.touched.inventory_date || hasAttemptedSubmit) && Boolean(formik.errors.inventory_date)} helperText={(formik.touched.inventory_date || hasAttemptedSubmit) ? formik.errors.inventory_date : ''} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
+													<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={`${t.magasin.status} *`} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} onBlur={formik.handleBlur('status')} error={(formik.touched.status || hasAttemptedSubmit) && Boolean(formik.errors.status)} helperText={(formik.touched.status || hasAttemptedSubmit) ? formik.errors.status : ''} InputProps={{ startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> }} fullWidth>{stockWorkflowStatusOptions(t).map((option) => <MenuItem key={option.id} value={option.id}>{option.nom}</MenuItem>)}</TextField></ThemeProvider>
 												</Box>
 												<Box sx={{ mt: 2.5 }}><CustomTextInput id="note" type="text" label={t.magasin.note} value={formik.values.note} onChange={formik.handleChange('note')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} /></Box>
 											</CardContent>
@@ -179,9 +184,9 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 												<Divider sx={{ mb: 3 }} />
 												<Stack spacing={2}>{formik.values.lines.map((line, index) => (
 													<Box key={index} sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 150px 150px 1fr 44px' }, gap: 2 }}>
-														<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={`${t.magasin.product} *`} value={line.product} onChange={(event) => void formik.setFieldValue(`lines.${index}.product`, event.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><InventoryIcon fontSize="small" /></InputAdornment> }} fullWidth><MenuItem value="">{t.common.selectValue}</MenuItem>{products?.results.map((product) => <MenuItem key={product.id} value={String(product.id)}>{product.reference ?? product.barcode ?? product.id} - {product.name}</MenuItem>)}</TextField></ThemeProvider>
-														<CustomTextInput id={`lines.${index}.expected_quantity`} type="number" label={t.magasin.expectedQuantity} value={line.expected_quantity} onChange={formik.handleChange(`lines.${index}.expected_quantity`)} fullWidth size="small" theme={inputTheme} startIcon={<NumbersIcon fontSize="small" />} />
-														<CustomTextInput id={`lines.${index}.counted_quantity`} type="number" label={t.magasin.countedQuantity} value={line.counted_quantity} onChange={formik.handleChange(`lines.${index}.counted_quantity`)} fullWidth size="small" theme={inputTheme} startIcon={<NumbersIcon fontSize="small" />} />
+														<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={`${t.magasin.product} *`} value={line.product} onChange={(event) => void formik.setFieldValue(`lines.${index}.product`, event.target.value)} onBlur={formik.handleBlur(`lines.${index}.product`)} error={Boolean(lineError(index, 'product'))} helperText={lineError(index, 'product')} InputProps={{ startAdornment: <InputAdornment position="start"><InventoryIcon fontSize="small" /></InputAdornment> }} fullWidth><MenuItem value="">{t.common.selectValue}</MenuItem>{products?.results.map((product) => <MenuItem key={product.id} value={String(product.id)}>{product.reference ?? product.barcode ?? product.id} - {product.name}</MenuItem>)}</TextField></ThemeProvider>
+														<CustomTextInput id={`lines.${index}.expected_quantity`} type="number" label={`${t.magasin.expectedQuantity} *`} value={line.expected_quantity} onChange={formik.handleChange(`lines.${index}.expected_quantity`)} onBlur={formik.handleBlur(`lines.${index}.expected_quantity`)} error={Boolean(lineError(index, 'expected_quantity'))} helperText={lineError(index, 'expected_quantity')} fullWidth size="small" theme={inputTheme} startIcon={<NumbersIcon fontSize="small" />} />
+														<CustomTextInput id={`lines.${index}.counted_quantity`} type="number" label={`${t.magasin.countedQuantity} *`} value={line.counted_quantity} onChange={formik.handleChange(`lines.${index}.counted_quantity`)} onBlur={formik.handleBlur(`lines.${index}.counted_quantity`)} error={Boolean(lineError(index, 'counted_quantity'))} helperText={lineError(index, 'counted_quantity')} fullWidth size="small" theme={inputTheme} startIcon={<NumbersIcon fontSize="small" />} />
 														<CustomTextInput id={`lines.${index}.note`} type="text" label={t.magasin.note} value={line.note} onChange={formik.handleChange(`lines.${index}.note`)} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
 														<IconButton color="error" onClick={() => removeLine(index)} sx={{ height: 40, width: 40 }}><CloseIcon /></IconButton>
 													</Box>

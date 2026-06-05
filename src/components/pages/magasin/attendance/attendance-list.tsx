@@ -10,6 +10,7 @@ import DarkTooltip from '@/components/htmlElements/tooltip/darkTooltip/darkToolt
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
+import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
 import StoreTabs, { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
@@ -61,9 +62,9 @@ const AttendanceClient = ({ session }: SessionProps) => {
 	const [deleteAttendanceRecord] = useDeleteAttendanceRecordMutation();
 
 	const statusOptions = [
-		{ value: 'present', label: 'Présent' },
-		{ value: 'off', label: 'Repos' },
-		{ value: 'absent', label: 'Absent' },
+		{ value: 'present', label: t.magasin.present },
+		{ value: 'off', label: t.magasin.off },
+		{ value: 'absent', label: t.magasin.absent },
 	];
 	const chipFilters = useMemo(
 		() => [
@@ -72,13 +73,13 @@ const AttendanceClient = ({ session }: SessionProps) => {
 				label: t.magasin.status,
 				paramName: 'status',
 				options: [
-					{ id: 'present', nom: 'Présent' },
-					{ id: 'off', nom: 'Repos' },
-					{ id: 'absent', nom: 'Absent' },
+					{ id: 'present', nom: t.magasin.present },
+					{ id: 'off', nom: t.magasin.off },
+					{ id: 'absent', nom: t.magasin.absent },
 				],
 			},
 		],
-		[t.magasin.status],
+		[t.magasin.absent, t.magasin.off, t.magasin.present, t.magasin.status],
 	);
 
 	const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -137,7 +138,7 @@ const AttendanceClient = ({ session }: SessionProps) => {
 			flex: 0.8,
 			minWidth: 120,
 			filterOperators: createDropdownFilterOperators(statusOptions, t.common.all),
-			renderCell: (params: GridRenderCellParams<AttendanceRecordType>) => <Chip size="small" label={params.value} />,
+			renderCell: (params: GridRenderCellParams<AttendanceRecordType>) => <Chip size="small" label={magasinStatusLabel(t, params.value as string)} />,
 		},
 		{
 			field: 'actions',

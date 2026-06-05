@@ -20,6 +20,7 @@ import type {
 	InventorySessionType,
 	ProductPayload,
 	ProductType,
+	ProductUnitType,
 	PromotionPayload,
 	PromotionType,
 	PurchasePayload,
@@ -153,6 +154,64 @@ export const magasinApi = createApi({
 				},
 			}),
 			providesTags: ['Products'],
+		}),
+		addCategory: builder.mutation<CategoryType, { code: string; name: string; is_active?: boolean }>({
+			query: (data) => ({
+				url: process.env.NEXT_PUBLIC_CATALOG_CATEGORIES,
+				method: 'POST',
+				data,
+			}),
+			invalidatesTags: ['Products'],
+		}),
+		editCategory: builder.mutation<CategoryType, { id: number; data: Partial<{ code: string; name: string; is_active: boolean }> }>({
+			query: ({ id, data }) => ({
+				url: `${process.env.NEXT_PUBLIC_CATALOG_CATEGORIES}${id}/`,
+				method: 'PATCH',
+				data,
+			}),
+			invalidatesTags: ['Products'],
+		}),
+		deleteCategory: builder.mutation<void, { id: number }>({
+			query: ({ id }) => ({
+				url: `${process.env.NEXT_PUBLIC_CATALOG_CATEGORIES}${id}/`,
+				method: 'DELETE',
+			}),
+			invalidatesTags: ['Products'],
+		}),
+		getProductUnits: builder.query<PaginationResponseType<ProductUnitType>, { search?: string; page?: number; pageSize?: number } | void>({
+			query: (params) => ({
+				url: process.env.NEXT_PUBLIC_CATALOG_UNITS,
+				method: 'GET',
+				params: {
+					search: params?.search,
+					page: params?.page ?? 1,
+					page_size: params?.pageSize ?? 100,
+				},
+			}),
+			providesTags: ['Products'],
+		}),
+		addProductUnit: builder.mutation<ProductUnitType, { code: string; name: string; is_active?: boolean }>({
+			query: (data) => ({
+				url: process.env.NEXT_PUBLIC_CATALOG_UNITS,
+				method: 'POST',
+				data,
+			}),
+			invalidatesTags: ['Products'],
+		}),
+		editProductUnit: builder.mutation<ProductUnitType, { id: number; data: Partial<{ code: string; name: string; is_active: boolean }> }>({
+			query: ({ id, data }) => ({
+				url: `${process.env.NEXT_PUBLIC_CATALOG_UNITS}${id}/`,
+				method: 'PATCH',
+				data,
+			}),
+			invalidatesTags: ['Products'],
+		}),
+		deleteProductUnit: builder.mutation<void, { id: number }>({
+			query: ({ id }) => ({
+				url: `${process.env.NEXT_PUBLIC_CATALOG_UNITS}${id}/`,
+				method: 'DELETE',
+			}),
+			invalidatesTags: ['Products'],
 		}),
 		getProducts: builder.query<PaginationResponseType<ProductType>, ListParams>({
 			query: ({ store, search, page = 1, pageSize = 10, ...filters }) => ({
@@ -637,9 +696,11 @@ export const magasinApi = createApi({
 });
 
 export const {
+	useAddCategoryMutation,
 	useAddExpenseMutation,
 	useAddInventorySessionMutation,
 	useAddAttendanceRecordMutation,
+	useAddProductUnitMutation,
 	useAddPromotionMutation,
 	useAddPurchaseMutation,
 	useAddStoreMutation,
@@ -655,18 +716,22 @@ export const {
 	useBulkDeleteStockTransfersMutation,
 	useCreateSaleMutation,
 	useDeleteAttendanceRecordMutation,
+	useDeleteCategoryMutation,
 	useDeleteExpenseMutation,
 	useDeleteInventorySessionMutation,
 	useDeleteProductMutation,
+	useDeleteProductUnitMutation,
 	useDeletePromotionMutation,
 	useDeletePurchaseMutation,
 	useDeleteStoreMutation,
 	useDeleteStockBalanceMutation,
 	useDeleteStockTransferMutation,
 	useEditAttendanceRecordMutation,
+	useEditCategoryMutation,
 	useEditExpenseMutation,
 	useEditInventorySessionMutation,
 	useEditProductMutation,
+	useEditProductUnitMutation,
 	useEditPromotionMutation,
 	useEditPurchaseMutation,
 	useEditStoreMutation,
@@ -685,6 +750,7 @@ export const {
 	useGetInventorySessionsQuery,
 	useGetMyStoresQuery,
 	useGetProductQuery,
+	useGetProductUnitsQuery,
 	useGetProductsQuery,
 	useGetPromotionQuery,
 	useGetPromotionsQuery,

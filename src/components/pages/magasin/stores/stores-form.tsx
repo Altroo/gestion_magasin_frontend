@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
+	Autocomplete,
 	Box,
 	Button,
 	Card,
@@ -147,6 +148,7 @@ const StoresFormClient = ({ session, id }: Props) => {
 	const rolesData = rolesRaw?.results ?? [];
 	const assignedUserIds = formik.values.managed_by.map((item) => item.pk);
 	const availableUsers = usersData.filter((user) => user.is_active && !assignedUserIds.includes(user.id));
+	const selectedUser = availableUsers.find((user) => String(user.id) === selectedUserId) ?? null;
 
 	const addManagedUser = () => {
 		if (!selectedUserId || !selectedRole) return;
@@ -157,6 +159,7 @@ const StoresFormClient = ({ session, id }: Props) => {
 			...formik.values.managed_by,
 			{ pk: user.id, role: role.code, role_name: role.name },
 		]);
+		void formik.setFieldTouched('managed_by', true);
 		setSelectedUserId('');
 		setSelectedRole('');
 	};
@@ -166,6 +169,7 @@ const StoresFormClient = ({ session, id }: Props) => {
 			'managed_by',
 			formik.values.managed_by.filter((item) => item.pk !== userId),
 		);
+		void formik.setFieldTouched('managed_by', true);
 	};
 
 	const validationErrors = useMemo(() => {
@@ -182,6 +186,9 @@ const StoresFormClient = ({ session, id }: Props) => {
 
 	const isLoading = isPending || addState.isLoading || editState.isLoading || (isEditMode && isStoreLoading);
 	const shouldShowError = (axiosError?.status ?? 0) > 400 && !isLoading;
+	const managedByError = (formik.touched.managed_by || hasAttemptedSubmit) && typeof formik.errors.managed_by === 'string'
+		? formik.errors.managed_by
+		: '';
 
 	return (
 		<NavigationBar title={isEditMode ? t.magasin.editStore : t.magasin.newStore}>
@@ -296,23 +303,43 @@ const StoresFormClient = ({ session, id }: Props) => {
 												<Divider sx={{ mb: 3 }} />
 												<Stack spacing={2}>
 													<Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ xs: 'stretch', md: 'center' }}>
-														<ThemeProvider theme={customDropdownTheme()}>
-															<TextField
-																select
-																size="small"
-																label={t.users.selectUser}
-																value={selectedUserId}
-																onChange={(event) => setSelectedUserId(event.target.value)}
-																fullWidth
-																InputProps={{ startAdornment: <InputAdornment position="start"><PeopleIcon fontSize="small" /></InputAdornment> }}
-															>
-																{availableUsers.map((user) => (
-																	<MenuItem key={user.id} value={String(user.id)}>
-																		{`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.email}
-																	</MenuItem>
-																))}
-															</TextField>
-														</ThemeProvider>
+														<Autocomplete
+															size="small"
+															options={availableUsers}
+															value={selectedUser}
+															onChange={(_, nextUser) => setSelectedUserId(nextUser ? String(nextUser.id) : '')}
+															getOptionLabel={(user) => `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.email}
+															isOptionEqualToValue={(option, value) => option.id === value.id}
+															noOptionsText={t.common.noOptions}
+															fullWidth
+															sx={{
+																'& .MuiOutlinedInput-root': {
+																	minHeight: 40,
+																	borderRadius: '8px',
+																	fontFamily: 'Poppins',
+																	fontSize: '16px',
+																},
+																'& .MuiAutocomplete-input': {
+																	fontFamily: 'Poppins',
+																	fontSize: '16px',
+																},
+															}}
+															renderInput={(params) => (
+																<TextField
+																	{...params}
+																	label={t.users.selectUser}
+																	InputProps={{
+																		...params.InputProps,
+																		startAdornment: (
+																			<>
+																				<InputAdornment position="start"><PeopleIcon fontSize="small" /></InputAdornment>
+																				{params.InputProps.startAdornment}
+																			</>
+																		),
+																	}}
+																/>
+															)}
+														/>
 														<ThemeProvider theme={customDropdownTheme()}>
 															<TextField
 																select
@@ -328,7 +355,7 @@ const StoresFormClient = ({ session, id }: Props) => {
 																))}
 															</TextField>
 														</ThemeProvider>
-														<Button variant="contained" startIcon={<AddIcon />} onClick={addManagedUser} disabled={!selectedUserId || !selectedRole}>
+														<Button variant="contained" startIcon={<AddIcon />} onClick={addManagedUser} disabled={!selectedUserId || !selectedRole} sx={{ minWidth: 120, height: 40 }}>
 															{t.common.add}
 														</Button>
 													</Stack>
@@ -353,6 +380,11 @@ const StoresFormClient = ({ session, id }: Props) => {
 															})
 														)}
 													</Stack>
+													{managedByError && (
+														<Typography color="error" variant="caption">
+															{managedByError}
+														</Typography>
+													)}
 												</Stack>
 											</CardContent>
 										</Card>

@@ -192,6 +192,10 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 		const touched = getIn(formik.touched, `lines.${index}.${field}`);
 		return (touched || hasAttemptedSubmit) && typeof error === 'string' ? error : '';
 	};
+	const fieldError = (field: 'payment_status' | 'paid_amount' | 'discount_amount' | 'note') =>
+		(formik.touched[field] || hasAttemptedSubmit) && typeof formik.errors[field] === 'string'
+			? formik.errors[field]
+			: '';
 
 	const setLineProduct = (index: number, productId: string) => {
 		const product = productOptions.find((item) => item.id === Number(productId));
@@ -265,9 +269,12 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 															select
 															size="small"
 															id="payment_status"
-															label={t.magasin.paymentStatus}
+															label={`${t.magasin.paymentStatus} *`}
 															value={formik.values.payment_status}
 															onChange={(event) => void formik.setFieldValue('payment_status', event.target.value)}
+															onBlur={formik.handleBlur('payment_status')}
+															error={Boolean(fieldError('payment_status'))}
+															helperText={fieldError('payment_status')}
 															InputProps={{ startAdornment: <InputAdornment position="start"><CreditCardIcon fontSize="small" /></InputAdornment> }}
 															fullWidth
 														>
@@ -279,12 +286,12 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 														<CustomTextInput
 															id="paid_amount"
 															type="number"
-															label={t.magasin.paidAmount}
+															label={`${t.magasin.paidAmount} *`}
 															value={formik.values.paid_amount}
 															onChange={formik.handleChange('paid_amount')}
 															onBlur={formik.handleBlur('paid_amount')}
-															error={formik.touched.paid_amount && Boolean(formik.errors.paid_amount)}
-															helperText={formik.touched.paid_amount ? formik.errors.paid_amount : ''}
+															error={Boolean(fieldError('paid_amount'))}
+															helperText={fieldError('paid_amount')}
 															fullWidth
 															size="small"
 															theme={inputTheme}
@@ -293,12 +300,12 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 														<CustomTextInput
 															id="discount_amount"
 															type="number"
-															label={t.magasin.discountAmount}
+															label={`${t.magasin.discountAmount} *`}
 															value={formik.values.discount_amount}
 															onChange={formik.handleChange('discount_amount')}
 															onBlur={formik.handleBlur('discount_amount')}
-															error={formik.touched.discount_amount && Boolean(formik.errors.discount_amount)}
-															helperText={formik.touched.discount_amount ? formik.errors.discount_amount : ''}
+															error={Boolean(fieldError('discount_amount'))}
+															helperText={fieldError('discount_amount')}
 															fullWidth
 															size="small"
 															theme={inputTheme}
@@ -312,8 +319,8 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 														value={formik.values.note}
 														onChange={formik.handleChange('note')}
 														onBlur={formik.handleBlur('note')}
-														error={formik.touched.note && Boolean(formik.errors.note)}
-														helperText={formik.touched.note ? formik.errors.note : ''}
+														error={Boolean(fieldError('note'))}
+														helperText={fieldError('note')}
 														fullWidth
 														size="small"
 														theme={inputTheme}
@@ -344,7 +351,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 																<TextField
 																	select
 																	size="small"
-																	label={t.magasin.lineType}
+																	label={`${t.magasin.lineType} *`}
 																	value={line.type}
 																	onChange={(event) => {
 																		const type = event.target.value as 'product' | 'promotion';
@@ -353,6 +360,9 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 																		void formik.setFieldValue(`lines.${index}.promotion`, '');
 																		void formik.setFieldValue(`lines.${index}.unit_price`, '0');
 																	}}
+																	onBlur={formik.handleBlur(`lines.${index}.type`)}
+																	error={Boolean(getLineFieldError(index, 'type'))}
+																	helperText={getLineFieldError(index, 'type')}
 																	InputProps={{ startAdornment: <InputAdornment position="start">{line.type === 'promotion' ? <LocalOfferIcon fontSize="small" /> : <InventoryIcon fontSize="small" />}</InputAdornment> }}
 																	fullWidth
 																>
@@ -364,9 +374,10 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 																<TextField
 																	select
 																	size="small"
-																	label={line.type === 'promotion' ? t.magasin.promotion : t.magasin.product}
+																	label={`${line.type === 'promotion' ? t.magasin.promotion : t.magasin.product} *`}
 																	value={line.type === 'promotion' ? line.promotion : line.product}
 																	onChange={(event) => (line.type === 'promotion' ? setLinePromotion(index, event.target.value) : setLineProduct(index, event.target.value))}
+																	onBlur={formik.handleBlur(`lines.${index}.${line.type === 'promotion' ? 'promotion' : 'product'}`)}
 																	InputProps={{ startAdornment: <InputAdornment position="start">{line.type === 'promotion' ? <LocalOfferIcon fontSize="small" /> : <InventoryIcon fontSize="small" />}</InputAdornment> }}
 																	error={Boolean(getLineFieldError(index, line.type === 'promotion' ? 'promotion' : 'product'))}
 																	helperText={getLineFieldError(index, line.type === 'promotion' ? 'promotion' : 'product')}
@@ -385,7 +396,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 															<CustomTextInput
 																id={`lines.${index}.quantity`}
 																type="number"
-																label={t.magasin.quantity}
+																label={`${t.magasin.quantity} *`}
 																value={line.quantity}
 																onChange={formik.handleChange(`lines.${index}.quantity`)}
 																onBlur={formik.handleBlur(`lines.${index}.quantity`)}
@@ -399,7 +410,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 															<CustomTextInput
 																id={`lines.${index}.unit_price`}
 																type="number"
-																label={t.magasin.unitPrice}
+																label={`${t.magasin.unitPrice} *`}
 																value={line.unit_price}
 																onChange={formik.handleChange(`lines.${index}.unit_price`)}
 																onBlur={formik.handleBlur(`lines.${index}.unit_price`)}

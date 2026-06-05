@@ -585,9 +585,9 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 													width: '100%',
 													'& .MuiOutlinedInput-root': {
 														borderRadius: '16px',
-														minHeight: 48,
+														minHeight: 40,
 														fontFamily: 'Poppins',
-														fontSize: '19px',
+														fontSize: '16px',
 														py: 0,
 														'& fieldset': {
 															borderRadius: '16px',
@@ -596,16 +596,16 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 													},
 													'& .MuiInputLabel-root': {
 														fontFamily: 'Poppins',
-														fontSize: '16px',
+														fontSize: '14px',
 														color: '#A3A3AD',
 													},
 													'& .MuiInputLabel-root.Mui-focused': {
-														fontSize: '19px',
+														fontSize: '16px',
 														color: '#0274d7',
 													},
 													'& .MuiAutocomplete-input': {
 														fontFamily: 'Poppins',
-														fontSize: '19px',
+														fontSize: '16px',
 													},
 												}}
 												renderInput={(params) => (

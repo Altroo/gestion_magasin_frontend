@@ -66,6 +66,15 @@ export type CategoryType = {
 	date_updated?: string;
 };
 
+export type ProductUnitType = {
+	id: number;
+	code: string;
+	name: string;
+	is_active: boolean;
+	date_created?: string;
+	date_updated?: string;
+};
+
 export type ProductType = {
 	id: number;
 	reference: string | null;
@@ -73,7 +82,8 @@ export type ProductType = {
 	name: string;
 	category: number | null;
 	category_name: string | null;
-	unit: string;
+	unit: number;
+	unit_name: string;
 	purchase_price: string;
 	wholesale_price: string;
 	detail_price: string;
@@ -94,7 +104,7 @@ export type ProductPayload = {
 	barcode?: string | null;
 	name: string;
 	category?: number | null;
-	unit: string;
+	unit: number;
 	purchase_price: string;
 	wholesale_price: string;
 	detail_price: string;

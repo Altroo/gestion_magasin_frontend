@@ -167,7 +167,7 @@ const CatalogViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
 											<Divider />
 											<InfoRow icon={<CategoryIcon />} label={t.magasin.category} value={product.category_name} />
 											<Divider />
-											<InfoRow icon={<StraightenIcon />} label={t.magasin.unit} value={product.unit} />
+											<InfoRow icon={<StraightenIcon />} label={t.magasin.unit} value={product.unit_name} />
 										</CardContent>
 									</Card>
 									<Card elevation={2} sx={{ borderRadius: 2 }}>

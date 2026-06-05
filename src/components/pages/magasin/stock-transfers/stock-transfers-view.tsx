@@ -80,7 +80,7 @@ const StockTransfersViewClient = ({ session, id }: Props) => {
 								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(STOCK_TRANSFERS_LIST)}>{t.magasin.backToTransfers}</Button>
 								{transfer && (
 									<Stack direction="row" spacing={1}>
-										{permissions.can_create && transfer.status === 'draft' && <Button variant="outlined" color="primary" size="small" startIcon={<EditIcon />} onClick={() => router.push(STOCK_TRANSFERS_EDIT(transfer.id))}>{t.common.edit}</Button>}
+										{permissions.can_edit && transfer.status !== 'validated' && <Button variant="outlined" color="primary" size="small" startIcon={<EditIcon />} onClick={() => router.push(STOCK_TRANSFERS_EDIT(transfer.id))}>{t.common.edit}</Button>}
 										{permissions.can_create && transfer.status === 'draft' && <Button variant="outlined" color="success" size="small" startIcon={<ValidateIcon />} onClick={() => setShowValidateModal(true)}>{t.common.confirm}</Button>}
 										{permissions.can_delete && transfer.status !== 'validated' && <Button variant="outlined" color="error" size="small" startIcon={<DeleteIcon />} onClick={() => setShowDeleteModal(true)}>{t.common.delete}</Button>}
 									</Stack>

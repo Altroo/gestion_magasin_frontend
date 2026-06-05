@@ -198,9 +198,9 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 													<CustomTextInput id="date" type="date" label={`${t.magasin.date} *`} value={formik.values.date} onChange={formik.handleChange('date')} onBlur={formik.handleBlur('date')} error={formik.touched.date && Boolean(formik.errors.date)} helperText={formik.touched.date ? formik.errors.date : ''} fullWidth size="small" theme={inputTheme} startIcon={<EventIcon fontSize="small" />} shrink />
 													<ThemeProvider theme={dropdownTheme}>
 														<TextField select size="small" id="status" label={`${t.magasin.status} *`} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} fullWidth>
-															<MenuItem value="present">Présent</MenuItem>
-															<MenuItem value="off">Repos</MenuItem>
-															<MenuItem value="absent">Absent</MenuItem>
+															<MenuItem value="present">{t.magasin.present}</MenuItem>
+															<MenuItem value="off">{t.magasin.off}</MenuItem>
+															<MenuItem value="absent">{t.magasin.absent}</MenuItem>
 														</TextField>
 													</ThemeProvider>
 													{(['clock_in', 'break_start', 'break_end', 'clock_out'] as const).map((field) => (
