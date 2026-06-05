@@ -281,7 +281,7 @@ export const en: TranslationDictionary = {
     stockMovement: 'Stock movement',
     stockThreshold: 'Stock threshold',
     selectProduct: 'Select product',
-    adjustmentQuantity: 'Adjustment quantity',
+    adjustmentQuantity: 'Quantity to add / remove',
     movementNote: 'Remark',
     averageCost: 'Average cost',
     lowStockStatus: 'Low stock status',

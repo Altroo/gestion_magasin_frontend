@@ -255,6 +255,10 @@ describe('Zod Schema Validation', () => {
 			expect(() => stockAdjustmentSchema.parse({ product: '1', quantity: '-2', globalError: '' })).not.toThrow();
 		});
 
+		it('validates numeric stock adjustment input from number fields', () => {
+			expect(() => stockAdjustmentSchema.parse({ product: '1', quantity: 6, globalError: '' })).not.toThrow();
+		});
+
 		it('fails with an empty quantity', () => {
 			expect(() => stockAdjustmentSchema.parse({ product: '1', quantity: '' })).toThrow();
 		});
