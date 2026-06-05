@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, Box, Button, Card, CardContent, Divider, InputAdornment, MenuItem, Stack, TextField, ThemeProvider, Typography } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Category as CategoryIcon, Description as DescriptionIcon, Payments as PaymentsIcon, Save as SaveIcon, Storefront as StorefrontIcon, Warning as WarningIcon } from '@mui/icons-material';
+import { Add as AddIcon, ArrowBack as ArrowBackIcon, Category as CategoryIcon, Description as DescriptionIcon, Edit as EditIcon, Payments as PaymentsIcon, Storefront as StorefrontIcon, Warning as WarningIcon } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
@@ -156,7 +156,7 @@ const ExpensesFormClient = ({ session, id, storeId: initialStoreId }: Props) => 
 												<Box sx={{ mt: 2.5 }}><CustomTextInput id="note" type="text" label={t.magasin.note} value={formik.values.note} onChange={formik.handleChange('note')} onBlur={formik.handleBlur('note')} error={Boolean(fieldError('note'))} helperText={fieldError('note')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} /></Box>
 											</CardContent>
 										</Card>
-										<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}><PrimaryLoadingButton type="submit" buttonText={isEditMode ? t.magasin.editExpense : t.magasin.newExpense} active={!addState.isLoading && !editState.isLoading} loading={addState.isLoading || editState.isLoading} startIcon={<SaveIcon />} onClick={(event: React.MouseEvent<HTMLButtonElement>) => { setHasAttemptedSubmit(true); if (!formik.isValid) { event.preventDefault(); formik.handleSubmit(); onError(t.magasin.fixValidationErrors); window.scrollTo({ top: 0, behavior: 'smooth' }); } }} cssClass={`${Styles.maxWidth} ${Styles.mobileButton} ${Styles.submitButton}`} /></Box>
+										<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}><PrimaryLoadingButton type="submit" buttonText={isEditMode ? t.magasin.editExpense : t.magasin.newExpense} active={!addState.isLoading && !editState.isLoading} loading={addState.isLoading || editState.isLoading} startIcon={isEditMode ? <EditIcon /> : <AddIcon />} onClick={(event: React.MouseEvent<HTMLButtonElement>) => { setHasAttemptedSubmit(true); if (!formik.isValid) { event.preventDefault(); formik.handleSubmit(); onError(t.magasin.fixValidationErrors); window.scrollTo({ top: 0, behavior: 'smooth' }); } }} cssClass={`${Styles.maxWidth} ${Styles.mobileButton} ${Styles.submitButton}`} /></Box>
 									</Stack>
 								</form>
 							)}

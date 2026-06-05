@@ -17,6 +17,7 @@ import {
 	Button,
 } from '@mui/material';
 import {
+	Add as AddIcon,
 	ArrowBack as ArrowBackIcon,
 	Category as CategoryIcon,
 	CheckCircle as CheckCircleIcon,
@@ -27,7 +28,6 @@ import {
 	Fingerprint as FingerprintIcon,
 	Inventory2 as InventoryIcon,
 	QrCodeScanner as QrCodeScannerIcon,
-	Save as SaveIcon,
 	Straighten as StraightenIcon,
 	Warning as WarningIcon,
 } from '@mui/icons-material';
@@ -458,7 +458,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 												buttonText={isEditMode ? t.magasin.editProduct : t.magasin.newProduct}
 												active={!isPending}
 												loading={isPending}
-												startIcon={isEditMode ? <EditIcon /> : <SaveIcon />}
+												startIcon={isEditMode ? <EditIcon /> : <AddIcon />}
 												onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
 													setHasAttemptedSubmit(true);
 													if (!formik.isValid) {

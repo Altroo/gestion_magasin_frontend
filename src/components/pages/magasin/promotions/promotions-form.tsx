@@ -29,7 +29,6 @@ import {
 	Inventory2 as InventoryIcon,
 	LocalOffer as LocalOfferIcon,
 	Numbers as NumbersIcon,
-	Save as SaveIcon,
 	Warning as WarningIcon,
 } from '@mui/icons-material';
 import { getIn, useFormik } from 'formik';
@@ -406,7 +405,7 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 												buttonText={isEditMode ? t.magasin.editPromotion : t.magasin.newPromotion}
 												active={!isPending}
 												loading={isPending}
-												startIcon={isEditMode ? <EditIcon /> : <SaveIcon />}
+												startIcon={isEditMode ? <EditIcon /> : <AddIcon />}
 												onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
 													setHasAttemptedSubmit(true);
 													if (!formik.isValid) {

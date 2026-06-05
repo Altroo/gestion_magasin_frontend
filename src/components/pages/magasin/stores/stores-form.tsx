@@ -29,7 +29,6 @@ import {
 	LocationOn as LocationOnIcon,
 	Phone as PhoneIcon,
 	People as PeopleIcon,
-	Save as SaveIcon,
 	Security as SecurityIcon,
 	Storefront as StorefrontIcon,
 	Tag as TagIcon,
@@ -398,7 +397,7 @@ const StoresFormClient = ({ session, id }: Props) => {
 												buttonText={isEditMode ? t.magasin.editStore : t.magasin.newStore}
 												active={!isPending}
 												loading={isPending}
-												startIcon={isEditMode ? <EditIcon /> : <SaveIcon />}
+												startIcon={isEditMode ? <EditIcon /> : <AddIcon />}
 												onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
 													setHasAttemptedSubmit(true);
 													if (!formik.isValid) {

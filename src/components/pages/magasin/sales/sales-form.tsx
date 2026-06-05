@@ -26,7 +26,6 @@ import {
 	Inventory2 as InventoryIcon,
 	LocalOffer as LocalOfferIcon,
 	ReceiptLong as ReceiptLongIcon,
-	Save as SaveIcon,
 	Warning as WarningIcon,
 } from '@mui/icons-material';
 import { getIn, useFormik } from 'formik';
@@ -443,7 +442,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 												buttonText={t.magasin.newSale}
 												active={!isPending}
 												loading={isPending}
-												startIcon={<SaveIcon />}
+												startIcon={<AddIcon />}
 												onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
 													setHasAttemptedSubmit(true);
 													if (!formik.isValid) {

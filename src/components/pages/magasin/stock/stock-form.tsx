@@ -15,11 +15,11 @@ import {
 	useTheme,
 } from '@mui/material';
 import {
+	Add as AddIcon,
 	ArrowBack as ArrowBackIcon,
 	Edit as EditIcon,
 	Inventory2 as InventoryIcon,
 	Numbers as NumbersIcon,
-	Save as SaveIcon,
 	Subject as RemarkIcon,
 	Warning as WarningIcon,
 } from '@mui/icons-material';
@@ -305,7 +305,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 												buttonText={isEditMode ? t.magasin.editStock : t.magasin.newStock}
 												active={!isPending}
 												loading={isPending}
-												startIcon={isEditMode ? <EditIcon /> : <SaveIcon />}
+												startIcon={isEditMode ? <EditIcon /> : <AddIcon />}
 												onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
 													setHasAttemptedSubmit(true);
 													if (!formik.isValid) {

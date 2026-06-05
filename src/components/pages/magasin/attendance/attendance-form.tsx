@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, Box, Button, Card, CardContent, Divider, InputAdornment, MenuItem, Stack, TextField, ThemeProvider, Typography } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Badge as BadgeIcon, Event as EventIcon, Save as SaveIcon, Schedule as ScheduleIcon, Warning as WarningIcon } from '@mui/icons-material';
+import { Add as AddIcon, ArrowBack as ArrowBackIcon, Badge as BadgeIcon, Edit as EditIcon, Event as EventIcon, Schedule as ScheduleIcon, Warning as WarningIcon } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
@@ -224,7 +224,7 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 											buttonText={isEditMode ? t.magasin.editAttendance : t.magasin.newAttendance}
 											active={!isPending}
 											loading={isPending}
-											startIcon={<SaveIcon />}
+											startIcon={isEditMode ? <EditIcon /> : <AddIcon />}
 											onClick={(event) => {
 												setHasAttemptedSubmit(true);
 												if (!formik.isValid) {
