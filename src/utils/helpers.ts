@@ -15,6 +15,28 @@ export const setHelpersLanguage = (lang: Language) => {
 	currentLang = lang;
 };
 
+const normalizeBackendError = (status: number, data: unknown): ApiErrorResponseType | null => {
+	if (!data || typeof data !== 'object') {
+		return null;
+	}
+	const errorData = data as Partial<ApiErrorResponseType> & { detail?: unknown };
+	if (errorData.status_code !== undefined && errorData.message !== undefined) {
+		return {
+			status_code: errorData.status_code,
+			message: errorData.message,
+			details: errorData.details || {},
+		};
+	}
+	if (typeof errorData.detail === 'string') {
+		return {
+			status_code: status,
+			message: errorData.detail,
+			details: { detail: [errorData.detail] },
+		};
+	}
+	return null;
+};
+
 /**
  * Handles unauthorized response by clearing cookies, signing out, and resetting token.
  * Dispatches a custom 'session-expired' event to notify the UI.
@@ -77,7 +99,7 @@ export const isAuthenticatedInstance = (
 		(response: AxiosResponse) => response,
 		async (error) => {
 			if (error.response?.data) {
-				const errorData = error.response.data as ApiErrorResponseType;
+				const errorData = normalizeBackendError(error.response.status, error.response.data);
 
 				if (error.response.status >= 500) {
 					return Promise.reject({
@@ -106,12 +128,12 @@ export const isAuthenticatedInstance = (
 					return Promise.reject({
 						error: {
 							status_code: 401,
-							message: errorData.message || getT().errors.unauthorized,
-							details: errorData.details || { error: [getT().errors.authRequiredDetail] },
+							message: errorData?.message || getT().errors.unauthorized,
+							details: errorData?.details || { error: [getT().errors.authRequiredDetail] },
 						},
 					});
 				}
-				if (errorData.status_code !== undefined && errorData.message !== undefined) {
+				if (errorData) {
 					return Promise.reject({
 						error: {
 							status_code: errorData.status_code,
@@ -149,8 +171,8 @@ export const allowAnyInstance = (contentType: APIContentTypeInterface = 'applica
 		(response: AxiosResponse) => response,
 		(error) => {
 			if (error.response?.data) {
-				const errorData = error.response.data as ApiErrorResponseType;
-				if (errorData.status_code !== undefined && errorData.message !== undefined) {
+				const errorData = normalizeBackendError(error.response.status, error.response.data);
+				if (errorData) {
 					return Promise.reject({
 						error: {
 							status_code: errorData.status_code,

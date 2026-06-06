@@ -81,6 +81,19 @@ type CartGridRow = {
 	total: number;
 };
 
+type ScanErrorPayload = {
+	status_code?: number;
+	message?: string;
+	details?: Record<string, string[] | string>;
+	detail?: string;
+};
+
+type ScanError = {
+	status?: number;
+	data?: ScanErrorPayload;
+	error?: ScanErrorPayload;
+};
+
 const OFFLINE_KEY = 'gestion-magasin-offline-sales';
 const inputTheme = textInputTheme();
 const dropdownTheme = customDropdownTheme();
@@ -109,6 +122,16 @@ const readOfflineQueue = (): SaleCreatePayload[] => {
 
 const writeOfflineQueue = (sales: SaleCreatePayload[]) => {
 	window.localStorage.setItem(OFFLINE_KEY, JSON.stringify(sales));
+};
+
+const getScanErrorPayload = (error: unknown) => {
+	const scanError = error as ScanError;
+	const payload = scanError.data ?? scanError.error ?? (error as ScanErrorPayload);
+	const statusCode = payload?.status_code ?? scanError.status;
+	const detailValue = payload?.details?.barcode ?? payload?.details?.detail ?? payload?.detail ?? payload?.message;
+	const message = Array.isArray(detailValue) ? detailValue[0] : detailValue;
+
+	return { statusCode, message };
 };
 
 const PosClient = ({ session }: SessionProps) => {
@@ -200,10 +223,15 @@ const PosClient = ({ session }: SessionProps) => {
 			addProduct(product);
 			return true;
 		} catch (e) {
+			const { statusCode, message } = getScanErrorPayload(e);
+			if (setFieldError && (statusCode === 400 || statusCode === 404) && message) {
+				setFieldError('barcode', message);
+				return false;
+			}
 			if (setFieldError) {
 				setFormikAutoErrors({ e, setFieldError });
 			}
-			onError(t.errors.genericError);
+			onError(message || t.errors.genericError);
 			return false;
 		}
 	};

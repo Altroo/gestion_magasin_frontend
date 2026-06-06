@@ -14,6 +14,28 @@ type NormalizedError = {
 	error: ApiErrorResponseType;
 };
 
+const normalizeErrorData = (status: number, data: unknown): ApiErrorResponseType | null => {
+	if (!data || typeof data !== 'object') {
+		return null;
+	}
+	const errorData = data as Partial<ApiErrorResponseType> & { detail?: unknown };
+	if (errorData.status_code !== undefined && errorData.message !== undefined) {
+		return {
+			status_code: errorData.status_code,
+			message: errorData.message,
+			details: errorData.details || {},
+		};
+	}
+	if (typeof errorData.detail === 'string') {
+		return {
+			status_code: status,
+			message: errorData.detail,
+			details: { detail: [errorData.detail] },
+		};
+	}
+	return null;
+};
+
 // Type guard for normalized errors
 const isNormalizedError = (err: unknown): err is NormalizedError => {
 	return (
@@ -60,7 +82,7 @@ export const axiosBaseQuery =
 			// Handle raw Axios errors
 			if (axios.isAxiosError(err)) {
 				const status = err.response?.status ?? 0;
-				const errorData: ApiErrorResponseType = err.response?.data ?? {
+				const errorData: ApiErrorResponseType = normalizeErrorData(status, err.response?.data) ?? {
 					status_code: status || 0,
 					message: err.message || getT().errors.networkError,
 					details: { error: [getT().errors.cannotConnectServer] },
