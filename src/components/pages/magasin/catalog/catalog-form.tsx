@@ -59,7 +59,7 @@ import {
 	useGetProductUnitsQuery,
 } from '@/store/services/magasin';
 import { CATALOG_LIST, CATALOG_VIEW } from '@/utils/routes';
-import { textInputTheme } from '@/utils/themes';
+import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
 import { productSchema } from '@/utils/formValidationSchemas';
 import { useLanguage, useToast } from '@/utils/hooks';
@@ -68,6 +68,7 @@ import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '
 import type { ProductFormValues, ProductPayload } from '@/types/gestionMagasinTypes';
 
 const inputTheme = textInputTheme();
+const dropdownTheme = customDropdownTheme();
 type Props = SessionProps & {
 	id?: number;
 	storeId?: number;
@@ -309,7 +310,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														noOptionsText={t.common.noOptions}
 														label={`${t.magasin.category} *`}
 														items={categoryItems}
-														theme={theme}
+														theme={dropdownTheme}
 														value={selectedCategory}
 														fullWidth
 														onChange={(_, nextCategory) => void formik.setFieldValue('category', nextCategory ? nextCategory.code : '')}
@@ -337,7 +338,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														noOptionsText={t.common.noOptions}
 														label={`${t.magasin.unit} *`}
 														items={unitItems}
-														theme={theme}
+														theme={dropdownTheme}
 														value={selectedUnit}
 														fullWidth
 														onChange={(_, nextUnit) => void formik.setFieldValue('unit', nextUnit ? nextUnit.code : '')}

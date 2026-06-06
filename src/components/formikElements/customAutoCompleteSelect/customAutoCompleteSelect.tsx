@@ -1,9 +1,9 @@
 import React, { type Key } from 'react';
-import TextField, { type TextFieldProps } from '@mui/material/TextField';
+import type { TextFieldProps } from '@mui/material/TextField';
 import type { Theme } from '@mui/material/styles';
-import { ThemeProvider } from '@mui/material/styles';
 import type { DropDownType } from '@/types/accountTypes';
-import { Autocomplete, Box, InputAdornment, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
+import RoundedAutocomplete from '@/components/formikElements/roundedAutocomplete/roundedAutocomplete';
 
 type Props = {
 	id: string;
@@ -56,67 +56,33 @@ const CustomAutoCompleteSelect: React.FC<Props> = ({
 	};
 
 	return (
-		<ThemeProvider theme={theme}>
-			<Autocomplete
-				id={id}
-				size={size}
-				fullWidth={fullWidth}
-				noOptionsText={noOptionsText}
-				options={items}
-				getOptionLabel={(option) => option.value}
-				getOptionKey={(option) => option.code || option.value}
-				filterOptions={(options, state) =>
-					options.filter((option) => option.value.toLowerCase().includes(state.inputValue.toLowerCase()))
-				}
-				value={value}
-				onChange={onChange}
-				disabled={disabled}
-				isOptionEqualToValue={(option, val) => option.code === val.code}
-				onBlur={onBlur}
-				renderOption={(props, option) =>
-					(renderOptionProp || defaultRenderOption)(props as React.HTMLAttributes<HTMLLIElement> & { key: Key }, option)
-				}
-				renderInput={(params) => (
-					<TextField
-						{...params}
-						label={label}
-						error={error}
-						helperText={helperText}
-						sx={{
-							'& .MuiOutlinedInput-root': {
-								borderRadius: '16px',
-								minHeight: 40,
-								fontFamily: 'Poppins',
-								fontSize: '16px',
-								'& fieldset': {
-									borderRadius: '16px',
-								},
-							},
-							'& .MuiAutocomplete-input': {
-								fontFamily: 'Poppins',
-								fontSize: '16px',
-							},
-						}}
-						InputProps={{
-							...params.InputProps,
-							startAdornment: (
-								<>
-									{startIcon && <InputAdornment position="start">{startIcon}</InputAdornment>}
-									{params.InputProps.startAdornment}
-								</>
-							),
-							endAdornment: (
-								<>
-									{params.InputProps.endAdornment}
-									{endIcon && <InputAdornment position="end">{endIcon}</InputAdornment>}
-								</>
-							),
-						}}
-						slotProps={slotProps}
-					/>
-				)}
-			/>
-		</ThemeProvider>
+		<RoundedAutocomplete
+			id={id}
+			size={size}
+			fullWidth={fullWidth}
+			noOptionsText={noOptionsText}
+			options={items}
+			getOptionLabel={(option) => option.value}
+			getOptionKey={(option) => option.code || option.value}
+			filterOptions={(options, state) =>
+				options.filter((option) => option.value.toLowerCase().includes(state.inputValue.toLowerCase()))
+			}
+			value={value}
+			onChange={onChange}
+			disabled={disabled}
+			isOptionEqualToValue={(option, val) => option.code === val.code}
+			onBlur={onBlur}
+			renderOption={(props, option) =>
+				(renderOptionProp || defaultRenderOption)(props as React.HTMLAttributes<HTMLLIElement> & { key: Key }, option)
+			}
+			label={label}
+			error={error}
+			helperText={helperText}
+			startIcon={startIcon}
+			endIcon={endIcon}
+			textFieldProps={{ slotProps }}
+			theme={theme}
+		/>
 	);
 };
 

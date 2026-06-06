@@ -7,7 +7,6 @@ import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import {
 	Box,
 	Button,
-	Autocomplete,
 	FormControlLabel,
 	Checkbox,
 	Switch,
@@ -27,7 +26,6 @@ import {
 	TableContainer,
 	TableHead,
 	TableRow,
-	TextField,
 } from '@mui/material';
 import {
 	ArrowBack as ArrowBackIcon,
@@ -48,6 +46,7 @@ import { useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
 import CustomTextInput from '@/components/formikElements/customTextInput/customTextInput';
 import CustomDropDownSelect from '@/components/formikElements/customDropDownSelect/customDropDownSelect';
+import RoundedAutocomplete from '@/components/formikElements/roundedAutocomplete/roundedAutocomplete';
 import PrimaryLoadingButton from '@/components/htmlElements/buttons/primaryLoadingButton/primaryLoadingButton';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
@@ -91,6 +90,15 @@ type FormikContentProps = {
 	token: string | undefined;
 	id?: number;
 };
+
+const permissionFields: Array<keyof Pick<UserFormValues, 'can_view' | 'can_print' | 'can_create' | 'can_edit' | 'can_delete' | 'can_create_promotion'>> = [
+	'can_view',
+	'can_print',
+	'can_create',
+	'can_edit',
+	'can_delete',
+	'can_create_promotion',
+];
 
 const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) => {
 	const { token, id } = props;
@@ -241,6 +249,33 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 		() => Object.fromEntries(rolesData.map((role) => [role.name, role.code])),
 		[rolesData],
 	);
+
+	const setAllPermissions = (checked: boolean) => {
+		permissionFields.forEach((field) => {
+			void formik.setFieldValue(field, checked, true);
+		});
+	};
+
+	const handleAdminChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const checked = event.target.checked;
+		void formik.setFieldValue('is_staff', checked, true);
+		setAllPermissions(checked);
+	};
+
+	const handlePermissionChange = (field: (typeof permissionFields)[number]) => (event: React.ChangeEvent<HTMLInputElement>) => {
+		const checked = event.target.checked;
+		void formik.setFieldValue(field, checked, true);
+		const nextValues = {
+			can_view: formik.values.can_view,
+			can_print: formik.values.can_print,
+			can_create: formik.values.can_create,
+			can_edit: formik.values.can_edit,
+			can_delete: formik.values.can_delete,
+			can_create_promotion: formik.values.can_create_promotion,
+			[field]: checked,
+		};
+		void formik.setFieldValue('is_staff', permissionFields.every((permissionField) => nextValues[permissionField]), true);
+	};
 
 	const setStoreAssignments = (next: UserStoreAssignmentType[]) => {
 		void formik.setFieldValue('stores', next, true);
@@ -462,7 +497,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 										control={
 											<Checkbox
 												checked={formik.values.is_staff}
-												onChange={formik.handleChange}
+												onChange={handleAdminChange}
 												name="is_staff"
 												color="primary"
 											/>
@@ -578,55 +613,16 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 										</Typography>
 									<Stack direction={isMobile ? 'column' : 'row'} spacing={2} sx={{ mt: 2 }}>
 										<Box sx={{ flex: 1 }}>
-											<Autocomplete
+											<RoundedAutocomplete
 												size="small"
 												options={availableStores}
 												value={selectedStore}
 												onChange={(_, nextStore) => setSelectedStore(nextStore)}
 												getOptionLabel={(option) => option.code}
 												noOptionsText={t.common.noOptions}
-												sx={{
-													width: '100%',
-													'& .MuiOutlinedInput-root': {
-														borderRadius: '16px',
-														minHeight: 40,
-														fontFamily: 'Poppins',
-														fontSize: '16px',
-														py: 0,
-														'& fieldset': {
-															borderRadius: '16px',
-															borderColor: '#A3A3AD',
-														},
-													},
-													'& .MuiInputLabel-root': {
-														fontFamily: 'Poppins',
-														fontSize: '14px',
-														color: '#A3A3AD',
-													},
-													'& .MuiInputLabel-root.Mui-focused': {
-														fontSize: '16px',
-														color: '#0274d7',
-													},
-													'& .MuiAutocomplete-input': {
-														fontFamily: 'Poppins',
-														fontSize: '16px',
-													},
-												}}
-												renderInput={(params) => (
-													<TextField
-														{...params}
-														label={t.users.selectStore}
-														InputProps={{
-															...params.InputProps,
-															startAdornment: (
-																<>
-																	<StorefrontIcon fontSize="small" color="action" sx={{ mr: 1 }} />
-																	{params.InputProps.startAdornment}
-																</>
-															),
-														}}
-													/>
-												)}
+												label={t.users.selectStore}
+												startIcon={<StorefrontIcon fontSize="small" color="action" />}
+												fullWidth
 											/>
 										</Box>
 										<Box sx={{ flex: 1 }}>
@@ -667,27 +663,27 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 								<Divider sx={{ mb: 3 }} />
 								<Stack spacing={1}>
 									<FormControlLabel
-										control={<Switch checked={formik.values.can_view} onChange={formik.handleChange} name="can_view" />}
+										control={<Switch checked={formik.values.can_view} onChange={handlePermissionChange('can_view')} name="can_view" />}
 								label={t.users.canView}
 									/>
 									<FormControlLabel
-										control={<Switch checked={formik.values.can_print} onChange={formik.handleChange} name="can_print" />}
+										control={<Switch checked={formik.values.can_print} onChange={handlePermissionChange('can_print')} name="can_print" />}
 								label={t.users.canPrint}
 									/>
 									<FormControlLabel
-										control={<Switch checked={formik.values.can_create} onChange={formik.handleChange} name="can_create" />}
+										control={<Switch checked={formik.values.can_create} onChange={handlePermissionChange('can_create')} name="can_create" />}
 								label={t.users.canCreate}
 									/>
 									<FormControlLabel
-										control={<Switch checked={formik.values.can_edit} onChange={formik.handleChange} name="can_edit" />}
+										control={<Switch checked={formik.values.can_edit} onChange={handlePermissionChange('can_edit')} name="can_edit" />}
 								label={t.users.canEdit}
 									/>
 									<FormControlLabel
-										control={<Switch checked={formik.values.can_delete} onChange={formik.handleChange} name="can_delete" />}
+										control={<Switch checked={formik.values.can_delete} onChange={handlePermissionChange('can_delete')} name="can_delete" />}
 								label={t.users.canDelete}
 									/>
 									<FormControlLabel
-										control={<Switch checked={formik.values.can_create_promotion} onChange={formik.handleChange} name="can_create_promotion" />}
+										control={<Switch checked={formik.values.can_create_promotion} onChange={handlePermissionChange('can_create_promotion')} name="can_create_promotion" />}
 								label={t.users.canCreatePromotion}
 									/>
 								</Stack>

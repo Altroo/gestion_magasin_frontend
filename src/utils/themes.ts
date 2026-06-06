@@ -1,6 +1,9 @@
 import { createTheme } from '@mui/material/styles';
 import { hexToRGB } from './helpers';
 
+export const FORM_FIELD_HEIGHT = 44;
+export const FORM_FIELD_RADIUS = '16px';
+
 export const CustomTheme = (primaryColor: string | undefined = undefined) => {
 	let rippleColor = '#0D070B';
 	if (primaryColor) {
@@ -64,8 +67,12 @@ export const textInputTheme = (primaryColor: string | undefined = undefined) => 
 			MuiInputBase: {
 				styleOverrides: {
 					root: {
+						'&.MuiInputBase-sizeSmall:not(.MuiInputBase-multiline)': {
+							minHeight: FORM_FIELD_HEIGHT,
+							height: FORM_FIELD_HEIGHT,
+						},
 						'& fieldset': {
-							borderRadius: '16px',
+							borderRadius: FORM_FIELD_RADIUS,
 							border: '1px solid #A3A3AD',
 						},
 						'& fieldset > legend': {
@@ -150,12 +157,14 @@ export const customDropdownTheme = (primaryColor: string | undefined = undefined
 				styleOverrides: {
 					root: {
 						'& .MuiOutlinedInput-root': {
-							borderRadius: '16px',
-							minHeight: 40,
+							borderRadius: FORM_FIELD_RADIUS,
+							minHeight: FORM_FIELD_HEIGHT,
 							fontFamily: 'Poppins',
 							fontSize: '16px',
+							paddingTop: 0,
+							paddingBottom: 0,
 							'& fieldset': {
-								borderRadius: '16px',
+								borderRadius: FORM_FIELD_RADIUS,
 								borderColor: '#A3A3AD',
 							},
 							'&:hover fieldset': {
@@ -169,10 +178,21 @@ export const customDropdownTheme = (primaryColor: string | undefined = undefined
 							fontFamily: 'Poppins',
 							fontSize: '16px',
 							caretColor: blueColor,
+							paddingTop: '0 !important',
+							paddingBottom: '0 !important',
+						},
+						'& .MuiAutocomplete-inputRoot[class*="MuiOutlinedInput-root"]': {
+							minHeight: FORM_FIELD_HEIGHT,
+							paddingTop: 0,
+							paddingBottom: 0,
+						},
+						'& .MuiAutocomplete-inputRoot[class*="MuiOutlinedInput-root"][class*="MuiInputBase-sizeSmall"]': {
+							height: FORM_FIELD_HEIGHT,
+							minHeight: FORM_FIELD_HEIGHT,
 						},
 					},
 					paper: {
-						borderRadius: '16px',
+						borderRadius: FORM_FIELD_RADIUS,
 						border: `1px solid ${blueColor}`,
 						boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.1)',
 						marginTop: '4px',
@@ -186,8 +206,12 @@ export const customDropdownTheme = (primaryColor: string | undefined = undefined
 			MuiInputBase: {
 				styleOverrides: {
 					root: {
+						'&.MuiInputBase-sizeSmall:not(.MuiInputBase-multiline)': {
+							minHeight: FORM_FIELD_HEIGHT,
+							height: FORM_FIELD_HEIGHT,
+						},
 						'& fieldset': {
-							borderRadius: '16px',
+							borderRadius: FORM_FIELD_RADIUS,
 							border: '1px solid #A3A3AD',
 						},
 						'& fieldset > legend': {

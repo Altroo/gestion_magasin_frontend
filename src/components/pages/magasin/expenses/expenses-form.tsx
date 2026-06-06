@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert, Box, Button, Card, CardContent, Divider, InputAdornment, MenuItem, Stack, TextField, ThemeProvider, Typography, useTheme } from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, Divider, InputAdornment, MenuItem, Stack, TextField, ThemeProvider, Typography } from '@mui/material';
 import {
 	Add as AddIcon,
 	ArrowBack as ArrowBackIcon,
@@ -68,7 +68,6 @@ const ExpensesFormClient = ({ session, id, storeId: initialStoreId }: Props) => 
 	const token = useInitAccessToken(session);
 	const { t } = useLanguage();
 	const router = useRouter();
-	const theme = useTheme();
 	const { onSuccess, onError } = useToast();
 	const isEditMode = id !== undefined;
 	const { defaultStore } = useSelectedStore(token);
@@ -190,7 +189,7 @@ const ExpensesFormClient = ({ session, id, storeId: initialStoreId }: Props) => 
 														noOptionsText={t.common.noOptions}
 														label={`${t.magasin.expenseCategory} *`}
 														items={categoryItems}
-														theme={theme}
+														theme={dropdownTheme}
 														value={selectedCategory}
 														fullWidth
 														onChange={(_, nextCategory) => void formik.setFieldValue('category', nextCategory ? nextCategory.code : '')}

@@ -10,7 +10,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { renderTimeViewClock } from '@mui/x-date-pickers/timeViewRenderers';
 import { fr } from 'date-fns/locale';
 import { formatLocalDate } from '@/utils/helpers';
-import { textInputTheme } from '@/utils/themes';
+import { FORM_FIELD_HEIGHT, FORM_FIELD_RADIUS, textInputTheme } from '@/utils/themes';
 
 type PickerFieldProps = {
 	id: string;
@@ -27,12 +27,11 @@ type PickerFieldProps = {
 
 const inputTheme = textInputTheme();
 
-const fieldRadius = '16px';
-
 const pickerTextFieldSx = {
 	'& .MuiOutlinedInput-root, & .MuiPickersOutlinedInput-root': {
-		borderRadius: fieldRadius,
-		minHeight: 40,
+		borderRadius: FORM_FIELD_RADIUS,
+		minHeight: FORM_FIELD_HEIGHT,
+		height: FORM_FIELD_HEIGHT,
 		fontFamily: 'Poppins',
 		fontSize: '16px',
 	},
@@ -40,7 +39,7 @@ const pickerTextFieldSx = {
 		overflow: 'hidden',
 	},
 	'& .MuiOutlinedInput-notchedOutline, & .MuiPickersOutlinedInput-notchedOutline': {
-		borderRadius: fieldRadius,
+		borderRadius: FORM_FIELD_RADIUS,
 		borderColor: '#A3A3AD',
 	},
 	'&:hover .MuiOutlinedInput-notchedOutline, &:hover .MuiPickersOutlinedInput-notchedOutline': {
@@ -50,8 +49,9 @@ const pickerTextFieldSx = {
 		borderColor: '#0274d7',
 	},
 	'& .MuiInputBase-root': {
-		borderRadius: '16px',
-		minHeight: 40,
+		borderRadius: FORM_FIELD_RADIUS,
+		minHeight: FORM_FIELD_HEIGHT,
+		height: FORM_FIELD_HEIGHT,
 		fontFamily: 'Poppins',
 		fontSize: '16px',
 	},
