@@ -64,6 +64,7 @@ export type TranslationDictionary = {
     pos: string;
     catalog: string;
     stock: string;
+    storeStockOverview: string;
     stockTransfers: string;
     purchases: string;
     inventory: string;
@@ -147,6 +148,8 @@ export type TranslationDictionary = {
     importArticlesGuideEmailSent: string;
     importArticlesGuideEmailError: string;
     stock: string;
+    storeStockOverview: string;
+    storeStockOverviewHelp: string;
     lowStock: string;
     currentStock: string;
     minimumStock: string;
@@ -424,10 +427,11 @@ export type TranslationDictionary = {
     canEdit: string;
     canDelete: string;
     canCreatePromotion: string;
-    deleteUser: string;
-    deleteUserConfirm: string;
-    addUser: string;
-    updateUser: string;
+	deleteUser: string;
+	deleteUserConfirm: string;
+	addUser: string;
+	addManagedUser: string;
+	updateUser: string;
     createUser: string;
     editUser: string;
     userDetails: string;
@@ -460,6 +464,7 @@ export type TranslationDictionary = {
     addStore: string;
     selectStore: string;
     selectUser: string;
+    userHeader: string;
     storeHeader: string;
     roleHeader: string;
     role: string;
@@ -590,6 +595,8 @@ export type TranslationDictionary = {
     editProductDescription: string;
     stockTitle: string;
     stockDescription: string;
+    storeStockTitle: string;
+    storeStockDescription: string;
     stockTransfersTitle: string;
     stockTransfersDescription: string;
     newStockTransferTitle: string;

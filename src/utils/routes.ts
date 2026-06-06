@@ -13,6 +13,7 @@ export const DASHBOARD = `${SITE_ROOT}dashboard`;
 export const DASHBOARD_POS = `${SITE_ROOT}dashboard/caise`;
 export const DASHBOARD_CATALOG = `${SITE_ROOT}dashboard/article`;
 export const DASHBOARD_STOCK = `${SITE_ROOT}dashboard/stock`;
+export const DASHBOARD_STORE_STOCK = `${SITE_ROOT}dashboard/store-stock`;
 export const DASHBOARD_STOCK_TRANSFERS = `${SITE_ROOT}dashboard/stock-transfers`;
 export const DASHBOARD_PURCHASES = `${SITE_ROOT}dashboard/purchases`;
 export const DASHBOARD_INVENTORY = `${SITE_ROOT}dashboard/inventory`;
@@ -32,6 +33,14 @@ export const CATALOG_EDIT = (id: number, storeId?: number) => `${SITE_ROOT}dashb
 export const STOCK_LIST = DASHBOARD_STOCK;
 export const STOCK_ADD = (storeId?: number) => `${SITE_ROOT}dashboard/stock/new${storeQuery(storeId)}`;
 export const STOCK_VIEW = (id: number, storeId?: number) => `${SITE_ROOT}dashboard/stock/${id}${storeQuery(storeId)}`;
+export const STORE_STOCK_VIEW = (id: number, storeId?: number) => {
+	const params = new URLSearchParams();
+	if (storeId) {
+		params.set('store_id', String(storeId));
+	}
+	params.set('source', 'store-stock');
+	return `${SITE_ROOT}dashboard/stock/${id}?${params.toString()}`;
+};
 export const STOCK_EDIT = (id: number, storeId?: number) => `${SITE_ROOT}dashboard/stock/${id}/edit${storeQuery(storeId)}`;
 // Stock transfers
 export const STOCK_TRANSFERS_LIST = DASHBOARD_STOCK_TRANSFERS;

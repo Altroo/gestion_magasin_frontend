@@ -7,7 +7,7 @@ import { getServerTranslations } from '@/utils/serverTranslations';
 
 type PageProps = {
 	params: Promise<{ id: string }>;
-	searchParams: Promise<{ store_id?: string }>;
+	searchParams: Promise<{ source?: string; store_id?: string }>;
 };
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 const StockViewPage = async ({ params, searchParams }: PageProps) => {
 	const session = await auth();
 	const { id } = await params;
-	const { store_id } = await searchParams;
+	const { source, store_id } = await searchParams;
 
 	if (!session) {
 		redirect(AUTH_LOGIN);
@@ -28,7 +28,14 @@ const StockViewPage = async ({ params, searchParams }: PageProps) => {
 		redirect(STOCK_LIST);
 	}
 
-	return <StockViewClient session={session} id={Number(id)} storeId={store_id ? Number(store_id) : undefined} />;
+	return (
+		<StockViewClient
+			session={session}
+			id={Number(id)}
+			storeId={store_id ? Number(store_id) : undefined}
+			source={source === 'store-stock' ? 'store-stock' : undefined}
+		/>
+	);
 };
 
 export default StockViewPage;

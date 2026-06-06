@@ -64,6 +64,7 @@ import {
 	DASHBOARD_PURCHASES,
 	DASHBOARD_SALES,
 	DASHBOARD_STOCK,
+	DASHBOARD_STORE_STOCK,
 	DASHBOARD_STOCK_TRANSFERS,
 	DASHBOARD,
 	SITE_ROOT,
@@ -109,6 +110,7 @@ const getNavigationMenu = (isStaff: boolean, t: TranslationDictionary) => {
 				icon: <DomainIcon />,
 				items: [
 					{ title: t.navigation.dashboard, label: t.navigation.dashboard, path: DASHBOARD },
+					{ title: t.navigation.storeStockOverview, label: t.navigation.storeStockOverview, path: DASHBOARD_STORE_STOCK },
 					{ title: t.navigation.stockTransfers, label: t.navigation.stockTransfers, path: DASHBOARD_STOCK_TRANSFERS },
 					{ title: t.navigation.purchases, label: t.navigation.purchases, path: DASHBOARD_PURCHASES },
 				],
@@ -136,7 +138,7 @@ const getNavigationMenu = (isStaff: boolean, t: TranslationDictionary) => {
 			items: [
 				{ title: t.navigation.myProfile, label: t.navigation.myProfile, path: DASHBOARD_EDIT_PROFILE },
 				{ title: t.navigation.changePassword, label: t.navigation.changePassword, path: DASHBOARD_PASSWORD },
-				{ title: t.navigation.notifications, label: t.navigation.notifications, path: DASHBOARD_NOTIFICATIONS },
+				{ title: t.magasin.notificationPreferences, label: t.magasin.notificationPreferences, path: DASHBOARD_NOTIFICATIONS },
 			],
 		},
 	};

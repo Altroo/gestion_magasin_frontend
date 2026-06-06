@@ -1,7 +1,7 @@
 'use client';
 
 import React, { isValidElement, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Alert, Box, Button, Card, CardContent, Chip, Divider, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import {
 	ArrowBack as ArrowBackIcon,
@@ -23,7 +23,7 @@ import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages
 import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeleteStockBalanceMutation, useGetStockBalanceQuery } from '@/store/services/magasin';
-import { STOCK_EDIT, STOCK_LIST } from '@/utils/routes';
+import { DASHBOARD_STORE_STOCK, STOCK_EDIT, STOCK_LIST } from '@/utils/routes';
 import { extractApiErrorMessage, formatDateShort, formatNumber } from '@/utils/helpers';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
 import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '@/types/_initTypes';
@@ -31,6 +31,7 @@ import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '
 type Props = SessionProps & {
 	id: number;
 	storeId?: number;
+	source?: 'store-stock';
 };
 
 type InfoRowProps = {
@@ -59,14 +60,18 @@ const InfoRow = ({ icon, label, value }: InfoRowProps) => {
 	);
 };
 
-const StockViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
+const StockViewClient = ({ session, id, storeId: initialStoreId, source }: Props) => {
 	const token = useInitAccessToken(session);
 	const { t } = useLanguage();
 	const permissions = usePermission();
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const { onSuccess, onError } = useToast();
 	const { defaultStore } = useSelectedStore(token);
 	const storeId = initialStoreId ?? defaultStore?.id;
+	const isStoreStockSource = source === 'store-stock' || searchParams.get('source') === 'store-stock';
+	const backRoute = isStoreStockSource ? DASHBOARD_STORE_STOCK : STOCK_LIST;
+	const backLabel = isStoreStockSource ? t.magasin.storeStockOverview : t.magasin.backToStock;
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const { data: stockBalance, isLoading, error } = useGetStockBalanceQuery({ id }, { skip: !token });
 	const axiosError = useMemo(
@@ -79,7 +84,7 @@ const StockViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
 		try {
 			await deleteStockBalance({ id }).unwrap();
 			onSuccess(t.magasin.stockDeleted);
-			router.push(STOCK_LIST);
+			router.push(backRoute);
 		} catch (deleteError) {
 			onError(extractApiErrorMessage(deleteError, t.magasin.stockDeleteError));
 		} finally {
@@ -94,10 +99,10 @@ const StockViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={3}>
 							<Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'center' }} spacing={2}>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(STOCK_LIST)}>
-									{t.magasin.backToStock}
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(backRoute)}>
+									{backLabel}
 								</Button>
-								{!isLoading && !error && stockBalance && (
+								{!isStoreStockSource && !isLoading && !error && stockBalance && (
 									<Stack direction="row" gap={1} flexWrap="wrap">
 										{permissions.can_edit && (
 											<Button variant="outlined" size="small" startIcon={<EditIcon />} onClick={() => router.push(STOCK_EDIT(id, storeId))}>
