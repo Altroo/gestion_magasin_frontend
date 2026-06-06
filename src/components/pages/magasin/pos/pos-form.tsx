@@ -115,6 +115,7 @@ const PosClient = ({ session }: SessionProps) => {
 	const [cartPaginationModel, setCartPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
 	const [offlineQueue, setOfflineQueue] = useState<SaleCreatePayload[]>(() => readOfflineQueue());
 	const [cameraActive, setCameraActive] = useState(false);
+	const [hasAttemptedScan, setHasAttemptedScan] = useState(false);
 	const videoRef = useRef<HTMLVideoElement | null>(null);
 	const scanTimerRef = useRef<number | null>(null);
 	const streamRef = useRef<MediaStream | null>(null);
@@ -192,12 +193,15 @@ const PosClient = ({ session }: SessionProps) => {
 	const scanFormik = useFormik<PosScanFormValues>({
 		initialValues: { barcode: '', globalError: '' },
 		validateOnMount: true,
+		validateOnBlur: false,
 		validationSchema: toFormikValidationSchema(posScanSchema),
 		onSubmit: async (values, { resetForm, setFieldError }) => {
+			setHasAttemptedScan(true);
 			try {
 				const scanned = await scanByCode(values.barcode, setFieldError);
 				if (scanned) {
 					resetForm();
+					setHasAttemptedScan(false);
 				}
 			} catch (e) {
 				setFormikAutoErrors({ e, setFieldError });
@@ -291,13 +295,13 @@ const PosClient = ({ session }: SessionProps) => {
 						alignItems="center"
 						sx={{ width: '100%', height: '100%' }}
 					>
-						<IconButton size="small" onClick={() => updateQuantity(params.row.id, -1)} aria-label="Diminuer">
+						<IconButton type="button" size="small" onClick={() => updateQuantity(params.row.id, -1)} aria-label="Diminuer">
 							<RemoveIcon fontSize="small" />
 						</IconButton>
 						<Typography variant="body2" sx={{ width: 42, textAlign: 'center', fontWeight: 600 }}>
 							{params.row.quantity}
 						</Typography>
-						<IconButton size="small" onClick={() => updateQuantity(params.row.id, 1)} aria-label="Augmenter">
+						<IconButton type="button" size="small" onClick={() => updateQuantity(params.row.id, 1)} aria-label="Augmenter">
 							<AddIcon fontSize="small" />
 						</IconButton>
 					</Stack>
@@ -320,7 +324,7 @@ const PosClient = ({ session }: SessionProps) => {
 				disableColumnMenu: true,
 				align: 'left',
 				renderCell: (params: GridRenderCellParams<CartGridRow>) => (
-					<IconButton color="error" size="small" onClick={() => setCart((current) => current.filter((item) => lineKey(item) !== params.row.id))}>
+					<IconButton type="button" color="error" size="small" onClick={() => setCart((current) => current.filter((item) => lineKey(item) !== params.row.id))}>
 						<DeleteIcon fontSize="small" />
 					</IconButton>
 				),
@@ -391,6 +395,8 @@ const PosClient = ({ session }: SessionProps) => {
 			onError(t.errors.genericError);
 		}
 	};
+
+	const shouldShowBarcodeError = Boolean(scanFormik.errors.barcode) && (hasAttemptedScan || Boolean(scanFormik.values.barcode));
 
 	const stopCamera = () => {
 		if (scanTimerRef.current) {
@@ -486,7 +492,10 @@ const PosClient = ({ session }: SessionProps) => {
 											theme={inputTheme}
 											label={t.magasin.barcode}
 											value={scanFormik.values.barcode}
-											onChange={scanFormik.handleChange}
+											onChange={(event) => {
+												setHasAttemptedScan(false);
+												scanFormik.handleChange(event);
+											}}
 											onBlur={scanFormik.handleBlur}
 											onKeyDown={(event) => {
 												if (event.key === 'Enter') {
@@ -494,8 +503,8 @@ const PosClient = ({ session }: SessionProps) => {
 													void scanFormik.submitForm();
 												}
 											}}
-											error={scanFormik.touched.barcode && Boolean(scanFormik.errors.barcode)}
-											helperText={scanFormik.touched.barcode ? scanFormik.errors.barcode : ''}
+											error={shouldShowBarcodeError}
+											helperText={shouldShowBarcodeError ? scanFormik.errors.barcode : ''}
 											startIcon={<QrCodeScannerIcon fontSize="small" />}
 											fullWidth
 											size="small"
@@ -519,6 +528,7 @@ const PosClient = ({ session }: SessionProps) => {
 											{t.magasin.scan}
 										</Button>
 										<Button
+											type="button"
 											variant="outlined"
 											startIcon={cameraActive ? <VideocamOffIcon /> : <VideocamIcon />}
 											onClick={cameraActive ? stopCamera : () => void startCamera()}
@@ -548,6 +558,7 @@ const PosClient = ({ session }: SessionProps) => {
 									<Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
 										{promotions?.results.map((promotion) => (
 											<Button
+												type="button"
 												key={promotion.id}
 												variant="outlined"
 												startIcon={<LocalOfferIcon />}
@@ -567,7 +578,7 @@ const PosClient = ({ session }: SessionProps) => {
 									offlineQueue.length > 0 ? (
 										<Stack direction="row" spacing={1}>
 											<Chip label={`${t.magasin.offlineQueue}: ${offlineQueue.length}`} size="small" />
-											<IconButton onClick={() => void syncQueue()} disabled={syncState.isLoading} aria-label={t.magasin.syncOffline}>
+											<IconButton type="button" onClick={() => void syncQueue()} disabled={syncState.isLoading} aria-label={t.magasin.syncOffline}>
 												<SyncIcon />
 											</IconButton>
 										</Stack>
@@ -628,6 +639,7 @@ const PosClient = ({ session }: SessionProps) => {
 										</Typography>
 									</Stack>
 									<Button
+										type="button"
 										variant="contained"
 										size="large"
 										startIcon={<PointOfSaleIcon />}
