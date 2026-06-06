@@ -8,13 +8,18 @@ import {
 	Chip,
 	Divider,
 	IconButton,
+	InputAdornment,
+	MenuItem,
 	Stack,
+	TextField,
+	ThemeProvider,
 	Typography,
 } from '@mui/material';
 import { DataGrid, type GridColDef, type GridPaginationModel, type GridRenderCellParams } from '@mui/x-data-grid';
 import { frFR } from '@mui/x-data-grid/locales';
 import {
 	Add as AddIcon,
+	CreditCard as CreditCardIcon,
 	Delete as DeleteIcon,
 	Inventory2 as InventoryIcon,
 	LocalOffer as LocalOfferIcon,
@@ -38,6 +43,7 @@ import { useInitAccessToken } from '@/contexts/InitContext';
 import {
 	useCreateSaleMutation,
 	useGetDashboardStatsQuery,
+	useGetPaymentModesQuery,
 	useGetPromotionsQuery,
 	useLazyScanProductQuery,
 	useSyncOfflineSalesMutation,
@@ -45,7 +51,7 @@ import {
 import { useLanguage, useToast } from '@/utils/hooks';
 import { setFormikAutoErrors } from '@/utils/helpers';
 import { posScanSchema } from '@/utils/formValidationSchemas';
-import { textInputTheme } from '@/utils/themes';
+import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import type { SessionProps } from '@/types/_initTypes';
 import type { PosScanFormValues, ProductType, PromotionType, SaleCreatePayload } from '@/types/gestionMagasinTypes';
 
@@ -77,6 +83,7 @@ type CartGridRow = {
 
 const OFFLINE_KEY = 'gestion-magasin-offline-sales';
 const inputTheme = textInputTheme();
+const dropdownTheme = customDropdownTheme();
 const actionButtonSx = {
 	borderRadius: '50px',
 	height: '3rem',
@@ -116,6 +123,7 @@ const PosClient = ({ session }: SessionProps) => {
 	const [offlineQueue, setOfflineQueue] = useState<SaleCreatePayload[]>(() => readOfflineQueue());
 	const [cameraActive, setCameraActive] = useState(false);
 	const [hasAttemptedScan, setHasAttemptedScan] = useState(false);
+	const [selectedPaymentModeId, setSelectedPaymentModeId] = useState('');
 	const videoRef = useRef<HTMLVideoElement | null>(null);
 	const scanTimerRef = useRef<number | null>(null);
 	const streamRef = useRef<MediaStream | null>(null);
@@ -127,6 +135,16 @@ const PosClient = ({ session }: SessionProps) => {
 		{ store: storeId, page: 1, pageSize: 50, status: 'active' },
 		{ skip: !token || !storeId },
 	);
+	const { data: paymentModes, isLoading: arePaymentModesLoading } = useGetPaymentModesQuery(
+		{ page: 1, pageSize: 100, is_active: 'true' },
+		{ skip: !token },
+	);
+	const paymentModeOptions = useMemo(() => paymentModes?.results ?? [], [paymentModes?.results]);
+	const defaultPaymentMode = useMemo(
+		() => paymentModeOptions.find((mode) => mode.code === 'cash') ?? paymentModeOptions.find((mode) => !mode.is_credit) ?? paymentModeOptions[0],
+		[paymentModeOptions],
+	);
+	const effectivePaymentModeId = selectedPaymentModeId || (defaultPaymentMode ? String(defaultPaymentMode.id) : '');
 
 	const total = useMemo(
 		() => cart.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0),
@@ -334,7 +352,7 @@ const PosClient = ({ session }: SessionProps) => {
 	);
 
 	const payload = (): SaleCreatePayload | null => {
-		if (!storeId || !cart.length) {
+		if (!storeId || !cart.length || !effectivePaymentModeId) {
 			return null;
 		}
 		return {
@@ -353,7 +371,7 @@ const PosClient = ({ session }: SessionProps) => {
 					quantity: String(line.quantity),
 					unit_price: String(line.unitPrice),
 				})),
-			payment_mode_code: 'cash',
+			payment_mode: Number(effectivePaymentModeId),
 			paid_amount: String(total),
 			idempotency_key: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`,
 		};
@@ -630,6 +648,25 @@ const PosClient = ({ session }: SessionProps) => {
 								)}
 								<Divider sx={{ my: 2 }} />
 								<Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'center' }}>
+									<ThemeProvider theme={dropdownTheme}>
+										<TextField
+											select
+											size="small"
+											id="payment_mode"
+											label={`${t.magasin.paymentMode} *`}
+											value={effectivePaymentModeId}
+											onChange={(event) => setSelectedPaymentModeId(event.target.value)}
+											disabled={arePaymentModesLoading || paymentModeOptions.length === 0}
+											InputProps={{ startAdornment: <InputAdornment position="start"><CreditCardIcon fontSize="small" /></InputAdornment> }}
+											sx={{ minWidth: { xs: '100%', sm: 260 } }}
+										>
+											{paymentModeOptions.map((mode) => (
+												<MenuItem key={mode.id} value={String(mode.id)}>
+													{mode.name}
+												</MenuItem>
+											))}
+										</TextField>
+									</ThemeProvider>
 									<Stack spacing={0.25}>
 										<Typography variant="caption" color="text.secondary">
 											{t.magasin.total}
@@ -643,7 +680,7 @@ const PosClient = ({ session }: SessionProps) => {
 										variant="contained"
 										size="large"
 										startIcon={<PointOfSaleIcon />}
-										disabled={!cart.length || createState.isLoading}
+										disabled={!cart.length || !effectivePaymentModeId || createState.isLoading}
 										onClick={() => void confirmSale()}
 										sx={actionButtonSx}
 									>
