@@ -319,6 +319,9 @@ export type TranslationDictionary = {
     attendanceDeleteError: string;
     deleteAttendanceTitle: string;
     deleteAttendanceBody: string;
+    deleteAttendancesTitle: (n: number) => string;
+    deleteAttendancesBody: (n: number) => string;
+    attendancesDeleted: (n: number) => string;
     expenseCreated: string;
     expenseUpdated: string;
     expenseDeleted: string;
@@ -383,6 +386,9 @@ export type TranslationDictionary = {
     promotionDeleteError: string;
     deletePromotionTitle: string;
     deletePromotionBody: string;
+    deletePromotionsTitle: (n: number) => string;
+    deletePromotionsBody: (n: number) => string;
+    promotionsDeleted: (n: number) => string;
     lineType: string;
     promotion: string;
     salePromotionLines: string;

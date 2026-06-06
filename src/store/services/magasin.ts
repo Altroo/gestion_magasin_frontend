@@ -547,6 +547,14 @@ export const magasinApi = createApi({
 			}),
 			invalidatesTags: ['Promotions', 'Reports'],
 		}),
+		bulkDeletePromotions: builder.mutation<{ deleted: number }, { ids: number[] }>({
+			query: ({ ids }) => ({
+				url: `${process.env.NEXT_PUBLIC_SALES_PROMOTIONS}bulk-delete/`,
+				method: 'DELETE',
+				data: { ids },
+			}),
+			invalidatesTags: ['Promotions', 'Reports'],
+		}),
 		getPaymentModes: builder.query<PaginationResponseType<PaymentModeType>, { page?: number; pageSize?: number; search?: string; is_active?: string | boolean } | void>({
 			query: (params) => ({
 				url: process.env.NEXT_PUBLIC_SALES_PAYMENT_MODES,
@@ -723,6 +731,14 @@ export const magasinApi = createApi({
 			}),
 			invalidatesTags: ['Attendance'],
 		}),
+		bulkDeleteAttendanceRecords: builder.mutation<{ deleted: number }, { ids: number[] }>({
+			query: ({ ids }) => ({
+				url: `${process.env.NEXT_PUBLIC_ATTENDANCE_ROOT}bulk-delete/`,
+				method: 'DELETE',
+				data: { ids },
+			}),
+			invalidatesTags: ['Attendance'],
+		}),
 		importAttendance: builder.mutation<unknown, { store: number; file: File }>({
 			query: ({ store, file }) => {
 				const data = new FormData();
@@ -753,8 +769,10 @@ export const {
 	useAddStockTransferMutation,
 	useAdjustStockMutation,
 	useBulkDeleteExpensesMutation,
+	useBulkDeleteAttendanceRecordsMutation,
 	useBulkDeleteInventorySessionsMutation,
 	useBulkDeleteProductsMutation,
+	useBulkDeletePromotionsMutation,
 	useBulkDeletePurchasesMutation,
 	useBulkDeleteStoresMutation,
 	useBulkDeleteStockBalancesMutation,

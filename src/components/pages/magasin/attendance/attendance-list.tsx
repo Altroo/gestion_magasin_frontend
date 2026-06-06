@@ -30,7 +30,7 @@ import { createDropdownFilterOperators } from '@/components/shared/dropdownFilte
 import { createNumericFilterOperators } from '@/components/shared/numericFilter/numericFilterOperator';
 import { createDateRangeFilterOperator } from '@/components/shared/dateRangeFilter/dateRangeFilterOperator';
 import { useInitAccessToken } from '@/contexts/InitContext';
-import { useDeleteAttendanceRecordMutation, useGetAttendanceRecordsQuery, useGetEmployeesQuery, useImportAttendanceMutation } from '@/store/services/magasin';
+import { useBulkDeleteAttendanceRecordsMutation, useDeleteAttendanceRecordMutation, useGetAttendanceRecordsQuery, useGetEmployeesQuery, useImportAttendanceMutation } from '@/store/services/magasin';
 import { ATTENDANCE_ADD, ATTENDANCE_EDIT, ATTENDANCE_VIEW } from '@/utils/routes';
 import { extractApiErrorMessage, formatNumber } from '@/utils/helpers';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
@@ -55,7 +55,9 @@ const AttendanceClient = ({ session }: SessionProps) => {
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});
 	const [chipFilterParams, setChipFilterParams] = useState<Record<string, string>>({});
+	const [selectedIds, setSelectedIds] = useState<number[]>([]);
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+	const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
 	const storeFilterActive = Boolean(chipFilterParams.store_ids);
 	const { data, isLoading, refetch } = useGetAttendanceRecordsQuery(
@@ -72,6 +74,7 @@ const AttendanceClient = ({ session }: SessionProps) => {
 	const { data: employees } = useGetEmployeesQuery({ pageSize: 200 }, { skip: !token });
 	const [importAttendance, importState] = useImportAttendanceMutation();
 	const [deleteAttendanceRecord] = useDeleteAttendanceRecordMutation();
+	const [bulkDeleteAttendanceRecords] = useBulkDeleteAttendanceRecordsMutation();
 
 	const statusOptions = [
 		{ value: 'present', label: t.magasin.present },
@@ -147,11 +150,25 @@ const AttendanceClient = ({ session }: SessionProps) => {
 		try {
 			await deleteAttendanceRecord({ id: deleteTarget }).unwrap();
 			onSuccess(t.magasin.attendanceDeleted);
+			setSelectedIds((current) => current.filter((id) => id !== deleteTarget));
 			refetch();
 		} catch (error) {
 			onError(extractApiErrorMessage(error, t.magasin.attendanceDeleteError));
 		} finally {
 			setDeleteTarget(null);
+		}
+	};
+
+	const bulkDeleteHandler = async () => {
+		try {
+			await bulkDeleteAttendanceRecords({ ids: selectedIds }).unwrap();
+			onSuccess(t.magasin.attendancesDeleted(selectedIds.length));
+			setSelectedIds([]);
+			refetch();
+		} catch (error) {
+			onError(extractApiErrorMessage(error, t.magasin.attendanceDeleteError));
+		} finally {
+			setShowBulkDeleteModal(false);
 		}
 	};
 
@@ -220,10 +237,15 @@ const AttendanceClient = ({ session }: SessionProps) => {
 				<Box sx={magasinPageContainerSx}>
 					<StoreTabs selectedStoreId={storeId} onChange={setSelectedStoreId} token={token} />
 					<Box sx={magasinPageContentSx}>
-						<Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} justifyContent="space-between" flexWrap="wrap">
+						<Stack direction="row" spacing={1} flexWrap="wrap">
 							{permissions.can_create && canManageStore && (
 								<Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => router.push(ATTENDANCE_ADD(storeId))}>
 									{t.magasin.newAttendance}
+								</Button>
+							)}
+							{permissions.can_delete && canManageStore && selectedIds.length > 0 && (
+								<Button variant="outlined" color="error" startIcon={<DeleteIcon fontSize="small" />} onClick={() => setShowBulkDeleteModal(true)}>
+									{t.common.delete} ({selectedIds.length})
 								</Button>
 							)}
 						</Stack>
@@ -241,6 +263,9 @@ const AttendanceClient = ({ session }: SessionProps) => {
 						onFilterModelChange={setFilterModel}
 						onCustomFilterParamsChange={setCustomFilterParams}
 						toolbar={{ quickFilter: true, debounceMs: 500 }}
+						checkboxSelection={permissions.can_delete && canManageStore}
+						selectedIds={selectedIds}
+						onSelectionChange={setSelectedIds}
 						toolbarActions={
 							permissions.can_create && canManageStore ? (
 								<DarkTooltip title={t.magasin.importPointage}>
@@ -262,6 +287,18 @@ const AttendanceClient = ({ session }: SessionProps) => {
 						actions={[
 							{ text: t.common.cancel, active: false, onClick: () => setDeleteTarget(null), icon: <CloseIcon />, color: '#6B6B6B' },
 							{ text: t.common.delete, active: true, onClick: deleteHandler, icon: <DeleteIcon />, color: '#D32F2F' },
+						]}
+					/>
+				)}
+				{showBulkDeleteModal && (
+					<ActionModals
+						title={t.magasin.deleteAttendancesTitle(selectedIds.length)}
+						body={t.magasin.deleteAttendancesBody(selectedIds.length)}
+						titleIcon={<DeleteIcon />}
+						titleIconColor="#D32F2F"
+						actions={[
+							{ text: t.common.cancel, active: false, onClick: () => setShowBulkDeleteModal(false), icon: <CloseIcon />, color: '#6B6B6B' },
+							{ text: t.common.delete, active: true, onClick: bulkDeleteHandler, icon: <DeleteIcon />, color: '#D32F2F' },
 						]}
 					/>
 				)}

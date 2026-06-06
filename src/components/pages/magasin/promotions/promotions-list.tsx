@@ -24,7 +24,7 @@ import { Protected } from '@/components/layouts/protected/protected';
 import StoreTabs, { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import { useInitAccessToken } from '@/contexts/InitContext';
-import { useDeletePromotionMutation, useGetPromotionsQuery } from '@/store/services/magasin';
+import { useBulkDeletePromotionsMutation, useDeletePromotionMutation, useGetPromotionsQuery } from '@/store/services/magasin';
 import type { SessionProps } from '@/types/_initTypes';
 import type { PromotionType } from '@/types/gestionMagasinTypes';
 import { extractApiErrorMessage, formatDate, formatNumber } from '@/utils/helpers';
@@ -45,13 +45,16 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});
 	const [chipFilterParams, setChipFilterParams] = useState<Record<string, string>>({});
+	const [selectedIds, setSelectedIds] = useState<number[]>([]);
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+	const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 	const mergedFilterParams = useMemo(() => ({ ...chipFilterParams, ...customFilterParams }), [chipFilterParams, customFilterParams]);
 	const { data, isLoading, refetch } = useGetPromotionsQuery(
 		{ store: storeId, search: searchTerm, page: paginationModel.page + 1, pageSize: paginationModel.pageSize, ...mergedFilterParams },
 		{ skip: !token || !storeId },
 	);
 	const [deletePromotion] = useDeletePromotionMutation();
+	const [bulkDeletePromotions] = useBulkDeletePromotionsMutation();
 
 	const chipFilters = useMemo(
 		() => [
@@ -78,11 +81,25 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 		try {
 			await deletePromotion({ id: deleteTarget }).unwrap();
 			onSuccess(t.magasin.promotionDeleted);
+			setSelectedIds((current) => current.filter((id) => id !== deleteTarget));
 			refetch();
 		} catch (error) {
 			onError(extractApiErrorMessage(error, t.magasin.promotionDeleteError));
 		} finally {
 			setDeleteTarget(null);
+		}
+	};
+
+	const handleBulkDelete = async () => {
+		try {
+			await bulkDeletePromotions({ ids: selectedIds }).unwrap();
+			onSuccess(t.magasin.promotionsDeleted(selectedIds.length));
+			setSelectedIds([]);
+			refetch();
+		} catch (error) {
+			onError(extractApiErrorMessage(error, t.magasin.promotionDeleteError));
+		} finally {
+			setShowBulkDeleteModal(false);
 		}
 	};
 
@@ -125,6 +142,7 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 					<Box sx={magasinPageContentSx}>
 						<Stack direction="row" spacing={1} flexWrap="wrap">
 							{permissions.can_create_promotion && <Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => router.push(PROMOTIONS_ADD(storeId))}>{t.magasin.newPromotion}</Button>}
+							{permissions.can_create_promotion && selectedIds.length > 0 && <Button variant="outlined" color="error" startIcon={<DeleteIcon fontSize="small" />} onClick={() => setShowBulkDeleteModal(true)}>{t.common.delete} ({selectedIds.length})</Button>}
 						</Stack>
 					</Box>
 					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} />
@@ -140,6 +158,9 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 						onFilterModelChange={setFilterModel}
 						onCustomFilterParamsChange={setCustomFilterParams}
 						toolbar={{ quickFilter: true, debounceMs: 500 }}
+						checkboxSelection={permissions.can_create_promotion}
+						selectedIds={selectedIds}
+						onSelectionChange={setSelectedIds}
 					/>
 				</Box>
 			</Protected>
@@ -152,6 +173,18 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 					actions={[
 						{ text: t.common.cancel, active: false, onClick: () => setDeleteTarget(null), icon: <CloseIcon />, color: '#6B6B6B' },
 						{ text: t.common.delete, active: true, onClick: handleDelete, icon: <DeleteIcon />, color: '#D32F2F' },
+					]}
+				/>
+			)}
+			{showBulkDeleteModal && (
+				<ActionModals
+					title={t.magasin.deletePromotionsTitle(selectedIds.length)}
+					body={t.magasin.deletePromotionsBody(selectedIds.length)}
+					titleIcon={<DeleteIcon />}
+					titleIconColor="#D32F2F"
+					actions={[
+						{ text: t.common.cancel, active: false, onClick: () => setShowBulkDeleteModal(false), icon: <CloseIcon />, color: '#6B6B6B' },
+						{ text: t.common.delete, active: true, onClick: handleBulkDelete, icon: <DeleteIcon />, color: '#D32F2F' },
 					]}
 				/>
 			)}
