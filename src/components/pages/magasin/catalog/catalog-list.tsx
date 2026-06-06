@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
 	Box,
 	Button,
+	Chip,
 	CircularProgress,
 	IconButton,
 	Stack,
@@ -28,6 +29,7 @@ import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import StoreTabs, { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
+import TooltipTextCell from '@/components/shared/dataGridCells/tooltipTextCell';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
 import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelectFilterBar';
@@ -224,7 +226,7 @@ const CatalogClient = ({ session }: SessionProps) => {
 			flex: 1,
 			minWidth: 130,
 			renderCell: (params: GridRenderCellParams<ProductType>) => (
-				<Typography variant="body2" noWrap>{params.value ?? '-'}</Typography>
+				<TooltipTextCell>{params.value ?? '-'}</TooltipTextCell>
 			),
 		},
 		{
@@ -233,7 +235,7 @@ const CatalogClient = ({ session }: SessionProps) => {
 			flex: 0.8,
 			minWidth: 110,
 			renderCell: (params: GridRenderCellParams<ProductType>) => (
-				<Typography variant="body2" noWrap>{params.value ?? '-'}</Typography>
+				<TooltipTextCell>{params.value ?? '-'}</TooltipTextCell>
 			),
 		},
 		{
@@ -243,9 +245,9 @@ const CatalogClient = ({ session }: SessionProps) => {
 			minWidth: 120,
 			filterOperators: createNumericFilterOperators(),
 			renderCell: (params: GridRenderCellParams<ProductType>) => (
-				<Typography variant="body2" color="primary" fontWeight={600} noWrap>
+				<TooltipTextCell title={`${formatNumber(params.value as string)} Dhs`} color="primary" fontWeight={600}>
 					{formatNumber(params.value as string)} Dhs
-				</Typography>
+				</TooltipTextCell>
 			),
 		},
 		{
@@ -255,7 +257,7 @@ const CatalogClient = ({ session }: SessionProps) => {
 			minWidth: 120,
 			filterOperators: createNumericFilterOperators(),
 			renderCell: (params: GridRenderCellParams<ProductType>) => (
-				<Typography variant="body2" noWrap>{params.value ?? '-'}</Typography>
+				<TooltipTextCell>{params.value ?? '-'}</TooltipTextCell>
 			),
 		},
 		{
@@ -265,7 +267,7 @@ const CatalogClient = ({ session }: SessionProps) => {
 			minWidth: 130,
 			filterOperators: createNumericFilterOperators(),
 			renderCell: (params: GridRenderCellParams<ProductType>) => (
-				<Typography variant="body2" noWrap>{params.value ?? params.row.default_stock_alert}</Typography>
+				<TooltipTextCell>{params.value ?? params.row.default_stock_alert}</TooltipTextCell>
 			),
 		},
 		{
@@ -274,15 +276,22 @@ const CatalogClient = ({ session }: SessionProps) => {
 			flex: 0.7,
 			minWidth: 100,
 			filterOperators: createBooleanFilterOperators(booleanFilterOptions, t.common.all),
-			renderCell: (params: GridRenderCellParams<ProductType>) => (
-				<DarkTooltip title={params.value ? t.common.yes : t.common.no}>
-					{params.value ? (
-						<CheckCircleIcon color="success" fontSize="small" />
-					) : (
-						<CancelIcon color="error" fontSize="small" />
-					)}
-				</DarkTooltip>
-			),
+			renderCell: (params: GridRenderCellParams<ProductType>) => {
+				const isActive = Boolean(params.value);
+
+				return (
+					<DarkTooltip title={isActive ? t.users.active : t.users.inactive}>
+						<Chip
+							icon={isActive ? <CheckCircleIcon fontSize="small" /> : <CancelIcon fontSize="small" />}
+							label={isActive ? t.users.active : t.users.inactive}
+							color={isActive ? 'success' : 'error'}
+							size="small"
+							variant="outlined"
+							sx={{ fontWeight: 600 }}
+						/>
+					</DarkTooltip>
+				);
+			},
 		},
 		{
 			field: 'actions',

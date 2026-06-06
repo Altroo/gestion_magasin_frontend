@@ -19,6 +19,7 @@ import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import StoreTabs, { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
+import TooltipTextCell from '@/components/shared/dataGridCells/tooltipTextCell';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
 import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelectFilterBar';
@@ -136,10 +137,13 @@ const StockClient = ({ session }: SessionProps) => {
 				key: 'stock',
 				label: t.magasin.lowStockStatus,
 				paramName: 'low',
-				options: [{ id: 'true', nom: t.magasin.lowStockReached }],
+				options: [
+					{ id: 'true', nom: t.magasin.lowStockReached },
+					{ id: 'false', nom: t.magasin.stockSufficient },
+				],
 			},
 		],
-		[categories?.results, productUnits?.results, t.magasin.category, t.magasin.lowStockReached, t.magasin.lowStockStatus, t.magasin.unit],
+		[categories?.results, productUnits?.results, t.magasin.category, t.magasin.lowStockReached, t.magasin.lowStockStatus, t.magasin.stockSufficient, t.magasin.unit],
 	);
 
 	const columns: GridColDef[] = [
@@ -171,7 +175,7 @@ const StockClient = ({ session }: SessionProps) => {
 			flex: 1,
 			minWidth: 130,
 			renderCell: (params: GridRenderCellParams<StockBalanceType>) => (
-				<Typography variant="body2" noWrap>{params.value ?? '-'}</Typography>
+				<TooltipTextCell>{params.value ?? '-'}</TooltipTextCell>
 			),
 		},
 		{
@@ -180,7 +184,7 @@ const StockClient = ({ session }: SessionProps) => {
 			flex: 0.8,
 			minWidth: 110,
 			renderCell: (params: GridRenderCellParams<StockBalanceType>) => (
-				<Typography variant="body2" noWrap>{params.value ?? '-'}</Typography>
+				<TooltipTextCell>{params.value ?? '-'}</TooltipTextCell>
 			),
 		},
 		{
@@ -189,7 +193,7 @@ const StockClient = ({ session }: SessionProps) => {
 			flex: 1,
 			minWidth: 140,
 			renderCell: (params: GridRenderCellParams<StockBalanceType>) => (
-				<Typography variant="body2" noWrap>{params.value}</Typography>
+				<TooltipTextCell>{params.value}</TooltipTextCell>
 			),
 		},
 		{
@@ -199,7 +203,7 @@ const StockClient = ({ session }: SessionProps) => {
 			minWidth: 130,
 			filterOperators: createNumericFilterOperators(),
 			renderCell: (params: GridRenderCellParams<StockBalanceType>) => (
-				<Typography variant="body2" fontWeight={600} noWrap>{formatNumber(params.value as string)}</Typography>
+				<TooltipTextCell fontWeight={600}>{formatNumber(params.value as string)}</TooltipTextCell>
 			),
 		},
 		{
@@ -209,7 +213,7 @@ const StockClient = ({ session }: SessionProps) => {
 			minWidth: 140,
 			filterOperators: createNumericFilterOperators(),
 			renderCell: (params: GridRenderCellParams<StockBalanceType>) => (
-				<Typography variant="body2" noWrap>{formatNumber(params.value as string)}</Typography>
+				<TooltipTextCell>{formatNumber(params.value as string)}</TooltipTextCell>
 			),
 		},
 		{
@@ -219,9 +223,9 @@ const StockClient = ({ session }: SessionProps) => {
 			minWidth: 130,
 			filterOperators: createNumericFilterOperators(),
 			renderCell: (params: GridRenderCellParams<StockBalanceType>) => (
-				<Typography variant="body2" color="primary" fontWeight={600} noWrap>
+				<TooltipTextCell title={`${formatNumber(params.value as string)} Dhs`} color="primary" fontWeight={600}>
 					{formatNumber(params.value as string)} Dhs
-				</Typography>
+				</TooltipTextCell>
 			),
 		},
 		{
@@ -232,9 +236,13 @@ const StockClient = ({ session }: SessionProps) => {
 			filterOperators: createBooleanFilterOperators(booleanFilterOptions, t.common.all),
 			renderCell: (params: GridRenderCellParams<StockBalanceType>) =>
 				params.value ? (
-					<Chip icon={<WarningIcon />} label={t.magasin.lowStockReached} color="warning" size="small" />
+					<DarkTooltip title={t.magasin.lowStockReached}>
+						<Chip icon={<WarningIcon />} label={t.magasin.lowStockReached} color="warning" size="small" />
+					</DarkTooltip>
 				) : (
-					<Chip icon={<CheckCircleIcon />} label={t.magasin.stockSufficient} color="success" size="small" variant="outlined" />
+					<DarkTooltip title={t.magasin.stockSufficient}>
+						<Chip icon={<CheckCircleIcon />} label={t.magasin.stockSufficient} color="success" size="small" variant="outlined" />
+					</DarkTooltip>
 				),
 		},
 		{
