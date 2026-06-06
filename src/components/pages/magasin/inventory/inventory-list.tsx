@@ -2,14 +2,12 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Button, Chip, Stack, Typography } from '@mui/material';
+import { Box, Button, Stack } from '@mui/material';
 import {
 	Add as AddIcon,
-	Cancel as CancelIcon,
 	CheckCircle as ValidateIcon,
 	Close as CloseIcon,
 	Delete as DeleteIcon,
-	Description as DraftIcon,
 	Edit as EditIcon,
 	Visibility as VisibilityIcon,
 } from '@mui/icons-material';
@@ -19,8 +17,10 @@ import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import StoreTabs, { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
-import { magasinStatusLabel, stockWorkflowStatusOptions } from '@/components/pages/magasin/shared/status-labels';
+import { stockWorkflowStatusOptions } from '@/components/pages/magasin/shared/status-labels';
+import WorkflowStatusChip from '@/components/pages/magasin/shared/workflow-status-chip';
 import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelectFilterBar';
+import TooltipTextCell from '@/components/shared/dataGridCells/tooltipTextCell';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
 import { useInitAccessToken } from '@/contexts/InitContext';
@@ -60,17 +60,6 @@ const InventoryListClient = ({ session }: SessionProps) => {
 
 	const chipFilters = useMemo(() => [{ key: 'status', label: t.magasin.status, paramName: 'status', options: stockWorkflowStatusOptions(t) }], [t]);
 	const handleChipFilterChange = useCallback((params: Record<string, string>) => { setChipFilterParams(params); setPaginationModel((current) => ({ ...current, page: 0 })); }, []);
-
-	const renderStatusChip = (status?: string | null) => {
-		const label = magasinStatusLabel(t, status);
-		if (status === 'validated') {
-			return <Chip size="small" color="success" variant="outlined" icon={<ValidateIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
-		}
-		if (status === 'cancelled') {
-			return <Chip size="small" color="error" variant="outlined" icon={<CancelIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
-		}
-		return <Chip size="small" color="default" variant="outlined" icon={<DraftIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
-	};
 
 	const handleDelete = async () => {
 		if (!deleteTarget) return;
@@ -113,11 +102,11 @@ const InventoryListClient = ({ session }: SessionProps) => {
 	};
 
 	const columns: GridColDef[] = [
-		{ field: 'code', headerName: t.magasin.reference, flex: 0.8, minWidth: 130 },
-		{ field: 'title', headerName: t.magasin.inventory, flex: 1.4, minWidth: 180, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <Typography fontWeight={600}>{params.value}</Typography> },
-		{ field: 'store_name', headerName: t.magasin.store, flex: 1, minWidth: 140 },
-		{ field: 'inventory_date', headerName: t.magasin.date, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <Typography>{formatDate(params.value as string)}</Typography> },
-		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 140, renderCell: (params: GridRenderCellParams<InventorySessionType>) => renderStatusChip(params.value as string) },
+		{ field: 'code', headerName: t.magasin.reference, flex: 0.8, minWidth: 130, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
+		{ field: 'title', headerName: t.magasin.inventory, flex: 1.4, minWidth: 180, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <TooltipTextCell fontWeight={600}>{params.value}</TooltipTextCell> },
+		{ field: 'store_name', headerName: t.magasin.store, flex: 1, minWidth: 140, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
+		{ field: 'inventory_date', headerName: t.magasin.date, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <TooltipTextCell>{formatDate(params.value as string)}</TooltipTextCell> },
+		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 140, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <WorkflowStatusChip t={t} status={params.value as string} /> },
 		{
 			field: 'actions',
 			headerName: t.common.actions,

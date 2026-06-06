@@ -2,15 +2,18 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Button, Chip, Stack, Typography } from '@mui/material';
+import { Box, Button, Stack } from '@mui/material';
 import { Add as AddIcon, Close as CloseIcon, Delete as DeleteIcon, DownloadDone as ReceiveIcon, Edit as EditIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
 import { GridLogicOperator, type GridColDef, type GridFilterModel, type GridRenderCellParams } from '@mui/x-data-grid';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
-import { magasinStatusLabel, purchaseStatusOptions } from '@/components/pages/magasin/shared/status-labels';
+import { purchaseStatusOptions } from '@/components/pages/magasin/shared/status-labels';
+import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
+import WorkflowStatusChip from '@/components/pages/magasin/shared/workflow-status-chip';
 import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelectFilterBar';
+import TooltipTextCell from '@/components/shared/dataGridCells/tooltipTextCell';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
 import { useInitAccessToken } from '@/contexts/InitContext';
@@ -27,6 +30,7 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 	const permissions = usePermission();
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
+	const { memberships } = useSelectedStore(token);
 	const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
@@ -39,8 +43,26 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 		{ search: searchTerm, page: paginationModel.page + 1, pageSize: paginationModel.pageSize, ...mergedFilterParams },
 		{ skip: !token },
 	);
+	const { data: filterPurchases } = useGetPurchasesQuery(
+		{ page: 1, pageSize: 200 },
+		{ skip: !token },
+	);
 	const [deletePurchase] = useDeletePurchaseMutation();
 	const [receivePurchase] = useReceivePurchaseMutation();
+
+	const supplierOptions = useMemo(() => {
+		const suppliers = new Set<string>();
+		(filterPurchases?.results ?? []).forEach((purchase) => {
+			const supplier = purchase.supplier_name.trim();
+			if (supplier) suppliers.add(supplier);
+		});
+		return Array.from(suppliers).sort((a, b) => a.localeCompare(b)).map((supplier) => ({ id: supplier, nom: supplier }));
+	}, [filterPurchases?.results]);
+
+	const storeOptions = useMemo(
+		() => memberships.map((membership) => ({ id: String(membership.store.id), nom: membership.store.name })),
+		[memberships],
+	);
 
 	const chipFilters = useMemo(
 		() => [
@@ -50,8 +72,20 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 				paramName: 'status',
 				options: purchaseStatusOptions(t),
 			},
+			{
+				key: 'supplier',
+				label: t.magasin.supplier,
+				paramName: 'supplier_names',
+				options: supplierOptions,
+			},
+			{
+				key: 'store',
+				label: t.magasin.store,
+				paramName: 'store_ids',
+				options: storeOptions,
+			},
 		],
-		[t],
+		[storeOptions, supplierOptions, t],
 	);
 
 	const handleChipFilterChange = useCallback((params: Record<string, string>) => {
@@ -86,12 +120,12 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 	};
 
 	const columns: GridColDef[] = [
-		{ field: 'reference', headerName: t.magasin.reference, flex: 0.8, minWidth: 130 },
-		{ field: 'supplier_name', headerName: t.magasin.supplier, flex: 1.2, minWidth: 160, renderCell: (params: GridRenderCellParams<PurchaseType>) => <Typography fontWeight={600}>{params.value || '-'}</Typography> },
-		{ field: 'store_name', headerName: t.magasin.store, flex: 1, minWidth: 140 },
-		{ field: 'purchase_date', headerName: t.magasin.date, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<PurchaseType>) => <Typography>{formatDate(params.value as string)}</Typography> },
-		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 110, renderCell: (params: GridRenderCellParams<PurchaseType>) => <Chip size="small" color={params.value === 'received' ? 'success' : 'default'} label={magasinStatusLabel(t, params.value as string)} /> },
-		{ field: 'subtotal', headerName: t.magasin.subtotal, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<PurchaseType>) => <Typography fontWeight={600}>{formatNumber(params.value as string)} Dhs</Typography> },
+		{ field: 'reference', headerName: t.magasin.reference, flex: 0.8, minWidth: 130, renderCell: (params: GridRenderCellParams<PurchaseType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
+		{ field: 'supplier_name', headerName: t.magasin.supplier, flex: 1.2, minWidth: 160, renderCell: (params: GridRenderCellParams<PurchaseType>) => <TooltipTextCell fontWeight={600}>{params.value || '-'}</TooltipTextCell> },
+		{ field: 'store_name', headerName: t.magasin.store, flex: 1, minWidth: 140, renderCell: (params: GridRenderCellParams<PurchaseType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
+		{ field: 'purchase_date', headerName: t.magasin.date, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<PurchaseType>) => <TooltipTextCell>{formatDate(params.value as string)}</TooltipTextCell> },
+		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 110, renderCell: (params: GridRenderCellParams<PurchaseType>) => <WorkflowStatusChip t={t} status={params.value as string} /> },
+		{ field: 'subtotal', headerName: t.magasin.subtotal, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<PurchaseType>) => <TooltipTextCell title={`${formatNumber(params.value as string)} Dhs`} fontWeight={600}>{formatNumber(params.value as string)} Dhs</TooltipTextCell> },
 		{
 			field: 'actions',
 			headerName: t.common.actions,
@@ -120,7 +154,7 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 							{permissions.can_create && <Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => router.push(PURCHASES_ADD())}>{t.magasin.newPurchase}</Button>}
 						</Stack>
 					</Box>
-					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} columns={1} />
+					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} />
 					<PaginatedDataGrid
 						data={data}
 						isLoading={isLoading}

@@ -99,8 +99,6 @@ const StockTransfersViewClient = ({ session, id }: Props) => {
 										)}
 									/>
 									<DetailCard icon={<TransferIcon />} title={t.magasin.stockTransferDetails}>
-										<InfoRow icon={<StorefrontIcon />} label={t.magasin.sourceStore} value={transfer.source_store_name} />
-										<Divider />
 										<InfoRow icon={<StorefrontIcon />} label={t.magasin.targetStore} value={transfer.target_store_name} />
 										<Divider />
 										<InfoRow icon={<CalendarIcon />} label={t.magasin.transferDate} value={formatDate(transfer.transfer_date)} />

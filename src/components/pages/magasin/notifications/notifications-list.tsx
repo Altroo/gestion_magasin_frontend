@@ -62,7 +62,7 @@ const NotificationsClient = ({ session }: SessionProps) => {
 	});
 
 	return (
-		<NavigationBar title={t.magasin.notifications}>
+		<NavigationBar title={t.magasin.notificationPreferences}>
 			<Protected permission="can_edit">
 				<main className={`${Styles.main} ${Styles.fixMobile}`}>
 					<Box sx={{ width: '100%', display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' } }}>

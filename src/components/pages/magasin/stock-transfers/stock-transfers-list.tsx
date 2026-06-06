@@ -2,16 +2,25 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Button, Stack, Typography } from '@mui/material';
-import { Add as AddIcon, CheckCircle as ValidateIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
+import { Box, Button, Stack } from '@mui/material';
+import {
+	Add as AddIcon,
+	CheckCircle as ValidateIcon,
+	Close as CloseIcon,
+	Delete as DeleteIcon,
+	Edit as EditIcon,
+	Visibility as VisibilityIcon,
+} from '@mui/icons-material';
 import { GridLogicOperator, type GridColDef, type GridFilterModel, type GridRenderCellParams } from '@mui/x-data-grid';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import { stockWorkflowStatusOptions } from '@/components/pages/magasin/shared/status-labels';
-import { StatusIcon } from '@/components/pages/magasin/shared/view-components';
+import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
+import WorkflowStatusChip from '@/components/pages/magasin/shared/workflow-status-chip';
 import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelectFilterBar';
+import TooltipTextCell from '@/components/shared/dataGridCells/tooltipTextCell';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
 import { useInitAccessToken } from '@/contexts/InitContext';
@@ -28,6 +37,7 @@ const StockTransfersListClient = ({ session }: SessionProps) => {
 	const permissions = usePermission();
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
+	const { memberships } = useSelectedStore(token);
 	const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
@@ -43,7 +53,14 @@ const StockTransfersListClient = ({ session }: SessionProps) => {
 	const [deleteTransfer] = useDeleteStockTransferMutation();
 	const [validateTransfer] = useValidateStockTransferMutation();
 
-	const chipFilters = useMemo(() => [{ key: 'status', label: t.magasin.status, paramName: 'status', options: stockWorkflowStatusOptions(t) }], [t]);
+	const targetStoreOptions = useMemo(
+		() => memberships.map((membership) => membership.store).filter((store) => !store.is_global_stock).map((store) => ({ id: String(store.id), nom: store.name })),
+		[memberships],
+	);
+	const chipFilters = useMemo(() => [
+		{ key: 'status', label: t.magasin.status, paramName: 'status', options: stockWorkflowStatusOptions(t) },
+		{ key: 'target_store_ids', label: t.magasin.targetStore, paramName: 'target_store_ids', options: targetStoreOptions },
+	], [t, targetStoreOptions]);
 	const handleChipFilterChange = useCallback((params: Record<string, string>) => { setChipFilterParams(params); setPaginationModel((current) => ({ ...current, page: 0 })); }, []);
 
 	const handleDelete = async () => {
@@ -73,11 +90,10 @@ const StockTransfersListClient = ({ session }: SessionProps) => {
 	};
 
 	const columns: GridColDef[] = [
-		{ field: 'reference', headerName: t.magasin.transferReference, flex: 0.8, minWidth: 140 },
-		{ field: 'source_store_name', headerName: t.magasin.sourceStore, flex: 1, minWidth: 150 },
-		{ field: 'target_store_name', headerName: t.magasin.targetStore, flex: 1, minWidth: 150 },
-		{ field: 'transfer_date', headerName: t.magasin.transferDate, flex: 0.8, minWidth: 130, renderCell: (params: GridRenderCellParams<StockTransferType>) => <Typography>{formatDate(params.value as string)}</Typography> },
-		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 110, align: 'center', headerAlign: 'center', renderCell: (params: GridRenderCellParams<StockTransferType>) => <StatusIcon t={t} status={params.value as string} /> },
+		{ field: 'reference', headerName: t.magasin.transferReference, flex: 0.8, minWidth: 140, renderCell: (params: GridRenderCellParams<StockTransferType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
+		{ field: 'target_store_name', headerName: t.magasin.targetStore, flex: 1, minWidth: 150, renderCell: (params: GridRenderCellParams<StockTransferType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
+		{ field: 'transfer_date', headerName: t.magasin.transferDate, flex: 0.8, minWidth: 130, renderCell: (params: GridRenderCellParams<StockTransferType>) => <TooltipTextCell>{formatDate(params.value as string)}</TooltipTextCell> },
+		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 140, renderCell: (params: GridRenderCellParams<StockTransferType>) => <WorkflowStatusChip t={t} status={params.value as string} /> },
 		{
 			field: 'actions',
 			headerName: t.common.actions,
@@ -106,7 +122,7 @@ const StockTransfersListClient = ({ session }: SessionProps) => {
 							{permissions.can_create && <Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => router.push(STOCK_TRANSFERS_ADD())}>{t.magasin.newStockTransfer}</Button>}
 						</Stack>
 					</Box>
-					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} columns={1} />
+					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} />
 					<PaginatedDataGrid
 						data={data}
 						isLoading={isLoading}

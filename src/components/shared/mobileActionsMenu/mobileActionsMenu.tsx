@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { IconButton, Menu, MenuItem, ListItemIcon, ListItemText, useTheme, useMediaQuery, Box } from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
+import DarkTooltip from '@/components/htmlElements/tooltip/darkTooltip/darkTooltip';
 import { useLanguage } from '@/utils/hooks';
 
 export type ActionItem = {
@@ -49,16 +50,18 @@ const MobileActionsMenu: React.FC<MobileActionsMenuProps> = ({ actions }) => {
 	if (isMobile) {
 		return (
 			<>
-				<IconButton
-					size="small"
-					onClick={handleClick}
-					aria-label={t.accessibility.moreActions}
-					aria-controls={open ? 'actions-menu' : undefined}
-					aria-haspopup="true"
-					aria-expanded={open ? 'true' : undefined}
-				>
-					<MoreVertIcon />
-				</IconButton>
+				<DarkTooltip title={t.accessibility.moreActions}>
+					<IconButton
+						size="small"
+						onClick={handleClick}
+						aria-label={t.accessibility.moreActions}
+						aria-controls={open ? 'actions-menu' : undefined}
+						aria-haspopup="true"
+						aria-expanded={open ? 'true' : undefined}
+					>
+						<MoreVertIcon />
+					</IconButton>
+				</DarkTooltip>
 				<Menu
 					id="actions-menu"
 					anchorEl={anchorEl}
@@ -95,18 +98,19 @@ const MobileActionsMenu: React.FC<MobileActionsMenuProps> = ({ actions }) => {
 	return (
 		<Box sx={{ display: 'flex', gap: 1 }}>
 			{visibleActions.map((action, index) => (
-				<IconButton
-					key={index}
-					size="small"
-					color={action.color}
-					onClick={(e) => {
-						e.stopPropagation();
-						action.onClick(e);
-					}}
-					aria-label={action.label}
-				>
-					{action.icon}
-				</IconButton>
+				<DarkTooltip key={index} title={action.label}>
+					<IconButton
+						size="small"
+						color={action.color}
+						onClick={(e) => {
+							e.stopPropagation();
+							action.onClick(e);
+						}}
+						aria-label={action.label}
+					>
+						{action.icon}
+					</IconButton>
+				</DarkTooltip>
 			))}
 		</Box>
 	);

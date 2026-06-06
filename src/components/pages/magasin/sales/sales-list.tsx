@@ -17,6 +17,7 @@ import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
 import StoreTabs, { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
+import TooltipTextCell from '@/components/shared/dataGridCells/tooltipTextCell';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
 import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelectFilterBar';
@@ -103,15 +104,15 @@ const SalesClient = ({ session }: SessionProps) => {
 	const renderStatusChip = (status?: string | null) => {
 		const label = magasinStatusLabel(t, status);
 		if (status === 'confirmed' || status === 'paid') {
-			return <Chip size="small" color="success" variant="outlined" icon={<CheckCircleIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
+			return <DarkTooltip title={label}><Chip size="small" color="success" variant="outlined" icon={<CheckCircleIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
 		}
 		if (status === 'void') {
-			return <Chip size="small" color="error" variant="outlined" icon={<CancelIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
+			return <DarkTooltip title={label}><Chip size="small" color="error" variant="outlined" icon={<CancelIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
 		}
 		if (status === 'credit') {
-			return <Chip size="small" color="warning" variant="outlined" icon={<PendingActionsIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
+			return <DarkTooltip title={label}><Chip size="small" color="warning" variant="outlined" icon={<PendingActionsIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
 		}
-		return <Chip size="small" color="default" variant="outlined" label={label} sx={{ fontWeight: 600 }} />;
+		return <DarkTooltip title={label}><Chip size="small" color="default" variant="outlined" label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
 	};
 
 	const columns: GridColDef[] = [
@@ -122,7 +123,7 @@ const SalesClient = ({ session }: SessionProps) => {
 			minWidth: 160,
 			filterOperators: createDateRangeFilterOperator(),
 			renderCell: (params: GridRenderCellParams<SaleType>) => (
-				<Typography variant="body2" noWrap>{formatDate(params.value as string)}</Typography>
+				<TooltipTextCell>{formatDate(params.value as string)}</TooltipTextCell>
 			),
 		},
 		{
@@ -142,7 +143,7 @@ const SalesClient = ({ session }: SessionProps) => {
 			flex: 1,
 			minWidth: 130,
 			renderCell: (params: GridRenderCellParams<SaleType>) => (
-				<Typography variant="body2" noWrap>{params.value ?? '-'}</Typography>
+				<TooltipTextCell>{params.value ?? '-'}</TooltipTextCell>
 			),
 		},
 		{
@@ -168,9 +169,9 @@ const SalesClient = ({ session }: SessionProps) => {
 			minWidth: 130,
 			filterOperators: createNumericFilterOperators(),
 			renderCell: (params: GridRenderCellParams<SaleType>) => (
-				<Typography variant="body2" color="primary" fontWeight={600} noWrap>
+				<TooltipTextCell title={`${formatNumber(params.value as string)} Dhs`} color="primary" fontWeight={600}>
 					{formatNumber(params.value as string)} Dhs
-				</Typography>
+				</TooltipTextCell>
 			),
 		},
 		{

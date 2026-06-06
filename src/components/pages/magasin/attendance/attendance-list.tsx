@@ -22,6 +22,7 @@ import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
 import StoreTabs, { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
+import TooltipTextCell from '@/components/shared/dataGridCells/tooltipTextCell';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
 import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelectFilterBar';
@@ -117,15 +118,15 @@ const AttendanceClient = ({ session }: SessionProps) => {
 	const renderStatusChip = (status?: string | null) => {
 		const label = magasinStatusLabel(t, status);
 		if (status === 'present') {
-			return <Chip size="small" color="success" variant="outlined" icon={<CheckCircleIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
+			return <DarkTooltip title={label}><Chip size="small" color="success" variant="outlined" icon={<CheckCircleIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
 		}
 		if (status === 'absent') {
-			return <Chip size="small" color="error" variant="outlined" icon={<CancelIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
+			return <DarkTooltip title={label}><Chip size="small" color="error" variant="outlined" icon={<CancelIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
 		}
 		if (status === 'off') {
-			return <Chip size="small" color="warning" variant="outlined" icon={<PendingActionsIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
+			return <DarkTooltip title={label}><Chip size="small" color="warning" variant="outlined" icon={<PendingActionsIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
 		}
-		return <Chip size="small" color="default" variant="outlined" label={label} sx={{ fontWeight: 600 }} />;
+		return <DarkTooltip title={label}><Chip size="small" color="default" variant="outlined" label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
 	};
 
 	const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -155,7 +156,7 @@ const AttendanceClient = ({ session }: SessionProps) => {
 	};
 
 	const columns: GridColDef[] = [
-		{ field: 'date', headerName: t.magasin.date, flex: 0.9, minWidth: 130, filterOperators: createDateRangeFilterOperator() },
+		{ field: 'date', headerName: t.magasin.date, flex: 0.9, minWidth: 130, filterOperators: createDateRangeFilterOperator(), renderCell: (params: GridRenderCellParams<AttendanceRecordType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
 		{
 			field: 'employee_name',
 			headerName: t.magasin.employee,
@@ -167,16 +168,16 @@ const AttendanceClient = ({ session }: SessionProps) => {
 				</DarkTooltip>
 			),
 		},
-		{ field: 'store_name', headerName: t.magasin.store, flex: 1, minWidth: 140 },
-		{ field: 'clock_in', headerName: t.magasin.clockIn, flex: 0.8, minWidth: 110 },
-		{ field: 'clock_out', headerName: t.magasin.clockOut, flex: 0.8, minWidth: 110 },
+		{ field: 'store_name', headerName: t.magasin.store, flex: 1, minWidth: 140, renderCell: (params: GridRenderCellParams<AttendanceRecordType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
+		{ field: 'clock_in', headerName: t.magasin.clockIn, flex: 0.8, minWidth: 110, renderCell: (params: GridRenderCellParams<AttendanceRecordType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
+		{ field: 'clock_out', headerName: t.magasin.clockOut, flex: 0.8, minWidth: 110, renderCell: (params: GridRenderCellParams<AttendanceRecordType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
 		{
 			field: 'shift',
 			headerName: t.magasin.shift,
 			flex: 0.8,
 			minWidth: 120,
 			filterOperators: createDropdownFilterOperators(shiftOptions, t.common.all),
-			renderCell: (params: GridRenderCellParams<AttendanceRecordType>) => <Typography variant="body2">{magasinStatusLabel(t, params.value as string)}</Typography>,
+			renderCell: (params: GridRenderCellParams<AttendanceRecordType>) => <TooltipTextCell>{magasinStatusLabel(t, params.value as string)}</TooltipTextCell>,
 		},
 		{
 			field: 'hours_worked',
@@ -184,7 +185,7 @@ const AttendanceClient = ({ session }: SessionProps) => {
 			flex: 0.8,
 			minWidth: 110,
 			filterOperators: createNumericFilterOperators(),
-			renderCell: (params: GridRenderCellParams<AttendanceRecordType>) => <Typography variant="body2">{formatNumber(params.value as string)}</Typography>,
+			renderCell: (params: GridRenderCellParams<AttendanceRecordType>) => <TooltipTextCell>{formatNumber(params.value as string)}</TooltipTextCell>,
 		},
 		{
 			field: 'status',

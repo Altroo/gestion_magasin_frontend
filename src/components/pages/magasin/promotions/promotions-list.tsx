@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Button, Chip, Stack, Typography } from '@mui/material';
+import { Box, Button, Chip, Stack } from '@mui/material';
 import {
 	Add as AddIcon,
 	Cancel as CancelIcon,
@@ -14,9 +14,11 @@ import {
 } from '@mui/icons-material';
 import { GridLogicOperator, type GridColDef, type GridFilterModel, type GridRenderCellParams } from '@mui/x-data-grid';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
+import DarkTooltip from '@/components/htmlElements/tooltip/darkTooltip/darkTooltip';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
 import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelectFilterBar';
+import TooltipTextCell from '@/components/shared/dataGridCells/tooltipTextCell';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import StoreTabs, { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
@@ -86,17 +88,17 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 
 	const renderStatusChip = (status?: string | null) => {
 		if (status === 'active') {
-			return <Chip size="small" color="success" variant="outlined" icon={<CheckCircleIcon fontSize="small" />} label={t.magasin.activePromotion} sx={{ fontWeight: 600 }} />;
+			return <DarkTooltip title={t.magasin.activePromotion}><Chip size="small" color="success" variant="outlined" icon={<CheckCircleIcon fontSize="small" />} label={t.magasin.activePromotion} sx={{ fontWeight: 600 }} /></DarkTooltip>;
 		}
-		return <Chip size="small" color="error" variant="outlined" icon={<CancelIcon fontSize="small" />} label={t.magasin.expiredPromotion} sx={{ fontWeight: 600 }} />;
+		return <DarkTooltip title={t.magasin.expiredPromotion}><Chip size="small" color="error" variant="outlined" icon={<CancelIcon fontSize="small" />} label={t.magasin.expiredPromotion} sx={{ fontWeight: 600 }} /></DarkTooltip>;
 	};
 
 	const columns: GridColDef[] = [
-		{ field: 'name', headerName: t.magasin.promotionName, flex: 1.4, minWidth: 180, renderCell: (params: GridRenderCellParams<PromotionType>) => <Typography fontWeight={600}>{params.value}</Typography> },
-		{ field: 'selling_price', headerName: t.magasin.sellingPrice, flex: 0.8, minWidth: 130, renderCell: (params: GridRenderCellParams<PromotionType>) => <Typography color="primary" fontWeight={600}>{formatNumber(params.value as string)} Dhs</Typography> },
+		{ field: 'name', headerName: t.magasin.promotionName, flex: 1.4, minWidth: 180, renderCell: (params: GridRenderCellParams<PromotionType>) => <TooltipTextCell fontWeight={600}>{params.value}</TooltipTextCell> },
+		{ field: 'selling_price', headerName: t.magasin.sellingPrice, flex: 0.8, minWidth: 130, renderCell: (params: GridRenderCellParams<PromotionType>) => <TooltipTextCell title={`${formatNumber(params.value as string)} Dhs`} color="primary" fontWeight={600}>{formatNumber(params.value as string)} Dhs</TooltipTextCell> },
 		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 130, renderCell: (params: GridRenderCellParams<PromotionType>) => renderStatusChip(params.value as string) },
-		{ field: 'start_date', headerName: t.magasin.startDate, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<PromotionType>) => <Typography>{params.value ? formatDate(params.value as string) : '-'}</Typography> },
-		{ field: 'end_date', headerName: t.magasin.endDate, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<PromotionType>) => <Typography>{params.value ? formatDate(params.value as string) : '-'}</Typography> },
+		{ field: 'start_date', headerName: t.magasin.startDate, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<PromotionType>) => <TooltipTextCell>{params.value ? formatDate(params.value as string) : '-'}</TooltipTextCell> },
+		{ field: 'end_date', headerName: t.magasin.endDate, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<PromotionType>) => <TooltipTextCell>{params.value ? formatDate(params.value as string) : '-'}</TooltipTextCell> },
 		{
 			field: 'actions',
 			headerName: t.common.actions,

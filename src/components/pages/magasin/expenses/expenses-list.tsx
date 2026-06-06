@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Button, Chip, Stack, Typography } from '@mui/material';
+import { Box, Button, Chip, Stack } from '@mui/material';
 import {
 	Add as AddIcon,
 	CheckCircle as CheckCircleIcon,
@@ -14,6 +14,7 @@ import {
 } from '@mui/icons-material';
 import { GridLogicOperator, type GridColDef, type GridFilterModel, type GridRenderCellParams } from '@mui/x-data-grid';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
+import DarkTooltip from '@/components/htmlElements/tooltip/darkTooltip/darkTooltip';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
@@ -25,6 +26,7 @@ import {
 	magasinStatusLabel,
 } from '@/components/pages/magasin/shared/status-labels';
 import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelectFilterBar';
+import TooltipTextCell from '@/components/shared/dataGridCells/tooltipTextCell';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
 import { useInitAccessToken } from '@/contexts/InitContext';
@@ -99,12 +101,12 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 	const renderPaymentStatusChip = (status?: string | null) => {
 		const label = magasinStatusLabel(t, status);
 		if (status === 'paid') {
-			return <Chip size="small" color="success" variant="outlined" icon={<CheckCircleIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
+			return <DarkTooltip title={label}><Chip size="small" color="success" variant="outlined" icon={<CheckCircleIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
 		}
 		if (status === 'payable') {
-			return <Chip size="small" color="warning" variant="outlined" icon={<PendingActionsIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} />;
+			return <DarkTooltip title={label}><Chip size="small" color="warning" variant="outlined" icon={<PendingActionsIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
 		}
-		return <Chip size="small" color="default" variant="outlined" label={label} sx={{ fontWeight: 600 }} />;
+		return <DarkTooltip title={label}><Chip size="small" color="default" variant="outlined" label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
 	};
 
 	const handleDelete = async () => {
@@ -135,13 +137,13 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 	};
 
 	const columns: GridColDef[] = [
-		{ field: 'label', headerName: t.magasin.expenseLabel, flex: 1.4, minWidth: 180, renderCell: (params: GridRenderCellParams<ExpenseType>) => <Typography fontWeight={600}>{params.value}</Typography> },
-		{ field: 'store_name', headerName: t.magasin.store, flex: 1, minWidth: 140 },
-		{ field: 'category_name', headerName: t.magasin.expenseCategory, flex: 1, minWidth: 140 },
-		{ field: 'expense_date', headerName: t.magasin.date, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<ExpenseType>) => <Typography>{formatDate(params.value as string)}</Typography> },
-		{ field: 'payment_mode', headerName: t.magasin.paymentMode, flex: 0.9, minWidth: 130, renderCell: (params: GridRenderCellParams<ExpenseType>) => <Typography>{params.row.payment_mode_name ?? expensePaymentModeLabel(t, params.value as string, paymentModes?.results)}</Typography> },
+		{ field: 'label', headerName: t.magasin.expenseLabel, flex: 1.4, minWidth: 180, renderCell: (params: GridRenderCellParams<ExpenseType>) => <TooltipTextCell fontWeight={600}>{params.value}</TooltipTextCell> },
+		{ field: 'store_name', headerName: t.magasin.store, flex: 1, minWidth: 140, renderCell: (params: GridRenderCellParams<ExpenseType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
+		{ field: 'category_name', headerName: t.magasin.expenseCategory, flex: 1, minWidth: 140, renderCell: (params: GridRenderCellParams<ExpenseType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
+		{ field: 'expense_date', headerName: t.magasin.date, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<ExpenseType>) => <TooltipTextCell>{formatDate(params.value as string)}</TooltipTextCell> },
+		{ field: 'payment_mode', headerName: t.magasin.paymentMode, flex: 0.9, minWidth: 130, renderCell: (params: GridRenderCellParams<ExpenseType>) => <TooltipTextCell>{params.row.payment_mode_name ?? expensePaymentModeLabel(t, params.value as string, paymentModes?.results)}</TooltipTextCell> },
 		{ field: 'payment_status', headerName: t.magasin.paymentStatus, flex: 0.8, minWidth: 140, renderCell: (params: GridRenderCellParams<ExpenseType>) => renderPaymentStatusChip(params.value as string) },
-		{ field: 'amount', headerName: t.magasin.expenseAmount, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<ExpenseType>) => <Typography fontWeight={600}>{formatNumber(params.value as string)} Dhs</Typography> },
+		{ field: 'amount', headerName: t.magasin.expenseAmount, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<ExpenseType>) => <TooltipTextCell title={`${formatNumber(params.value as string)} Dhs`} fontWeight={600}>{formatNumber(params.value as string)} Dhs</TooltipTextCell> },
 		{
 			field: 'actions',
 			headerName: t.common.actions,

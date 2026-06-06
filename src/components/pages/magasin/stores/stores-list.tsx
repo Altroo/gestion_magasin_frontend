@@ -18,6 +18,7 @@ import DarkTooltip from '@/components/htmlElements/tooltip/darkTooltip/darkToolt
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
+import TooltipTextCell from '@/components/shared/dataGridCells/tooltipTextCell';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
 import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelectFilterBar';
@@ -126,7 +127,7 @@ const StoresListClient = ({ session }: SessionProps) => {
 			flex: 0.8,
 			minWidth: 120,
 			renderCell: (params: GridRenderCellParams<StoreType>) => (
-				<Typography variant="body2" noWrap>{params.value}</Typography>
+				<TooltipTextCell>{params.value}</TooltipTextCell>
 			),
 		},
 		{
@@ -146,7 +147,7 @@ const StoresListClient = ({ session }: SessionProps) => {
 			flex: 0.9,
 			minWidth: 130,
 			renderCell: (params: GridRenderCellParams<StoreType>) => (
-				<Typography variant="body2" noWrap>{params.value || '-'}</Typography>
+				<TooltipTextCell>{params.value || '-'}</TooltipTextCell>
 			),
 		},
 		{
@@ -155,7 +156,7 @@ const StoresListClient = ({ session }: SessionProps) => {
 			flex: 0.7,
 			minWidth: 110,
 			renderCell: (params: GridRenderCellParams<StoreType>) => (
-				<Typography variant="body2" noWrap>{params.value ?? 0}</Typography>
+				<TooltipTextCell>{params.value ?? 0}</TooltipTextCell>
 			),
 		},
 		{

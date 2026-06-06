@@ -24,7 +24,7 @@ import type { SessionProps } from '@/types/_initTypes';
 import { fetchFileBlob } from '@/utils/apiHelpers';
 import { formatNumber } from '@/utils/helpers';
 import { useLanguage, useToast } from '@/utils/hooks';
-import { textInputTheme } from '@/utils/themes';
+import { customDropdownTheme } from '@/utils/themes';
 import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
 import CustomAutoCompleteSelect from '@/components/formikElements/customAutoCompleteSelect/customAutoCompleteSelect';
 import type { DropDownType } from '@/types/accountTypes';
@@ -32,7 +32,7 @@ import { CHART_OPTS } from '@/utils/rawData';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Filler, Tooltip, Legend);
 
-const inputTheme = textInputTheme();
+const dropdownTheme = customDropdownTheme();
 const ALL_STORES_CODE = '__all_stores__';
 
 const doughnutPalette = ['#1d4ed8', '#047857', '#b91c1c', '#c2410c', '#6d28d9', '#0f766e', '#be123c', '#4d7c0f'];
@@ -410,7 +410,7 @@ const DashboardClient = ({ session }: SessionProps) => {
 										noOptionsText={t.magasin.storeNotFound}
 										label={t.magasin.searchByStore}
 										items={storeOptions}
-										theme={inputTheme}
+										theme={dropdownTheme}
 										value={selectedStoreOption}
 										fullWidth
 										onChange={(_, newVal) =>

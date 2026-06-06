@@ -399,8 +399,6 @@ export type StockTransferLineType = {
 
 export type StockTransferType = {
 	id: number;
-	source_store: number;
-	source_store_name: string;
 	target_store: number;
 	target_store_name: string;
 	reference: string;
