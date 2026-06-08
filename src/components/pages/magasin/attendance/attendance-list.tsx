@@ -2,14 +2,16 @@
 
 import { ChangeEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Button, Chip, IconButton, Stack, Typography } from '@mui/material';
+import { Box, Button, Chip, CircularProgress, IconButton, Stack, Typography } from '@mui/material';
 import {
 	Add as AddIcon,
 	Cancel as CancelIcon,
 	CheckCircle as CheckCircleIcon,
 	Close as CloseIcon,
 	Delete as DeleteIcon,
+	Download as DownloadIcon,
 	Edit as EditIcon,
+	Email as EmailIcon,
 	FileUpload as FileUploadIcon,
 	PendingActions as PendingActionsIcon,
 	Visibility as VisibilityIcon,
@@ -30,8 +32,9 @@ import { createDropdownFilterOperators } from '@/components/shared/dropdownFilte
 import { createNumericFilterOperators } from '@/components/shared/numericFilter/numericFilterOperator';
 import { createDateRangeFilterOperator } from '@/components/shared/dateRangeFilter/dateRangeFilterOperator';
 import { useInitAccessToken } from '@/contexts/InitContext';
-import { useBulkDeleteAttendanceRecordsMutation, useDeleteAttendanceRecordMutation, useGetAttendanceRecordsQuery, useGetEmployeesQuery, useImportAttendanceMutation } from '@/store/services/magasin';
+import { useBulkDeleteAttendanceRecordsMutation, useDeleteAttendanceRecordMutation, useGetAttendanceRecordsQuery, useGetEmployeesQuery, useImportAttendanceMutation, useSendAttendanceImportGuideEmailMutation } from '@/store/services/magasin';
 import { ATTENDANCE_ADD, ATTENDANCE_EDIT, ATTENDANCE_VIEW } from '@/utils/routes';
+import { fetchFileBlob } from '@/utils/apiHelpers';
 import { extractApiErrorMessage, formatNumber } from '@/utils/helpers';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
 import type { SessionProps } from '@/types/_initTypes';
@@ -58,6 +61,7 @@ const AttendanceClient = ({ session }: SessionProps) => {
 	const [selectedIds, setSelectedIds] = useState<number[]>([]);
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 	const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+	const [isExporting, setIsExporting] = useState(false);
 
 	const storeFilterActive = Boolean(chipFilterParams.store_ids);
 	const { data, isLoading, refetch } = useGetAttendanceRecordsQuery(
@@ -73,6 +77,7 @@ const AttendanceClient = ({ session }: SessionProps) => {
 	);
 	const { data: employees } = useGetEmployeesQuery({ pageSize: 200 }, { skip: !token });
 	const [importAttendance, importState] = useImportAttendanceMutation();
+	const [sendAttendanceImportGuideEmail, sendGuideState] = useSendAttendanceImportGuideEmailMutation();
 	const [deleteAttendanceRecord] = useDeleteAttendanceRecordMutation();
 	const [bulkDeleteAttendanceRecords] = useBulkDeleteAttendanceRecordsMutation();
 
@@ -142,6 +147,54 @@ const AttendanceClient = ({ session }: SessionProps) => {
 			refetch();
 		} catch {
 			onError(t.errors.genericError);
+		}
+	};
+
+	const handleSendImportGuide = async () => {
+		if (!storeId) {
+			return;
+		}
+		try {
+			await sendAttendanceImportGuideEmail({ store: storeId }).unwrap();
+			onSuccess(t.magasin.importPointageGuideEmailSent);
+		} catch (error) {
+			onError(extractApiErrorMessage(error, t.magasin.importPointageGuideEmailError));
+		}
+	};
+
+	const handleExportXlsx = async () => {
+		if (!token) {
+			onError(t.errors.genericError);
+			return;
+		}
+		setIsExporting(true);
+		try {
+			const url = new URL(`${process.env.NEXT_PUBLIC_ATTENDANCE_ROOT}export-workbook/`);
+			if (!storeFilterActive && storeId) {
+				url.searchParams.set('store', String(storeId));
+			}
+			if (searchTerm) {
+				url.searchParams.set('search', searchTerm);
+			}
+			Object.entries({ ...customFilterParams, ...chipFilterParams }).forEach(([key, value]) => {
+				if (value) {
+					url.searchParams.set(key, value);
+				}
+			});
+			const blob = await fetchFileBlob(url.toString(), token);
+			const xlsxBlob = new Blob([blob], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+			const blobUrl = window.URL.createObjectURL(xlsxBlob);
+			const link = document.createElement('a');
+			link.href = blobUrl;
+			link.download = 'pointage.xlsx';
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60_000);
+		} catch (error) {
+			onError(extractApiErrorMessage(error, t.magasin.exportPointageXlsxError));
+		} finally {
+			setIsExporting(false);
 		}
 	};
 
@@ -262,18 +315,30 @@ const AttendanceClient = ({ session }: SessionProps) => {
 						filterModel={filterModel}
 						onFilterModelChange={setFilterModel}
 						onCustomFilterParamsChange={setCustomFilterParams}
-						toolbar={{ quickFilter: true, debounceMs: 500 }}
+						toolbar={{ quickFilter: true, debounceMs: 500, disableCsvExport: true }}
 						checkboxSelection={permissions.can_delete && canManageStore}
 						selectedIds={selectedIds}
 						onSelectionChange={setSelectedIds}
 						toolbarActions={
 							permissions.can_create && canManageStore ? (
-								<DarkTooltip title={t.magasin.importPointage}>
-									<IconButton size="small" disabled={importState.isLoading} component="label">
-										<FileUploadIcon />
-										<input hidden type="file" accept=".xlsx,.xls" onChange={handleImport} disabled={importState.isLoading} />
-									</IconButton>
-								</DarkTooltip>
+								<>
+									<DarkTooltip title={t.magasin.importPointageGuideEmail}>
+										<IconButton size="small" disabled={sendGuideState.isLoading} onClick={handleSendImportGuide}>
+											{sendGuideState.isLoading ? <CircularProgress size={20} /> : <EmailIcon />}
+										</IconButton>
+									</DarkTooltip>
+									<DarkTooltip title={t.magasin.exportPointageXlsx}>
+										<IconButton size="small" disabled={isExporting} onClick={handleExportXlsx}>
+											{isExporting ? <CircularProgress size={20} /> : <DownloadIcon />}
+										</IconButton>
+									</DarkTooltip>
+									<DarkTooltip title={t.magasin.importPointage}>
+										<IconButton size="small" disabled={importState.isLoading} component="label">
+											{importState.isLoading ? <CircularProgress size={20} /> : <FileUploadIcon />}
+											<input hidden type="file" accept=".xlsx,.xls" onChange={handleImport} disabled={importState.isLoading} />
+										</IconButton>
+									</DarkTooltip>
+								</>
 							) : undefined
 						}
 					/>

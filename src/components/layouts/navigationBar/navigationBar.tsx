@@ -90,20 +90,6 @@ import type { NotificationType } from '@/types/gestionMagasinTypes';
 
 const getNavigationMenu = (isStaff: boolean, t: TranslationDictionary) => {
 	return {
-		operations: {
-			title: t.navigation.operations,
-			icon: <PointOfSaleIcon />,
-			items: [
-				{ title: t.navigation.pos, label: t.navigation.pos, path: DASHBOARD_POS },
-				{ title: t.navigation.catalog, label: t.navigation.catalog, path: DASHBOARD_CATALOG },
-				{ title: t.navigation.stock, label: t.navigation.stock, path: DASHBOARD_STOCK },
-				{ title: t.navigation.inventory, label: t.navigation.inventory, path: DASHBOARD_INVENTORY },
-				{ title: t.navigation.sales, label: t.navigation.sales, path: DASHBOARD_SALES },
-				{ title: t.navigation.promotions, label: t.navigation.promotions, path: DASHBOARD_PROMOTIONS },
-				{ title: t.navigation.expenses, label: t.navigation.expenses, path: DASHBOARD_EXPENSES },
-				{ title: t.navigation.attendance, label: t.navigation.attendance, path: DASHBOARD_ATTENDANCE },
-			],
-		},
 		...(isStaff && {
 			mbrSouth: {
 				title: t.navigation.mbrSouth,
@@ -113,8 +99,24 @@ const getNavigationMenu = (isStaff: boolean, t: TranslationDictionary) => {
 					{ title: t.navigation.storeStockOverview, label: t.navigation.storeStockOverview, path: DASHBOARD_STORE_STOCK },
 					{ title: t.navigation.stockTransfers, label: t.navigation.stockTransfers, path: DASHBOARD_STOCK_TRANSFERS },
 					{ title: t.navigation.purchases, label: t.navigation.purchases, path: DASHBOARD_PURCHASES },
+					{ title: t.navigation.promotions, label: t.navigation.promotions, path: DASHBOARD_PROMOTIONS },
 				],
 			},
+		}),
+		operations: {
+			title: t.navigation.operations,
+			icon: <PointOfSaleIcon />,
+			items: [
+				{ title: t.navigation.pos, label: t.navigation.pos, path: DASHBOARD_POS },
+				{ title: t.navigation.catalog, label: t.navigation.catalog, path: DASHBOARD_CATALOG },
+				{ title: t.navigation.stock, label: t.navigation.stock, path: DASHBOARD_STOCK },
+				{ title: t.navigation.inventory, label: t.navigation.inventory, path: DASHBOARD_INVENTORY },
+				{ title: t.navigation.sales, label: t.navigation.sales, path: DASHBOARD_SALES },
+				{ title: t.navigation.expenses, label: t.navigation.expenses, path: DASHBOARD_EXPENSES },
+				{ title: t.navigation.attendance, label: t.navigation.attendance, path: DASHBOARD_ATTENDANCE },
+			],
+		},
+		...(isStaff && {
 			magasins: {
 				title: t.navigation.stores,
 				icon: <StorefrontIcon />,

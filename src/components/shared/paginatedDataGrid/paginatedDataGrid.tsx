@@ -36,6 +36,7 @@ type PaginatedDataGridProps<T> = {
 	toolbar?: {
 		quickFilter?: boolean;
 		debounceMs?: number;
+		disableCsvExport?: boolean;
 	};
 	/** Extra toolbar action buttons (CSV import, etc.) shown alongside filter/column buttons */
 	toolbarActions?: React.ReactNode;
@@ -465,6 +466,8 @@ const PaginatedDataGrid = <T,>({
 									toolbar: {
 										showQuickFilter: toolbar.quickFilter,
 										quickFilterProps: { debounceMs: toolbar.debounceMs },
+										csvOptions: { disableToolbarButton: toolbar.disableCsvExport },
+										printOptions: { disableToolbarButton: toolbar.disableCsvExport },
 										mainControls,
 									} as GridSlotProps['toolbar'],
 									panel: {

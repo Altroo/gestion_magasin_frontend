@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
@@ -9,6 +9,7 @@ import {
 	Button,
 	Card,
 	CardContent,
+	Checkbox,
 	Divider,
 	IconButton,
 	InputAdornment,
@@ -30,6 +31,7 @@ import {
 	LocalOffer as LocalOfferIcon,
 	Numbers as NumbersIcon,
 	Remove as RemoveIcon,
+	Storefront as StorefrontIcon,
 	Subject as RemarkIcon,
 	Warning as WarningIcon,
 } from '@mui/icons-material';
@@ -47,7 +49,7 @@ import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
-import { useAddPromotionMutation, useEditPromotionMutation, useGetProductsQuery, useGetPromotionQuery } from '@/store/services/magasin';
+import { useAddPromotionMutation, useEditPromotionMutation, useGetProductsQuery, useGetPromotionEligibleStoresQuery, useGetPromotionQuery, useGetStoresQuery } from '@/store/services/magasin';
 import { promotionSchema } from '@/utils/formValidationSchemas';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
 import { PROMOTIONS_LIST, PROMOTIONS_VIEW } from '@/utils/routes';
@@ -55,7 +57,7 @@ import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { useLanguage, useToast } from '@/utils/hooks';
 import Styles from '@/styles/dashboard/dashboard.module.sass';
 import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '@/types/_initTypes';
-import type { PromotionPayload } from '@/types/gestionMagasinTypes';
+import type { PromotionEligibleStoreType, PromotionPayload } from '@/types/gestionMagasinTypes';
 
 const inputTheme = textInputTheme();
 const dropdownTheme = customDropdownTheme();
@@ -72,6 +74,7 @@ type PromotionFormValues = {
 	start_date: string;
 	end_date: string;
 	note: string;
+	stores: string[];
 	lines: Array<{ product: string; quantity: string }>;
 	globalError: string;
 };
@@ -91,8 +94,7 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 	const theme = useTheme();
 	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 	const isEditMode = id !== undefined;
-	const { defaultStore } = useSelectedStore(token);
-	const storeId = initialStoreId ?? defaultStore?.id;
+	const { globalStore } = useSelectedStore(token);
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [isPending, setIsPending] = useState(false);
 	const [linePaginationModel, setLinePaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 5 });
@@ -102,9 +104,10 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 		{ skip: !token || !isEditMode },
 	);
 	const { data: products, isLoading: areProductsLoading } = useGetProductsQuery(
-		{ store: storeId, page: 1, pageSize: 200 },
-		{ skip: !token || !storeId },
+		{ store: globalStore?.id, page: 1, pageSize: 200 },
+		{ skip: !token || !globalStore?.id },
 	);
+	const { data: storesData } = useGetStoresQuery({ pageSize: 100 }, { skip: !token || !isEditMode });
 	const [addPromotion, addState] = useAddPromotionMutation();
 	const [editPromotion, editState] = useEditPromotionMutation();
 
@@ -115,7 +118,8 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 	);
 
 	const toPayload = (values: PromotionFormValues): PromotionPayload => ({
-		store: promotion?.store ?? storeId!,
+		store: isEditMode ? promotion?.store ?? initialStoreId : undefined,
+		stores: isEditMode ? undefined : values.stores.map(Number),
 		name: values.name.trim(),
 		selling_price: values.selling_price,
 		status: values.status || 'active',
@@ -136,6 +140,7 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 			start_date: promotion?.start_date ?? '',
 			end_date: promotion?.end_date ?? '',
 			note: promotion?.note ?? '',
+			stores: promotion?.store ? [String(promotion.store)] : [],
 			lines: promotion?.lines?.length
 				? promotion.lines.map((line) => ({ product: String(line.product), quantity: line.quantity }))
 				: [{ ...emptyLine }],
@@ -151,11 +156,12 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 				if (isEditMode) {
 					await editPromotion({ id: id!, data: toPayload(values) }).unwrap();
 					onSuccess(t.magasin.promotionUpdated);
-					router.push(PROMOTIONS_VIEW(id!, storeId));
+					router.push(PROMOTIONS_VIEW(id!));
 				} else {
-					const created = await addPromotion(toPayload(values)).unwrap();
-					onSuccess(t.magasin.promotionCreated);
-					router.push(PROMOTIONS_VIEW(created.id, storeId));
+					const response = await addPromotion(toPayload(values)).unwrap();
+					const createdPromotion = 'created' in response ? response.created[0] : response;
+					onSuccess('created' in response ? t.magasin.promotionCreatedForStores(response.count) : t.magasin.promotionCreated);
+					router.push(createdPromotion ? PROMOTIONS_VIEW(createdPromotion.id) : PROMOTIONS_LIST);
 				}
 			} catch (e) {
 				onError(extractApiErrorMessage(e, isEditMode ? t.magasin.promotionUpdateError : t.magasin.promotionCreateError));
@@ -174,6 +180,7 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 			start_date: t.magasin.startDate,
 			end_date: t.magasin.endDate,
 			note: t.magasin.note,
+			stores: t.magasin.targetStores,
 			lines: t.magasin.promotionLines,
 			globalError: t.errors.globalError,
 		}),
@@ -189,6 +196,9 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 				}
 				if (key === 'lines' && value) {
 					errors.lines = t.validation.required;
+				}
+				if (key === 'stores' && value) {
+					errors.stores = t.validation.required;
 				}
 			});
 		}
@@ -213,7 +223,75 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 		void formik.setFieldValue('lines', nextLines.length ? nextLines : [{ ...emptyLine }]);
 	};
 
-	const productOptions = products?.results ?? [];
+	const productOptions = useMemo(
+		() => (products?.results ?? []).filter((product) => Number(product.available_stock ?? 0) > 0),
+		[products?.results],
+	);
+	const eligibleStoreQueryParams = useMemo(() => {
+		const selectedLines = formik.values.lines.filter((line) => line.product);
+		if (!selectedLines.length) return undefined;
+		return {
+			product_ids: selectedLines.map((line) => line.product).join(','),
+			quantities: selectedLines.map((line) => line.quantity || '1').join(','),
+		};
+	}, [formik.values.lines]);
+	const { currentData: eligibleStores, isFetching: areEligibleStoresLoading } = useGetPromotionEligibleStoresQuery(
+		eligibleStoreQueryParams!,
+		{ skip: !token || isEditMode || !eligibleStoreQueryParams },
+	);
+	const targetStoreOptions = useMemo<PromotionEligibleStoreType[]>(() => {
+		if (isEditMode) {
+			return (storesData?.results ?? []).map((store) => ({
+				...store,
+				is_eligible: true,
+				missing_products: [],
+			}));
+		}
+		return eligibleStores ?? [];
+	}, [eligibleStores, isEditMode, storesData?.results]);
+	const eligibleStoreIds = useMemo(
+		() => new Set(targetStoreOptions.filter((store) => store.is_eligible).map((store) => String(store.id))),
+		[targetStoreOptions],
+	);
+	const eligibleStoreIdsKey = useMemo(
+		() => Array.from(eligibleStoreIds).sort().join(','),
+		[eligibleStoreIds],
+	);
+	const selectedStoresKey = formik.values.stores.join(',');
+	const storesError = fieldError('stores');
+	useEffect(() => {
+		if (isEditMode) return;
+		if (!eligibleStoreQueryParams) {
+			if (formik.values.stores.length > 0) {
+				void formik.setFieldValue('stores', [], true);
+			}
+			return;
+		}
+		if (areEligibleStoresLoading && !targetStoreOptions.length) return;
+		const selectedStores = selectedStoresKey ? selectedStoresKey.split(',').filter(Boolean) : [];
+		const nextStores = selectedStores.filter((storeId) => eligibleStoreIds.has(storeId));
+		if (nextStores.length !== formik.values.stores.length) {
+			void formik.setFieldValue('stores', nextStores, true);
+		}
+	}, [
+		areEligibleStoresLoading,
+		eligibleStoreIds,
+		eligibleStoreIdsKey,
+		eligibleStoreQueryParams,
+		formik,
+		isEditMode,
+		selectedStoresKey,
+		targetStoreOptions.length,
+	]);
+	const toggleTargetStore = (store: PromotionEligibleStoreType) => {
+		if (isEditMode || !store.is_eligible) return;
+		const storeId = String(store.id);
+		const nextStores = formik.values.stores.includes(storeId)
+			? formik.values.stores.filter((idValue) => idValue !== storeId)
+			: [...formik.values.stores, storeId];
+		void formik.setFieldTouched('stores', true, false);
+		void formik.setFieldValue('stores', nextStores, true);
+	};
 	const productLabel = (product: { id: number; reference: string | null; barcode: string | null; name: string }) =>
 		`${product.reference ?? product.barcode ?? product.id} - ${product.name}`;
 	const formatQuantityValue = (value: number) => {
@@ -446,6 +524,9 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 														{t.common.add}
 													</Button>
 												</Stack>
+												<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+													{t.magasin.mbrStockArticles}
+												</Typography>
 												<Divider sx={{ mb: 3 }} />
 												<Box sx={{ width: '100%' }}>
 													<DataGrid
@@ -484,6 +565,110 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 														}}
 													/>
 												</Box>
+											</CardContent>
+										</Card>
+										<Card elevation={2} sx={{ borderRadius: 2 }}>
+											<CardContent sx={{ p: 3 }}>
+												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+													<StorefrontIcon color="primary" />
+													<Typography variant="h6" fontWeight={700}>{t.magasin.targetStores}</Typography>
+												</Stack>
+												<Divider sx={{ mb: 3 }} />
+												<Box
+													sx={{
+														position: 'relative',
+														border: '1px solid',
+														borderColor: storesError ? 'error.main' : 'divider',
+														borderRadius: '28px',
+														overflow: 'hidden',
+														bgcolor: 'background.paper',
+													}}
+												>
+													<Box
+														sx={{
+															display: 'flex',
+															alignItems: 'center',
+															gap: 1.5,
+															px: 2,
+															py: 1.25,
+															borderBottom: targetStoreOptions.length > 0 || !eligibleStoreQueryParams || areEligibleStoresLoading ? '1px solid' : 'none',
+															borderColor: 'divider',
+															color: storesError ? 'error.main' : 'text.secondary',
+														}}
+													>
+														<StorefrontIcon fontSize="small" />
+														<Typography variant="body2" fontWeight={600}>
+															{t.magasin.selectTargetStores} *
+														</Typography>
+													</Box>
+													{!eligibleStoreQueryParams ? (
+														<Typography variant="body2" color="text.secondary" sx={{ px: 2, py: 2 }}>
+															{t.magasin.selectProduct}
+														</Typography>
+													) : areEligibleStoresLoading ? (
+														<Typography variant="body2" color="text.secondary" sx={{ px: 2, py: 2 }}>
+															{t.common.loading}
+														</Typography>
+													) : targetStoreOptions.length === 0 ? (
+														<Typography variant="body2" color="text.secondary" sx={{ px: 2, py: 2 }}>
+															{t.magasin.noEligibleStores}
+														</Typography>
+													) : (
+														targetStoreOptions.map((store, index) => {
+															const selected = formik.values.stores.includes(String(store.id));
+															return (
+																<Box
+																	key={store.id}
+																	onClick={() => toggleTargetStore(store)}
+																	sx={{
+																		display: 'flex',
+																		alignItems: 'center',
+																		gap: 1.5,
+																		px: 2,
+																		py: 1.5,
+																		borderTop: index === 0 ? 'none' : '1px solid',
+																		borderColor: 'divider',
+																		cursor: store.is_eligible && !isEditMode ? 'pointer' : 'not-allowed',
+																		opacity: store.is_eligible ? 1 : 0.48,
+																		bgcolor: selected ? 'rgba(127, 178, 226, 0.12)' : 'background.paper',
+																		transition: 'background-color 0.2s ease',
+																		'&:hover': {
+																			bgcolor: store.is_eligible && !isEditMode ? 'rgba(127, 178, 226, 0.08)' : 'background.paper',
+																		},
+																	}}
+																>
+																	<Checkbox
+																		checked={selected}
+																		disabled={!store.is_eligible || isEditMode}
+																		onChange={() => toggleTargetStore(store)}
+																		onClick={(event) => event.stopPropagation()}
+																		sx={{ p: 0.5 }}
+																	/>
+																	<Box sx={{ minWidth: 0, flex: 1 }}>
+																		<Typography variant="body2" fontWeight={700} noWrap>{store.name}</Typography>
+																		{store.missing_products.length > 0 && (
+																			<Box sx={{ mt: 0.5 }}>
+																				<Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>
+																					{t.magasin.ineligibleStoreMissingProducts} :
+																				</Typography>
+																				{store.missing_products.map((item) => (
+																					<Typography key={item.product} variant="caption" color="text.secondary" sx={{ display: 'block', pl: 1 }}>
+																						- {item.product_name}
+																					</Typography>
+																				))}
+																			</Box>
+																		)}
+																	</Box>
+																</Box>
+															);
+														})
+													)}
+												</Box>
+												{storesError && (
+													<Typography variant="caption" color="error" sx={{ display: 'block', mt: 1 }}>
+														{storesError}
+													</Typography>
+												)}
 											</CardContent>
 										</Card>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>

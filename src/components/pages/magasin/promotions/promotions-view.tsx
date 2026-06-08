@@ -29,7 +29,6 @@ import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import { DetailCard, DetailHeaderCard, InfoRow, LineItemsCard, StatusChip } from '@/components/pages/magasin/shared/view-components';
-import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeletePromotionMutation, useGetPromotionQuery } from '@/store/services/magasin';
 import { PROMOTIONS_EDIT, PROMOTIONS_LIST } from '@/utils/routes';
@@ -39,17 +38,14 @@ import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '
 
 type Props = SessionProps & {
 	id: number;
-	storeId?: number;
 };
 
-const PromotionsViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
+const PromotionsViewClient = ({ session, id }: Props) => {
 	const token = useInitAccessToken(session);
 	const { t } = useLanguage();
 	const permissions = usePermission();
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
-	const { defaultStore } = useSelectedStore(token);
-	const storeId = initialStoreId ?? defaultStore?.id;
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const { data: promotion, isLoading, error } = useGetPromotionQuery({ id }, { skip: !token });
 	const [deletePromotion] = useDeletePromotionMutation();
@@ -69,7 +65,7 @@ const PromotionsViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 
 	return (
 		<NavigationBar title={t.magasin.promotionDetails}>
-			<Protected permission="can_view">
+			<Protected permission="is_staff">
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={3}>
@@ -80,7 +76,7 @@ const PromotionsViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 								{promotion && (
 									<Stack direction="row" spacing={1}>
 										{permissions.can_create_promotion && (
-											<Button variant="outlined" size="small" startIcon={<EditIcon />} onClick={() => router.push(PROMOTIONS_EDIT(id, storeId))}>
+											<Button variant="outlined" size="small" startIcon={<EditIcon />} onClick={() => router.push(PROMOTIONS_EDIT(id))}>
 												{t.common.edit}
 											</Button>
 										)}

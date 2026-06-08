@@ -100,6 +100,14 @@ const permissionFields: Array<keyof Pick<UserFormValues, 'can_view' | 'can_print
 	'can_create_promotion',
 ];
 
+const baseAdminPermissionFields: Array<Exclude<(typeof permissionFields)[number], 'can_create_promotion'>> = [
+	'can_view',
+	'can_print',
+	'can_create',
+	'can_edit',
+	'can_delete',
+];
+
 const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) => {
 	const { token, id } = props;
 	const { onSuccess, onError } = useToast();
@@ -163,6 +171,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 			const { globalError, ...fields } = data;
 			const payload = {
 				...fields,
+				can_create_promotion: fields.is_staff ? fields.can_create_promotion : false,
 				stores: fields.stores.map((store) => ({
 					store_id: store.store_id,
 					role: store.role,
@@ -260,9 +269,16 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 		const checked = event.target.checked;
 		void formik.setFieldValue('is_staff', checked, true);
 		setAllPermissions(checked);
+		if (!checked) {
+			void formik.setFieldValue('can_create_promotion', false, true);
+		}
 	};
 
 	const handlePermissionChange = (field: (typeof permissionFields)[number]) => (event: React.ChangeEvent<HTMLInputElement>) => {
+		if (field === 'can_create_promotion' && !formik.values.is_staff) {
+			void formik.setFieldValue('can_create_promotion', false, true);
+			return;
+		}
 		const checked = event.target.checked;
 		void formik.setFieldValue(field, checked, true);
 		const nextValues = {
@@ -274,7 +290,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 			can_create_promotion: formik.values.can_create_promotion,
 			[field]: checked,
 		};
-		void formik.setFieldValue('is_staff', permissionFields.every((permissionField) => nextValues[permissionField]), true);
+		void formik.setFieldValue('is_staff', baseAdminPermissionFields.every((permissionField) => nextValues[permissionField]), true);
 	};
 
 	const setStoreAssignments = (next: UserStoreAssignmentType[]) => {
@@ -683,7 +699,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 								label={t.users.canDelete}
 									/>
 									<FormControlLabel
-										control={<Switch checked={formik.values.can_create_promotion} onChange={handlePermissionChange('can_create_promotion')} name="can_create_promotion" />}
+										control={<Switch checked={formik.values.is_staff && formik.values.can_create_promotion} onChange={handlePermissionChange('can_create_promotion')} name="can_create_promotion" disabled={!formik.values.is_staff} />}
 								label={t.users.canCreatePromotion}
 									/>
 								</Stack>

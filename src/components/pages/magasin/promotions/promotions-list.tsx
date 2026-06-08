@@ -21,10 +21,9 @@ import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelect
 import TooltipTextCell from '@/components/shared/dataGridCells/tooltipTextCell';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
-import StoreTabs, { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import { useInitAccessToken } from '@/contexts/InitContext';
-import { useBulkDeletePromotionsMutation, useDeletePromotionMutation, useGetPromotionsQuery } from '@/store/services/magasin';
+import { useBulkDeletePromotionsMutation, useDeletePromotionMutation, useGetPromotionsQuery, useGetStoresQuery } from '@/store/services/magasin';
 import type { SessionProps } from '@/types/_initTypes';
 import type { PromotionType } from '@/types/gestionMagasinTypes';
 import { extractApiErrorMessage, formatDate, formatNumber } from '@/utils/helpers';
@@ -37,9 +36,6 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 	const permissions = usePermission();
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
-	const { defaultStore } = useSelectedStore(token);
-	const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
-	const storeId = selectedStoreId ?? defaultStore?.id;
 	const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
@@ -50,9 +46,10 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 	const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 	const mergedFilterParams = useMemo(() => ({ ...chipFilterParams, ...customFilterParams }), [chipFilterParams, customFilterParams]);
 	const { data, isLoading, refetch } = useGetPromotionsQuery(
-		{ store: storeId, search: searchTerm, page: paginationModel.page + 1, pageSize: paginationModel.pageSize, ...mergedFilterParams },
-		{ skip: !token || !storeId },
+		{ search: searchTerm, page: paginationModel.page + 1, pageSize: paginationModel.pageSize, ...mergedFilterParams },
+		{ skip: !token },
 	);
+	const { data: storesData } = useGetStoresQuery({ pageSize: 100 }, { skip: !token });
 	const [deletePromotion] = useDeletePromotionMutation();
 	const [bulkDeletePromotions] = useBulkDeletePromotionsMutation();
 
@@ -67,8 +64,17 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 					{ id: 'expired', nom: t.magasin.expiredPromotion },
 				],
 			},
+			{
+				key: 'store',
+				label: t.magasin.store,
+				paramName: 'store',
+				options: (storesData?.results ?? []).map((store) => ({
+					id: String(store.id),
+					nom: store.name,
+				})),
+			},
 		],
-		[t],
+		[storesData?.results, t],
 	);
 
 	const handleChipFilterChange = useCallback((params: Record<string, string>) => {
@@ -112,6 +118,7 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 
 	const columns: GridColDef[] = [
 		{ field: 'name', headerName: t.magasin.promotionName, flex: 1.4, minWidth: 180, renderCell: (params: GridRenderCellParams<PromotionType>) => <TooltipTextCell fontWeight={600}>{params.value}</TooltipTextCell> },
+		{ field: 'store_name', headerName: t.magasin.store, flex: 1, minWidth: 170, renderCell: (params: GridRenderCellParams<PromotionType>) => <TooltipTextCell>{params.value}</TooltipTextCell> },
 		{ field: 'selling_price', headerName: t.magasin.sellingPrice, flex: 0.8, minWidth: 130, renderCell: (params: GridRenderCellParams<PromotionType>) => <TooltipTextCell title={`${formatNumber(params.value as string)} Dhs`} color="primary" fontWeight={600}>{formatNumber(params.value as string)} Dhs</TooltipTextCell> },
 		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 130, renderCell: (params: GridRenderCellParams<PromotionType>) => renderStatusChip(params.value as string) },
 		{ field: 'start_date', headerName: t.magasin.startDate, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<PromotionType>) => <TooltipTextCell>{params.value ? formatDate(params.value as string) : '-'}</TooltipTextCell> },
@@ -125,8 +132,8 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 			renderCell: (params: GridRenderCellParams<PromotionType>) => (
 				<MobileActionsMenu
 					actions={[
-						{ label: t.common.view, icon: <VisibilityIcon />, onClick: () => router.push(PROMOTIONS_VIEW(params.row.id, storeId)), color: 'info', show: permissions.can_view },
-						{ label: t.common.edit, icon: <EditIcon />, onClick: () => router.push(PROMOTIONS_EDIT(params.row.id, storeId)), color: 'primary', show: permissions.can_create_promotion },
+						{ label: t.common.view, icon: <VisibilityIcon />, onClick: () => router.push(PROMOTIONS_VIEW(params.row.id)), color: 'info', show: permissions.can_view },
+						{ label: t.common.edit, icon: <EditIcon />, onClick: () => router.push(PROMOTIONS_EDIT(params.row.id)), color: 'primary', show: permissions.can_create_promotion },
 						{ label: t.common.delete, icon: <DeleteIcon />, onClick: () => setDeleteTarget(params.row.id), color: 'error', show: permissions.can_create_promotion },
 					]}
 				/>
@@ -136,16 +143,15 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 
 	return (
 		<NavigationBar title={t.magasin.promotions}>
-			<Protected permission="can_view">
+			<Protected permission="is_staff">
 				<Box sx={magasinPageContainerSx}>
-					<StoreTabs selectedStoreId={storeId} onChange={setSelectedStoreId} token={token} />
 					<Box sx={magasinPageContentSx}>
 						<Stack direction="row" spacing={1} flexWrap="wrap">
-							{permissions.can_create_promotion && <Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => router.push(PROMOTIONS_ADD(storeId))}>{t.magasin.newPromotion}</Button>}
+							{permissions.can_create_promotion && <Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => router.push(PROMOTIONS_ADD())}>{t.magasin.newPromotion}</Button>}
 							{permissions.can_create_promotion && selectedIds.length > 0 && <Button variant="outlined" color="error" startIcon={<DeleteIcon fontSize="small" />} onClick={() => setShowBulkDeleteModal(true)}>{t.common.delete} ({selectedIds.length})</Button>}
 						</Stack>
 					</Box>
-					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} />
+					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} columns={2} />
 					<PaginatedDataGrid
 						data={data}
 						isLoading={isLoading}

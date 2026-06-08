@@ -468,8 +468,24 @@ export type PromotionType = {
 	lines: PromotionLineType[];
 };
 
+export type PromotionEligibleStoreType = StoreType & {
+	is_eligible: boolean;
+	missing_products: Array<{
+		product: number;
+		product_name: string;
+		required_quantity: string;
+		available_quantity: string;
+	}>;
+};
+
+export type PromotionCreateResponseType = PromotionType | {
+	count: number;
+	created: PromotionType[];
+};
+
 export type PromotionPayload = {
-	store: number;
+	store?: number;
+	stores?: number[];
 	name: string;
 	selling_price: string;
 	status: 'active' | 'expired';

@@ -427,13 +427,13 @@ const StockClient = ({ session }: SessionProps) => {
 					</Box>
 					<ChipSelectFilterBar filters={chipFilters} onFilterChange={setChipFilterParams} columns={2} />
 					{canApproveRequests && (
-						<Card elevation={2} sx={{ mb: 2, mx: { xs: 1.5, md: 3 }, borderRadius: 2 }}>
-							<CardContent sx={{ p: 3 }}>
-								<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+						<Card elevation={2} sx={{ mt: 2, mb: 2, mx: { xs: 1, sm: 2, md: 3 }, borderRadius: 2, overflow: 'hidden' }}>
+							<CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
+								<Stack direction="row" spacing={2} alignItems="center" sx={{ px: { xs: 2, md: 3 }, pt: { xs: 2, md: 3 }, pb: 2 }}>
 									<WarningIcon color="primary" />
 									<Typography variant="h6" fontWeight={700}>{t.magasin.stockRequests}</Typography>
 								</Stack>
-								<Divider sx={{ mb: 2 }} />
+								<Divider sx={{ mx: { xs: 2, md: 3 } }} />
 								<PaginatedDataGrid
 									data={stockRequests}
 									isLoading={areRequestsLoading}

@@ -205,6 +205,7 @@ export const saleSchema = z.object({
 	paid_amount: requiredNumberTextField(),
 	discount_amount: requiredNumberTextField(),
 	note: optionalTextField(1, 500),
+	stores: z.array(requiredNumberTextField()).min(1, { error: INPUT_REQUIRED }),
 	lines: z
 		.array(
 			z.object({

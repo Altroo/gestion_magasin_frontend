@@ -7,7 +7,6 @@ import { getServerTranslations } from '@/utils/serverTranslations';
 
 type PageProps = {
 	params: Promise<{ id: string }>;
-	searchParams: Promise<{ store_id?: string }>;
 };
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -15,20 +14,19 @@ export async function generateMetadata(): Promise<Metadata> {
 	return { title: t.metadata.editPromotionTitle, description: t.metadata.editPromotionDescription };
 }
 
-const PromotionEditPage = async ({ params, searchParams }: PageProps) => {
+const PromotionEditPage = async ({ params }: PageProps) => {
 	const session = await auth();
 	const { id } = await params;
-	const { store_id } = await searchParams;
 
 	if (!session) {
 		redirect(AUTH_LOGIN);
 	}
 
-	if (!id || isNaN(Number(id)) || (store_id && isNaN(Number(store_id)))) {
+	if (!id || isNaN(Number(id))) {
 		redirect(PROMOTIONS_LIST);
 	}
 
-	return <PromotionsFormClient session={session} id={Number(id)} storeId={store_id ? Number(store_id) : undefined} />;
+	return <PromotionsFormClient session={session} id={Number(id)} />;
 };
 
 export default PromotionEditPage;

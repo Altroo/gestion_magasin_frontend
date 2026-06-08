@@ -23,6 +23,8 @@ import type {
 	ProductType,
 	ProductUnitType,
 	PromotionPayload,
+	PromotionCreateResponseType,
+	PromotionEligibleStoreType,
 	PromotionType,
 	PurchasePayload,
 	PurchaseType,
@@ -576,7 +578,15 @@ export const magasinApi = createApi({
 			}),
 			providesTags: ['Promotions'],
 		}),
-		addPromotion: builder.mutation<PromotionType, PromotionPayload>({
+		getPromotionEligibleStores: builder.query<PromotionEligibleStoreType[], { product_ids: string; quantities: string }>({
+			query: (params) => ({
+				url: `${process.env.NEXT_PUBLIC_SALES_PROMOTIONS}eligible-stores/`,
+				method: 'GET',
+				params,
+			}),
+			providesTags: ['Promotions', 'Stock', 'Stores'],
+		}),
+		addPromotion: builder.mutation<PromotionCreateResponseType, PromotionPayload>({
 			query: ({ store, ...data }) => ({
 				url: process.env.NEXT_PUBLIC_SALES_PROMOTIONS,
 				method: 'POST',
@@ -813,6 +823,13 @@ export const magasinApi = createApi({
 			},
 			invalidatesTags: ['Attendance'],
 		}),
+		sendAttendanceImportGuideEmail: builder.mutation<{ message: string }, { store: number }>({
+			query: ({ store }) => ({
+				url: `${process.env.NEXT_PUBLIC_ATTENDANCE_ROOT}send-import-guide-email/`,
+				method: 'POST',
+				data: { store },
+			}),
+		}),
 	}),
 });
 
@@ -881,6 +898,7 @@ export const {
 	useGetProductQuery,
 	useGetProductUnitsQuery,
 	useGetProductsQuery,
+	useGetPromotionEligibleStoresQuery,
 	useGetPromotionQuery,
 	useGetPromotionsQuery,
 	useGetPurchaseQuery,
@@ -898,6 +916,7 @@ export const {
 	useImportAttendanceMutation,
 	useImportProductsMutation,
 	useLazyScanProductQuery,
+	useSendAttendanceImportGuideEmailMutation,
 	useReceivePurchaseMutation,
 	useSendCSVExampleEmailMutation,
 	useSyncOfflineSalesMutation,
