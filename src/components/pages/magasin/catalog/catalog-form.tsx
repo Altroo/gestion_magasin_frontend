@@ -86,6 +86,7 @@ const toPayload = (values: ProductFormValues): ProductPayload => ({
 	counter_price: values.counter_price,
 	default_stock_alert: values.default_stock_alert,
 	expiration_date: values.expiration_date || null,
+	requires_expiration_date: values.requires_expiration_date,
 	shelf_life_days: values.shelf_life_days ? Number(values.shelf_life_days) : null,
 	is_active: values.is_active,
 });
@@ -137,6 +138,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 			counter_price: product?.counter_price ?? '',
 			default_stock_alert: product?.default_stock_alert ?? '',
 			expiration_date: product?.expiration_date ?? '',
+			requires_expiration_date: product?.requires_expiration_date ?? false,
 			shelf_life_days: product?.shelf_life_days ? String(product.shelf_life_days) : '',
 			is_active: product?.is_active ?? true,
 			globalError: '',
@@ -179,6 +181,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 			counter_price: t.magasin.counterPrice,
 			default_stock_alert: t.magasin.defaultStockAlert,
 			expiration_date: t.magasin.expirationDate,
+			requires_expiration_date: t.magasin.expirationTracking,
 			shelf_life_days: t.magasin.shelfLifeDays,
 			is_active: t.magasin.activeProduct,
 			globalError: t.errors.globalError,
@@ -218,6 +221,9 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 			: '';
 	const categoryError = (formik.touched.category || hasAttemptedSubmit) && Boolean(formik.errors.category);
 	const unitError = (formik.touched.unit || hasAttemptedSubmit) && Boolean(formik.errors.unit);
+	const expirationLabel = formik.values.requires_expiration_date
+		? `${t.magasin.expirationDate} *`
+		: t.magasin.expirationDate;
 
 	return (
 		<NavigationBar title={isEditMode ? t.magasin.editProduct : t.magasin.newProduct}>
@@ -420,7 +426,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 													/>
 													<MuiFormikDatePicker
 														id="expiration_date"
-														label={t.magasin.expirationDate}
+														label={expirationLabel}
 														value={formik.values.expiration_date}
 														onChange={(value) => void formik.setFieldValue('expiration_date', value)}
 														onBlur={formik.handleBlur('expiration_date')}
@@ -429,6 +435,16 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														fullWidth
 														size="small"
 														startIcon={<EventIcon fontSize="small" />}
+													/>
+													<FormControlLabel
+														control={
+															<Checkbox
+																checked={formik.values.requires_expiration_date}
+																onChange={formik.handleChange}
+																name="requires_expiration_date"
+															/>
+														}
+														label={<Stack direction="row" spacing={1} alignItems="center"><EventIcon fontSize="small" /> <Typography>{t.magasin.expirationTracking}</Typography></Stack>}
 													/>
 													<CustomTextInput
 														id="shelf_life_days"

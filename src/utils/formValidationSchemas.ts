@@ -159,22 +159,33 @@ export const posScanSchema = z.object({
 	globalError: optionalTextField(1, 500),
 });
 
-export const productSchema = z.object({
-	reference: optionalTextField(1, 80),
-	barcode: requiredTextField(1, 80),
-	name: requiredTextField(2, 255),
-	category: requiredNumberTextField(),
-	unit: requiredNumberTextField(),
-	purchase_price: requiredNumberTextField(),
-	wholesale_price: requiredNumberTextField(),
-	detail_price: requiredNumberTextField(),
-	counter_price: requiredNumberTextField(),
-	default_stock_alert: requiredNumberTextField(),
-	expiration_date: optionalTextField(1, 20),
-	shelf_life_days: optionalTextField(1, 10),
-	is_active: z.boolean(),
-	globalError: optionalTextField(1, 500),
-});
+export const productSchema = z
+	.object({
+		reference: optionalTextField(1, 80),
+		barcode: requiredTextField(1, 80),
+		name: requiredTextField(2, 255),
+		category: requiredNumberTextField(),
+		unit: requiredNumberTextField(),
+		purchase_price: requiredNumberTextField(),
+		wholesale_price: requiredNumberTextField(),
+		detail_price: requiredNumberTextField(),
+		counter_price: requiredNumberTextField(),
+		default_stock_alert: requiredNumberTextField(),
+		expiration_date: optionalTextField(1, 20),
+		requires_expiration_date: z.boolean(),
+		shelf_life_days: optionalTextField(1, 10),
+		is_active: z.boolean(),
+		globalError: optionalTextField(1, 500),
+	})
+	.superRefine((data, ctx) => {
+		if (data.requires_expiration_date && !data.expiration_date) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: INPUT_REQUIRED(),
+				path: ['expiration_date'],
+			});
+		}
+	});
 
 export const storeSchema = z.object({
 	name: requiredTextField(2, 160),
@@ -188,7 +199,8 @@ export const storeSchema = z.object({
 });
 
 export const saleSchema = z.object({
-	payment_status: requiredChoiceTextField(),
+	store: requiredNumberTextField(),
+	payment_status: z.enum(['paid', 'in_progress', 'cancelled']),
 	payment_mode: requiredNumberTextField(),
 	paid_amount: requiredNumberTextField(),
 	discount_amount: requiredNumberTextField(),
@@ -221,6 +233,7 @@ export const expenseSchema = z.object({
 	payment_status: requiredChoiceTextField(),
 	payment_mode: requiredChoiceTextField(),
 	expense_date: requiredChoiceTextField(),
+	invoice_file: z.any().optional(),
 	note: optionalTextField(1, 500),
 	globalError: optionalTextField(1, 500),
 });
@@ -231,6 +244,7 @@ export const purchaseSchema = z.object({
 	reference: optionalTextField(1, 80),
 	purchase_date: requiredChoiceTextField(),
 	status: requiredChoiceTextField(),
+	invoice_file: z.any().optional(),
 	note: optionalTextField(1, 500),
 	lines: z
 		.array(
@@ -301,6 +315,7 @@ export const promotionSchema = z.object({
 export const stockAdjustmentSchema = z.object({
 	product: requiredNumberTextField(),
 	quantity: requiredNumberTextField(),
+	unit_cost: optionalTextField(1, 20),
 	min_stock: optionalTextField(1, 20),
 	note: optionalTextField(1, 500),
 	globalError: optionalTextField(1, 500),

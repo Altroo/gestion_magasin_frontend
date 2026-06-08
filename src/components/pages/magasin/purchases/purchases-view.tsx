@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Alert, Box, Button, Chip, Divider, Stack } from '@mui/material';
 import {
 	ArrowBack as ArrowBackIcon,
+	AttachFile as AttachFileIcon,
 	CalendarMonth as CalendarIcon,
 	Close as CloseIcon,
 	Delete as DeleteIcon,
@@ -107,6 +108,16 @@ const PurchasesViewClient = ({ session, id }: Props) => {
 										<InfoRow icon={<CalendarIcon />} label={t.magasin.date} value={formatDate(purchase.purchase_date)} />
 										<Divider />
 										<InfoRow icon={<NumbersIcon />} label={t.magasin.subtotal} value={`${formatNumber(purchase.subtotal)} Dhs`} />
+										<Divider />
+										<InfoRow
+											icon={<AttachFileIcon />}
+											label={t.magasin.invoice}
+											value={purchase.invoice_file_url ? (
+												<Button href={purchase.invoice_file_url} target="_blank" rel="noopener noreferrer" size="small" startIcon={<AttachFileIcon />}>
+													{t.magasin.invoice}
+												</Button>
+											) : '-'}
+										/>
 										<Divider />
 										<InfoRow icon={<DescriptionIcon />} label={t.magasin.note} value={purchase.note} />
 									</DetailCard>

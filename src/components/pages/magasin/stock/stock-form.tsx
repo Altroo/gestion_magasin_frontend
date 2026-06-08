@@ -37,6 +37,7 @@ import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import {
 	useAdjustStockMutation,
+	useCreateStockAddRequestMutation,
 	useGetProductsQuery,
 	useGetStockBalanceQuery,
 	useUpdateStockThresholdMutation,
@@ -45,13 +46,14 @@ import { STOCK_LIST, STOCK_VIEW } from '@/utils/routes';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
 import { stockAdjustmentSchema, stockThresholdSchema } from '@/utils/formValidationSchemas';
-import { useLanguage, useToast } from '@/utils/hooks';
+import { useLanguage, usePermission, useToast } from '@/utils/hooks';
 import Styles from '@/styles/dashboard/dashboard.module.sass';
 import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '@/types/_initTypes';
 import type { StockAdjustmentFormValues } from '@/types/gestionMagasinTypes';
 
 const inputTheme = textInputTheme();
 const dropdownTheme = customDropdownTheme();
+const roleCanAdjustDirectly = (role?: string) => role === 'direction';
 
 type Props = SessionProps & {
 	id?: number;
@@ -61,13 +63,16 @@ type Props = SessionProps & {
 const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 	const token = useInitAccessToken(session);
 	const { t } = useLanguage();
+	const permissions = usePermission();
 	const { onSuccess, onError } = useToast();
 	const router = useRouter();
 	const theme = useTheme();
 	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 	const isEditMode = id !== undefined;
-	const { defaultStore } = useSelectedStore(token);
+	const { defaultStore, memberships } = useSelectedStore(token);
 	const storeId = initialStoreId ?? defaultStore?.id;
+	const selectedMembership = memberships.find((membership) => membership.store.id === storeId);
+	const canAdjustDirectly = permissions.is_staff || roleCanAdjustDirectly(selectedMembership?.role.code);
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [isPending, setIsPending] = useState(false);
 
@@ -80,9 +85,10 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 		{ skip: !token || !storeId },
 	);
 	const [adjustStock, adjustState] = useAdjustStockMutation();
+	const [createStockAddRequest, requestState] = useCreateStockAddRequestMutation();
 	const [updateThreshold, thresholdState] = useUpdateStockThresholdMutation();
 
-	const error = stockError || adjustState.error || thresholdState.error;
+	const error = stockError || adjustState.error || thresholdState.error || requestState.error;
 	const axiosError = useMemo(
 		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
 		[error],
@@ -92,6 +98,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 		initialValues: {
 			product: stockBalance?.product ? String(stockBalance.product) : '',
 			quantity: '',
+			unit_cost: stockBalance?.average_cost ?? '',
 			min_stock: stockBalance?.min_stock ?? stockBalance?.effective_min_stock ?? '',
 			note: '',
 			globalError: '',
@@ -106,29 +113,51 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 				if (isEditMode) {
 					await updateThreshold({ id: id!, min_stock: values.min_stock ?? '0' }).unwrap();
 					if (values.quantity && Number(values.quantity) !== 0) {
+						if (canAdjustDirectly) {
+							await adjustStock({
+								store: stockBalance?.store ?? storeId!,
+								product: Number(values.product),
+								quantity: values.quantity,
+								movement_type: 'adjustment',
+								unit_cost: values.unit_cost,
+								note: values.note,
+							}).unwrap();
+						} else {
+							await createStockAddRequest({
+								store: stockBalance?.store ?? storeId!,
+								product: Number(values.product),
+								quantity: values.quantity,
+								unit_cost: values.unit_cost,
+								note: values.note,
+							}).unwrap();
+						}
+					}
+					onSuccess(canAdjustDirectly ? t.magasin.stockUpdated : t.magasin.stockRequestSent);
+					router.push(STOCK_VIEW(id!, storeId));
+				} else {
+					if (canAdjustDirectly) {
 						await adjustStock({
-							store: stockBalance?.store ?? storeId!,
+							store: storeId!,
 							product: Number(values.product),
 							quantity: values.quantity,
 							movement_type: 'adjustment',
+							unit_cost: values.unit_cost,
+							note: values.note,
+						}).unwrap();
+					} else {
+						await createStockAddRequest({
+							store: storeId!,
+							product: Number(values.product),
+							quantity: values.quantity,
+							unit_cost: values.unit_cost,
 							note: values.note,
 						}).unwrap();
 					}
-					onSuccess(t.magasin.stockUpdated);
-					router.push(STOCK_VIEW(id!, storeId));
-				} else {
-					await adjustStock({
-						store: storeId!,
-						product: Number(values.product),
-						quantity: values.quantity,
-						movement_type: 'adjustment',
-						note: values.note,
-					}).unwrap();
-					onSuccess(t.magasin.stockAdjusted);
+					onSuccess(canAdjustDirectly ? t.magasin.stockAdjusted : t.magasin.stockRequestSent);
 					router.push(STOCK_LIST);
 				}
 			} catch (e) {
-				onError(extractApiErrorMessage(e, isEditMode ? t.magasin.stockUpdateError : t.magasin.stockCreateError));
+				onError(extractApiErrorMessage(e, canAdjustDirectly ? (isEditMode ? t.magasin.stockUpdateError : t.magasin.stockCreateError) : t.magasin.stockRequestCreateError));
 				setFormikAutoErrors({ e, setFieldError });
 			} finally {
 				setIsPending(false);
@@ -140,6 +169,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 		() => ({
 			product: t.magasin.product,
 			quantity: t.magasin.adjustmentQuantity,
+			unit_cost: t.magasin.purchasePrice,
 			min_stock: t.magasin.minimumStock,
 			note: t.magasin.movementNote,
 			globalError: t.errors.globalError,
@@ -159,7 +189,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 		return errors;
 	}, [formik.errors, hasAttemptedSubmit]);
 
-	const isLoading = isPending || adjustState.isLoading || thresholdState.isLoading || areProductsLoading || (isEditMode && isStockLoading);
+	const isLoading = isPending || adjustState.isLoading || thresholdState.isLoading || requestState.isLoading || areProductsLoading || (isEditMode && isStockLoading);
 	const shouldShowError = (axiosError?.status ?? 0) > 400 && !isLoading;
 	const productItems = useMemo(
 		() =>
@@ -174,6 +204,11 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 		(formik.touched[field] || hasAttemptedSubmit) && typeof formik.errors[field] === 'string'
 			? (formik.errors[field] as string)
 			: '';
+	const submitText = isEditMode
+		? t.magasin.editStock
+		: canAdjustDirectly
+			? t.magasin.newStock
+			: t.magasin.newStockRequest;
 
 	return (
 		<NavigationBar title={isEditMode ? t.magasin.editStock : t.magasin.newStock}>
@@ -248,6 +283,20 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														theme={inputTheme}
 														startIcon={<NumbersIcon fontSize="small" />}
 													/>
+													<CustomTextInput
+														id="unit_cost"
+														type="number"
+														label={t.magasin.purchasePrice}
+														value={formik.values.unit_cost ?? ''}
+														onChange={formik.handleChange('unit_cost')}
+														onBlur={formik.handleBlur('unit_cost')}
+														error={Boolean(fieldError('unit_cost'))}
+														helperText={fieldError('unit_cost')}
+														fullWidth
+														size="small"
+														theme={inputTheme}
+														startIcon={<NumbersIcon fontSize="small" />}
+													/>
 												</Stack>
 											</CardContent>
 										</Card>
@@ -302,7 +351,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 										<Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 2 }}>
 											<PrimaryLoadingButton
 												type="submit"
-												buttonText={isEditMode ? t.magasin.editStock : t.magasin.newStock}
+												buttonText={submitText}
 												active={!isPending}
 												loading={isPending}
 												startIcon={isEditMode ? <EditIcon /> : <AddIcon />}

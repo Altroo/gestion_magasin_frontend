@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, Autocomplete, Box, Button, Card, CardContent, Divider, IconButton, InputAdornment, MenuItem, Stack, TextField, ThemeProvider, Typography } from '@mui/material';
-import { Add as AddIcon, ArrowBack as ArrowBackIcon, Delete as DeleteIcon, Description as DescriptionIcon, Edit as EditIcon, Inventory2 as InventoryIcon, Remove as RemoveIcon, Storefront as StorefrontIcon, Warning as WarningIcon } from '@mui/icons-material';
+import { Add as AddIcon, ArrowBack as ArrowBackIcon, AttachFile as AttachFileIcon, Delete as DeleteIcon, Description as DescriptionIcon, Edit as EditIcon, Inventory2 as InventoryIcon, Remove as RemoveIcon, Storefront as StorefrontIcon, Warning as WarningIcon } from '@mui/icons-material';
 import { DataGrid, type GridColDef, type GridPaginationModel, type GridRenderCellParams } from '@mui/x-data-grid';
 import { frFR } from '@mui/x-data-grid/locales';
 import { getIn, useFormik } from 'formik';
@@ -40,6 +40,7 @@ type PurchaseFormValues = {
 	reference: string;
 	purchase_date: string;
 	status: 'draft' | 'received' | 'cancelled' | '';
+	invoice_file: File | null;
 	note: string;
 	lines: Array<typeof emptyLine>;
 	globalError: string;
@@ -72,10 +73,6 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 		{ id: id! },
 		{ skip: !token || !isEditMode },
 	);
-	const { data: products, isLoading: areProductsLoading } = useGetProductsQuery(
-		{ store: defaultPurchaseStore?.id, page: 1, pageSize: 200 },
-		{ skip: !token || !defaultPurchaseStore?.id },
-	);
 	const axiosError = useMemo(() => (purchaseError ? (purchaseError as ResponseDataInterface<ApiErrorResponseType>) : undefined), [purchaseError]);
 
 	const toPayload = (values: PurchaseFormValues): PurchasePayload => ({
@@ -84,6 +81,7 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 		reference: values.reference.trim(),
 		purchase_date: values.purchase_date,
 		status: values.status || 'draft',
+		invoice_file: values.invoice_file,
 		note: values.note.trim(),
 		lines: values.lines.map((line) => ({ product: Number(line.product), quantity: line.quantity, unit_cost: line.unit_cost })),
 	});
@@ -95,6 +93,7 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 			reference: purchase?.reference ?? '',
 			purchase_date: purchase?.purchase_date ?? new Date().toISOString().slice(0, 10),
 			status: purchase?.status ?? 'draft',
+			invoice_file: null,
 			note: purchase?.note ?? '',
 			lines: purchase?.lines.length ? purchase.lines.map((line) => ({ product: String(line.product), quantity: line.quantity, unit_cost: line.unit_cost })) : [{ ...emptyLine }],
 			globalError: '',
@@ -120,6 +119,11 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 			}
 		},
 	});
+	const activeProductStoreId = Number(formik.values.store || defaultPurchaseStore?.id || 0);
+	const { data: products, isLoading: areProductsLoading } = useGetProductsQuery(
+		{ store: activeProductStoreId, page: 1, pageSize: 200 },
+		{ skip: !token || !activeProductStoreId },
+	);
 
 	const fieldLabels = useMemo<Record<string, string>>(() => ({
 		supplier_name: t.magasin.supplier,
@@ -127,6 +131,7 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 		reference: t.magasin.reference,
 		purchase_date: t.magasin.date,
 		status: t.magasin.status,
+		invoice_file: t.magasin.invoice,
 		note: t.magasin.note,
 		lines: t.magasin.purchaseLines,
 		globalError: t.errors.globalError,
@@ -334,7 +339,10 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 														size="small"
 														options={storeOptions}
 														value={selectedStoreOption}
-														onChange={(_, nextStore) => void formik.setFieldValue('store', nextStore ? String(nextStore.id) : '')}
+														onChange={(_, nextStore) => {
+															void formik.setFieldValue('store', nextStore ? String(nextStore.id) : '');
+															void formik.setFieldValue('lines', [{ ...emptyLine }]);
+														}}
 														onBlur={formik.handleBlur('store')}
 														getOptionLabel={(store) => store?.name ?? ''}
 														isOptionEqualToValue={(option, value) => option?.id === value?.id}
@@ -348,6 +356,20 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 													<CustomTextInput id="supplier_name" type="text" label={t.magasin.supplier} value={formik.values.supplier_name} onChange={formik.handleChange('supplier_name')} onBlur={formik.handleBlur('supplier_name')} error={Boolean(fieldError('supplier_name'))} helperText={fieldError('supplier_name')} fullWidth size="small" theme={inputTheme} startIcon={<StorefrontIcon fontSize="small" />} />
 													<CustomTextInput id="reference" type="text" label={t.magasin.reference} value={formik.values.reference} onChange={formik.handleChange('reference')} onBlur={formik.handleBlur('reference')} error={Boolean(fieldError('reference'))} helperText={fieldError('reference')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
 													<MuiFormikDatePicker id="purchase_date" label={`${t.magasin.date} *`} value={formik.values.purchase_date} onChange={(value) => void formik.setFieldValue('purchase_date', value)} onBlur={formik.handleBlur('purchase_date')} error={Boolean(fieldError('purchase_date'))} helperText={fieldError('purchase_date')} fullWidth size="small" startIcon={<DescriptionIcon fontSize="small" />} />
+													<Button
+														component="label"
+														variant="outlined"
+														startIcon={<AttachFileIcon fontSize="small" />}
+														sx={{ minHeight: 48, justifyContent: 'flex-start', borderRadius: 999, px: 2 }}
+													>
+														{formik.values.invoice_file?.name ?? t.magasin.attachInvoice}
+														<input
+															type="file"
+															hidden
+															accept=".pdf,.png,.jpg,.jpeg,.webp"
+															onChange={(event) => void formik.setFieldValue('invoice_file', event.currentTarget.files?.[0] ?? null)}
+														/>
+													</Button>
 													<ThemeProvider theme={dropdownTheme}>
 														<TextField select size="small" label={`${t.magasin.status} *`} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} onBlur={formik.handleBlur('status')} error={Boolean(fieldError('status'))} helperText={fieldError('status')} InputProps={{ startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> }} fullWidth>
 															{purchaseStatusOptions(t).map((option) => <MenuItem key={option.id} value={option.id}>{option.nom}</MenuItem>)}

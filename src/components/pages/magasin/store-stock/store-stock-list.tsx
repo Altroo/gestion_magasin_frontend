@@ -191,6 +191,18 @@ const StoreStockOverviewClient = ({ session }: SessionProps) => {
 			),
 		},
 		{
+			field: 'product_purchase_price',
+			headerName: t.magasin.purchasePrice,
+			flex: 0.9,
+			minWidth: 130,
+			filterOperators: createNumericFilterOperators(),
+			renderCell: (params: GridRenderCellParams<StockBalanceType>) => (
+				<TooltipTextCell title={`${formatNumber(params.value as string)} Dhs`} color="primary" fontWeight={600}>
+					{formatNumber(params.value as string)} Dhs
+				</TooltipTextCell>
+			),
+		},
+		{
 			field: 'is_low_stock',
 			headerName: t.magasin.lowStockStatus,
 			flex: 0.9,

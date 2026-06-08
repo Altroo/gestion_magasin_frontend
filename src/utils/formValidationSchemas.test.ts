@@ -330,10 +330,12 @@ describe('Zod Schema Validation', () => {
 		});
 	});
 
-	describe('saleSchema', () => {
-		const validSale = {
-			payment_status: 'paid',
-			paid_amount: '120',
+		describe('saleSchema', () => {
+			const validSale = {
+				store: '1',
+				payment_status: 'paid',
+				payment_mode: '1',
+				paid_amount: '120',
 			discount_amount: '0',
 			note: '',
 			lines: [{ type: 'product', product: '1', promotion: '', quantity: '2', unit_price: '60' }],
@@ -378,6 +380,7 @@ describe('Zod Schema Validation', () => {
 					counter_price: '0',
 					default_stock_alert: '0',
 					expiration_date: '',
+					requires_expiration_date: false,
 					shelf_life_days: '',
 					is_active: true,
 				}),
@@ -398,6 +401,7 @@ describe('Zod Schema Validation', () => {
 					counter_price: '',
 					default_stock_alert: '',
 					expiration_date: '',
+					requires_expiration_date: false,
 					shelf_life_days: '',
 					is_active: true,
 				}),
@@ -418,13 +422,35 @@ describe('Zod Schema Validation', () => {
 					counter_price: '15',
 					default_stock_alert: '3',
 					expiration_date: '',
+					requires_expiration_date: false,
 					shelf_life_days: '',
 					is_active: true,
 				}),
 			).toThrow();
-		});
+			});
 
-		it('requires purchase product lines', () => {
+			it('requires expiration date when expiration tracking is enabled', () => {
+				expect(() =>
+					productSchema.parse({
+						reference: '',
+						barcode: '6111122233344',
+						name: 'Article test',
+						category: '1',
+						unit: '1',
+						purchase_price: '10',
+						wholesale_price: '12',
+						detail_price: '14',
+						counter_price: '15',
+						default_stock_alert: '3',
+						expiration_date: '',
+						requires_expiration_date: true,
+						shelf_life_days: '',
+						is_active: true,
+					}),
+				).toThrow();
+			});
+
+			it('requires purchase product lines', () => {
 			expect(() =>
 				purchaseSchema.parse({
 					store: '1',

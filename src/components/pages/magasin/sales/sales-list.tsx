@@ -69,7 +69,8 @@ const SalesClient = ({ session }: SessionProps) => {
 	];
 	const paymentStatusOptions = [
 		{ value: 'paid', label: t.magasin.paid },
-		{ value: 'credit', label: t.magasin.credit },
+		{ value: 'in_progress', label: t.magasin.inProgress },
+		{ value: 'cancelled', label: t.magasin.cancelled },
 	];
 	const chipFilters = useMemo(
 		() => [
@@ -88,7 +89,8 @@ const SalesClient = ({ session }: SessionProps) => {
 				paramName: 'payment_status',
 				options: [
 					{ id: 'paid', nom: magasinStatusLabel(t, 'paid') },
-					{ id: 'credit', nom: magasinStatusLabel(t, 'credit') },
+					{ id: 'in_progress', nom: magasinStatusLabel(t, 'in_progress') },
+					{ id: 'cancelled', nom: magasinStatusLabel(t, 'cancelled') },
 				],
 			},
 			{
@@ -106,10 +108,10 @@ const SalesClient = ({ session }: SessionProps) => {
 		if (status === 'confirmed' || status === 'paid') {
 			return <DarkTooltip title={label}><Chip size="small" color="success" variant="outlined" icon={<CheckCircleIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
 		}
-		if (status === 'void') {
+		if (status === 'void' || status === 'cancelled') {
 			return <DarkTooltip title={label}><Chip size="small" color="error" variant="outlined" icon={<CancelIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
 		}
-		if (status === 'credit') {
+		if (status === 'credit' || status === 'in_progress') {
 			return <DarkTooltip title={label}><Chip size="small" color="warning" variant="outlined" icon={<PendingActionsIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
 		}
 		return <DarkTooltip title={label}><Chip size="small" color="default" variant="outlined" label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;

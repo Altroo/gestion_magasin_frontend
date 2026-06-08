@@ -2,13 +2,15 @@
 
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Button, Chip, Stack, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Chip, Divider, Stack, Typography } from '@mui/material';
 import {
 	Add as AddIcon,
 	CheckCircle as CheckCircleIcon,
 	Close as CloseIcon,
 	Delete as DeleteIcon,
 	Edit as EditIcon,
+	HighlightOff as RejectIcon,
+	TaskAlt as ApproveIcon,
 	Visibility as VisibilityIcon,
 	Warning as WarningIcon,
 } from '@mui/icons-material';
@@ -29,17 +31,21 @@ import { useInitAccessToken } from '@/contexts/InitContext';
 import {
 	useBulkDeleteStockBalancesMutation,
 	useDeleteStockBalanceMutation,
+	useApproveStockAddRequestMutation,
 	useGetCategoriesQuery,
 	useGetProductUnitsQuery,
+	useGetStockAddRequestsQuery,
 	useGetStockBalancesQuery,
+	useRejectStockAddRequestMutation,
 } from '@/store/services/magasin';
 import { STOCK_ADD, STOCK_EDIT, STOCK_VIEW } from '@/utils/routes';
 import { extractApiErrorMessage, formatNumber } from '@/utils/helpers';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
 import type { SessionProps } from '@/types/_initTypes';
-import type { StockBalanceType } from '@/types/gestionMagasinTypes';
+import type { StockAddRequestType, StockBalanceType } from '@/types/gestionMagasinTypes';
 
 const roleCanManage = (role?: string) => role === 'direction' || role === 'responsable';
+const roleCanApproveRequests = (role?: string) => role === 'direction';
 
 const StockClient = ({ session }: SessionProps) => {
 	const token = useInitAccessToken(session);
@@ -52,6 +58,7 @@ const StockClient = ({ session }: SessionProps) => {
 	const storeId = selectedStoreId ?? defaultStore?.id;
 	const selectedMembership = memberships.find((membership) => membership.store.id === storeId);
 	const canManageStore = roleCanManage(selectedMembership?.role.code);
+	const canApproveRequests = permissions.is_staff || roleCanApproveRequests(selectedMembership?.role.code);
 
 	const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
 	const [searchTerm, setSearchTerm] = useState('');
@@ -59,6 +66,9 @@ const StockClient = ({ session }: SessionProps) => {
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});
 	const [chipFilterParams, setChipFilterParams] = useState<Record<string, string>>({});
 	const [selectedIds, setSelectedIds] = useState<number[]>([]);
+	const [requestPaginationModel, setRequestPaginationModel] = useState({ page: 0, pageSize: 5 });
+	const [requestSearchTerm, setRequestSearchTerm] = useState('');
+	const [requestFilterModel, setRequestFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 	const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
@@ -79,8 +89,20 @@ const StockClient = ({ session }: SessionProps) => {
 	);
 	const [deleteStockBalance] = useDeleteStockBalanceMutation();
 	const [bulkDeleteStockBalances] = useBulkDeleteStockBalancesMutation();
+	const [approveStockAddRequest] = useApproveStockAddRequestMutation();
+	const [rejectStockAddRequest] = useRejectStockAddRequestMutation();
 	const { data: categories } = useGetCategoriesQuery(undefined, { skip: !token });
 	const { data: productUnits } = useGetProductUnitsQuery(undefined, { skip: !token });
+	const { data: stockRequests, isLoading: areRequestsLoading, refetch: refetchRequests } = useGetStockAddRequestsQuery(
+		{
+			store: storeId,
+			status: 'pending',
+			search: requestSearchTerm,
+			page: requestPaginationModel.page + 1,
+			pageSize: requestPaginationModel.pageSize,
+		},
+		{ skip: !token || !storeId || !canApproveRequests },
+	);
 
 	const resetSelection = () => setSelectedIds([]);
 
@@ -108,6 +130,27 @@ const StockClient = ({ session }: SessionProps) => {
 			onError(extractApiErrorMessage(error, t.magasin.stockDeleteError));
 		} finally {
 			setShowBulkDeleteModal(false);
+		}
+	};
+
+	const approveRequestHandler = async (requestId: number) => {
+		try {
+			await approveStockAddRequest({ id: requestId }).unwrap();
+			onSuccess(t.magasin.stockRequestApproved);
+			refetch();
+			refetchRequests();
+		} catch (error) {
+			onError(extractApiErrorMessage(error, t.magasin.stockRequestApproveError));
+		}
+	};
+
+	const rejectRequestHandler = async (requestId: number) => {
+		try {
+			await rejectStockAddRequest({ id: requestId }).unwrap();
+			onSuccess(t.magasin.stockRequestRejected);
+			refetchRequests();
+		} catch (error) {
+			onError(extractApiErrorMessage(error, t.magasin.stockRequestRejectError));
 		}
 	};
 
@@ -229,6 +272,18 @@ const StockClient = ({ session }: SessionProps) => {
 			),
 		},
 		{
+			field: 'product_purchase_price',
+			headerName: t.magasin.purchasePrice,
+			flex: 0.9,
+			minWidth: 130,
+			filterOperators: createNumericFilterOperators(),
+			renderCell: (params: GridRenderCellParams<StockBalanceType>) => (
+				<TooltipTextCell title={`${formatNumber(params.value as string)} Dhs`} color="primary" fontWeight={600}>
+					{formatNumber(params.value as string)} Dhs
+				</TooltipTextCell>
+			),
+		},
+		{
 			field: 'is_low_stock',
 			headerName: t.magasin.lowStockStatus,
 			flex: 0.9,
@@ -282,6 +337,67 @@ const StockClient = ({ session }: SessionProps) => {
 		},
 	];
 
+	const requestColumns: GridColDef[] = [
+		{
+			field: 'product_name',
+			headerName: t.magasin.product,
+			flex: 1.5,
+			minWidth: 190,
+			renderCell: (params: GridRenderCellParams<StockAddRequestType>) => (
+				<TooltipTextCell fontWeight={600}>{params.value}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'quantity',
+			headerName: t.magasin.quantity,
+			flex: 0.8,
+			minWidth: 120,
+			renderCell: (params: GridRenderCellParams<StockAddRequestType>) => (
+				<TooltipTextCell fontWeight={600}>{formatNumber(params.value as string)}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'unit_cost',
+			headerName: t.magasin.purchasePrice,
+			flex: 0.8,
+			minWidth: 130,
+			renderCell: (params: GridRenderCellParams<StockAddRequestType>) => (
+				<TooltipTextCell>{formatNumber(params.value as string)} Dhs</TooltipTextCell>
+			),
+		},
+		{
+			field: 'requested_by_email',
+			headerName: t.users.email,
+			flex: 1.2,
+			minWidth: 180,
+			renderCell: (params: GridRenderCellParams<StockAddRequestType>) => (
+				<TooltipTextCell>{params.value ?? '-'}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'actions',
+			headerName: t.common.actions,
+			flex: 1,
+			minWidth: 170,
+			sortable: false,
+			filterable: false,
+			renderCell: (params: GridRenderCellParams<StockAddRequestType>) => (
+				<Stack direction="row" spacing={1}>
+					<DarkTooltip title={t.magasin.approveStockRequest}>
+						<Button size="small" variant="outlined" color="success" startIcon={<ApproveIcon fontSize="small" />} onClick={() => void approveRequestHandler(params.row.id)}>
+							{t.common.confirm}
+						</Button>
+					</DarkTooltip>
+					<DarkTooltip title={t.magasin.rejectStockRequest}>
+						<Button size="small" variant="outlined" color="error" startIcon={<RejectIcon fontSize="small" />} onClick={() => void rejectRequestHandler(params.row.id)}>
+							{t.magasin.rejectStockRequest}
+						</Button>
+					</DarkTooltip>
+				</Stack>
+			),
+		},
+	];
+
 	return (
 		<NavigationBar title={t.magasin.stock}>
 			<Protected permission="can_view">
@@ -297,9 +413,9 @@ const StockClient = ({ session }: SessionProps) => {
 					/>
 					<Box sx={magasinPageContentSx}>
 						<Stack direction="row" spacing={1} flexWrap="wrap">
-							{permissions.can_create && canManageStore && (
+							{permissions.can_create && (canManageStore || selectedMembership) && (
 								<Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => router.push(STOCK_ADD(storeId))}>
-									{t.magasin.newStock}
+									{canApproveRequests ? t.magasin.newStock : t.magasin.newStockRequest}
 								</Button>
 							)}
 							{selectedIds.length > 0 && permissions.can_delete && canManageStore && (
@@ -310,6 +426,29 @@ const StockClient = ({ session }: SessionProps) => {
 						</Stack>
 					</Box>
 					<ChipSelectFilterBar filters={chipFilters} onFilterChange={setChipFilterParams} columns={2} />
+					{canApproveRequests && (
+						<Card elevation={2} sx={{ mb: 2, mx: { xs: 1.5, md: 3 }, borderRadius: 2 }}>
+							<CardContent sx={{ p: 3 }}>
+								<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+									<WarningIcon color="primary" />
+									<Typography variant="h6" fontWeight={700}>{t.magasin.stockRequests}</Typography>
+								</Stack>
+								<Divider sx={{ mb: 2 }} />
+								<PaginatedDataGrid
+									data={stockRequests}
+									isLoading={areRequestsLoading}
+									columns={requestColumns}
+									paginationModel={requestPaginationModel}
+									setPaginationModel={setRequestPaginationModel}
+									searchTerm={requestSearchTerm}
+									setSearchTerm={setRequestSearchTerm}
+									filterModel={requestFilterModel}
+									onFilterModelChange={setRequestFilterModel}
+									toolbar={{ quickFilter: true, debounceMs: 500 }}
+								/>
+							</CardContent>
+						</Card>
+					)}
 					<PaginatedDataGrid
 						data={data}
 						isLoading={isLoading}

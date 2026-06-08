@@ -6,6 +6,7 @@ import { Alert, Box, Button, Card, CardContent, Divider, InputAdornment, MenuIte
 import {
 	Add as AddIcon,
 	ArrowBack as ArrowBackIcon,
+	AttachFile as AttachFileIcon,
 	Category as CategoryIcon,
 	Description as DescriptionIcon,
 	Edit as EditIcon,
@@ -58,6 +59,7 @@ type ExpenseFormValues = {
 	payment_status: 'paid' | 'payable' | '';
 	payment_mode: 'cash' | 'card' | 'transfer' | 'other' | '';
 	expense_date: string;
+	invoice_file: File | null;
 	note: string;
 	globalError: string;
 };
@@ -106,6 +108,7 @@ const ExpensesFormClient = ({ session, id, storeId: initialStoreId }: Props) => 
 		payment_status: values.payment_status || 'payable',
 		payment_mode: values.payment_mode || 'cash',
 		expense_date: values.expense_date,
+		invoice_file: values.invoice_file,
 		note: values.note.trim(),
 	});
 
@@ -117,6 +120,7 @@ const ExpensesFormClient = ({ session, id, storeId: initialStoreId }: Props) => 
 			payment_status: expense?.payment_status ?? 'payable',
 			payment_mode: expense?.payment_mode ?? (defaultPaymentMode?.id as ExpenseFormValues['payment_mode'] | undefined) ?? '',
 			expense_date: expense?.expense_date ?? new Date().toISOString().slice(0, 10),
+			invoice_file: null,
 			note: expense?.note ?? '',
 			globalError: '',
 		},
@@ -149,6 +153,7 @@ const ExpensesFormClient = ({ session, id, storeId: initialStoreId }: Props) => 
 		payment_status: t.magasin.paymentStatus,
 		payment_mode: t.magasin.paymentMode,
 		expense_date: t.magasin.date,
+		invoice_file: t.magasin.invoice,
 		note: t.magasin.movementNote,
 		globalError: t.errors.globalError,
 	}), [t]);
@@ -214,6 +219,20 @@ const ExpensesFormClient = ({ session, id, storeId: initialStoreId }: Props) => 
 													<CustomTextInput id="label" type="text" label={`${t.magasin.expenseLabel} *`} value={formik.values.label} onChange={formik.handleChange('label')} onBlur={formik.handleBlur('label')} error={Boolean(fieldError('label'))} helperText={fieldError('label')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
 													<CustomTextInput id="amount" type="number" label={`${t.magasin.expenseAmount} *`} value={formik.values.amount} onChange={formik.handleChange('amount')} onBlur={formik.handleBlur('amount')} error={Boolean(fieldError('amount'))} helperText={fieldError('amount')} fullWidth size="small" theme={inputTheme} startIcon={<PaymentsIcon fontSize="small" />} />
 													<MuiFormikDatePicker id="expense_date" label={`${t.magasin.date} *`} value={formik.values.expense_date} onChange={(value) => void formik.setFieldValue('expense_date', value)} onBlur={formik.handleBlur('expense_date')} error={Boolean(fieldError('expense_date'))} helperText={fieldError('expense_date')} fullWidth size="small" startIcon={<DescriptionIcon fontSize="small" />} />
+													<Button
+														component="label"
+														variant="outlined"
+														startIcon={<AttachFileIcon fontSize="small" />}
+														sx={{ minHeight: 48, justifyContent: 'flex-start', borderRadius: 999, px: 2 }}
+													>
+														{formik.values.invoice_file?.name ?? t.magasin.attachInvoice}
+														<input
+															type="file"
+															hidden
+															accept=".pdf,.png,.jpg,.jpeg,.webp"
+															onChange={(event) => void formik.setFieldValue('invoice_file', event.currentTarget.files?.[0] ?? null)}
+														/>
+													</Button>
 													<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={`${t.magasin.paymentStatus} *`} value={formik.values.payment_status} onChange={(event) => void formik.setFieldValue('payment_status', event.target.value)} onBlur={formik.handleBlur('payment_status')} error={Boolean(fieldError('payment_status'))} helperText={fieldError('payment_status')} InputProps={{ startAdornment: <InputAdornment position="start"><PaymentsIcon fontSize="small" /></InputAdornment> }} fullWidth>{expensePaymentStatusOptions(t).map((option) => <MenuItem key={option.id} value={option.id}>{option.nom}</MenuItem>)}</TextField></ThemeProvider>
 													<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={`${t.magasin.paymentMode} *`} value={formik.values.payment_mode} onChange={(event) => void formik.setFieldValue('payment_mode', event.target.value)} onBlur={formik.handleBlur('payment_mode')} error={Boolean(fieldError('payment_mode'))} helperText={fieldError('payment_mode')} InputProps={{ startAdornment: <InputAdornment position="start"><PaymentsIcon fontSize="small" /></InputAdornment> }} fullWidth>{paymentModeOptions.map((option) => <MenuItem key={option.id} value={option.id}>{option.nom}</MenuItem>)}</TextField></ThemeProvider>
 												</Box>

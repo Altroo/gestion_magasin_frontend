@@ -28,6 +28,7 @@ import type {
 	PurchaseType,
 	SaleCreatePayload,
 	SaleType,
+	StockAddRequestType,
 	StockBalanceType,
 	StockTransferPayload,
 	StockTransferType,
@@ -45,9 +46,29 @@ type ListParams = {
 	[key: string]: string | number | boolean | undefined;
 };
 
+const hasFileValue = (data: Record<string, unknown>) =>
+	typeof File !== 'undefined' && Object.values(data).some((value) => value instanceof File);
+
+const toFormData = (data: Record<string, unknown>, jsonKeys: string[] = []) => {
+	const formData = new FormData();
+	Object.entries(data).forEach(([key, value]) => {
+		if (value === undefined || value === null || value === '') return;
+		if (typeof File !== 'undefined' && value instanceof File) {
+			formData.append(key, value);
+			return;
+		}
+		if (jsonKeys.includes(key)) {
+			formData.append(key, JSON.stringify(value));
+			return;
+		}
+		formData.append(key, String(value));
+	});
+	return formData;
+};
+
 export const magasinApi = createApi({
 	reducerPath: 'magasinApi',
-	tagTypes: ['Stores', 'Products', 'Stock', 'Sales', 'Attendance', 'Expenses', 'Purchases', 'Inventory', 'Transfers', 'Promotions', 'PaymentModes', 'Reports'],
+	tagTypes: ['Stores', 'Products', 'Stock', 'StockAddRequests', 'Sales', 'Attendance', 'Expenses', 'Purchases', 'Inventory', 'Transfers', 'Promotions', 'PaymentModes', 'Reports'],
 	baseQuery: axiosBaseQuery((api) =>
 		isAuthenticatedInstance(
 			() => getInitStateToken(api.getState() as RootState),
@@ -312,7 +333,9 @@ export const magasinApi = createApi({
 			query: (data) => ({
 				url: process.env.NEXT_PUBLIC_STOCK_PURCHASES,
 				method: 'POST',
-				data,
+				data: hasFileValue(data as unknown as Record<string, unknown>)
+					? toFormData(data as unknown as Record<string, unknown>, ['lines'])
+					: data,
 			}),
 			invalidatesTags: ['Purchases', 'Stock', 'Reports'],
 		}),
@@ -320,7 +343,9 @@ export const magasinApi = createApi({
 			query: ({ id, data }) => ({
 				url: `${process.env.NEXT_PUBLIC_STOCK_PURCHASES}${id}/`,
 				method: 'PUT',
-				data,
+				data: hasFileValue(data as unknown as Record<string, unknown>)
+					? toFormData(data as unknown as Record<string, unknown>, ['lines'])
+					: data,
 			}),
 			invalidatesTags: ['Purchases', 'Stock', 'Reports'],
 		}),
@@ -472,7 +497,7 @@ export const magasinApi = createApi({
 			}),
 			providesTags: ['Stock'],
 		}),
-		adjustStock: builder.mutation<unknown, { store: number; product: number; quantity: string; movement_type?: string; note?: string }>({
+		adjustStock: builder.mutation<unknown, { store: number; product: number; quantity: string; movement_type?: string; unit_cost?: string; note?: string }>({
 			query: ({ store, ...data }) => ({
 				url: `${process.env.NEXT_PUBLIC_STOCK_BALANCES}adjust/`,
 				method: 'POST',
@@ -480,6 +505,38 @@ export const magasinApi = createApi({
 				data,
 			}),
 			invalidatesTags: ['Stock'],
+		}),
+		getStockAddRequests: builder.query<PaginationResponseType<StockAddRequestType>, ListParams>({
+			query: ({ store, search, page = 1, pageSize = 10, ...filters }) => ({
+				url: process.env.NEXT_PUBLIC_STOCK_ADD_REQUESTS,
+				method: 'GET',
+				params: { store, search, page, page_size: pageSize, ...filters },
+			}),
+			providesTags: ['StockAddRequests'],
+		}),
+		createStockAddRequest: builder.mutation<StockAddRequestType, { store: number; product: number; quantity: string; unit_cost?: string; note?: string }>({
+			query: ({ store, ...data }) => ({
+				url: process.env.NEXT_PUBLIC_STOCK_ADD_REQUESTS,
+				method: 'POST',
+				params: { store },
+				data,
+			}),
+			invalidatesTags: ['StockAddRequests'],
+		}),
+		approveStockAddRequest: builder.mutation<StockAddRequestType, { id: number }>({
+			query: ({ id }) => ({
+				url: `${process.env.NEXT_PUBLIC_STOCK_ADD_REQUESTS}${id}/approve/`,
+				method: 'POST',
+			}),
+			invalidatesTags: ['StockAddRequests', 'Stock', 'Reports'],
+		}),
+		rejectStockAddRequest: builder.mutation<StockAddRequestType, { id: number; rejection_reason?: string }>({
+			query: ({ id, rejection_reason }) => ({
+				url: `${process.env.NEXT_PUBLIC_STOCK_ADD_REQUESTS}${id}/reject/`,
+				method: 'POST',
+				data: { rejection_reason },
+			}),
+			invalidatesTags: ['StockAddRequests'],
 		}),
 		updateStockThreshold: builder.mutation<StockBalanceType, { id: number; min_stock: string }>({
 			query: ({ id, min_stock }) => ({
@@ -658,7 +715,9 @@ export const magasinApi = createApi({
 			query: (data) => ({
 				url: process.env.NEXT_PUBLIC_FINANCE_ROOT,
 				method: 'POST',
-				data,
+				data: hasFileValue(data as unknown as Record<string, unknown>)
+					? toFormData(data as unknown as Record<string, unknown>)
+					: data,
 			}),
 			invalidatesTags: ['Expenses', 'Reports'],
 		}),
@@ -666,7 +725,9 @@ export const magasinApi = createApi({
 			query: ({ id, data }) => ({
 				url: `${process.env.NEXT_PUBLIC_FINANCE_ROOT}${id}/`,
 				method: 'PUT',
-				data,
+				data: hasFileValue(data as unknown as Record<string, unknown>)
+					? toFormData(data as unknown as Record<string, unknown>)
+					: data,
 			}),
 			invalidatesTags: ['Expenses', 'Reports'],
 		}),
@@ -768,6 +829,7 @@ export const {
 	useAddProductMutation,
 	useAddStockTransferMutation,
 	useAdjustStockMutation,
+	useApproveStockAddRequestMutation,
 	useBulkDeleteExpensesMutation,
 	useBulkDeleteAttendanceRecordsMutation,
 	useBulkDeleteInventorySessionsMutation,
@@ -778,6 +840,7 @@ export const {
 	useBulkDeleteStockBalancesMutation,
 	useBulkDeleteStockTransfersMutation,
 	useCreateSaleMutation,
+	useCreateStockAddRequestMutation,
 	useDeleteAttendanceRecordMutation,
 	useDeleteCategoryMutation,
 	useDeleteExpenseCategoryMutation,
@@ -829,6 +892,7 @@ export const {
 	useGetStoresQuery,
 	useGetStockBalanceQuery,
 	useGetStockBalancesQuery,
+	useGetStockAddRequestsQuery,
 	useGetStockTransferQuery,
 	useGetStockTransfersQuery,
 	useImportAttendanceMutation,
@@ -838,6 +902,7 @@ export const {
 	useSendCSVExampleEmailMutation,
 	useSyncOfflineSalesMutation,
 	useValidateStockTransferMutation,
+	useRejectStockAddRequestMutation,
 	useUpdateStockThresholdMutation,
 	useValidateInventorySessionMutation,
 	useVoidSaleMutation,

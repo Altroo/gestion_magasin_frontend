@@ -81,6 +81,7 @@ const STATUS_VISUALS: Record<string, StatusVisual> = {
 	void: { color: 'error', icon: (props) => <CancelIcon {...props} /> },
 	credit: { color: 'warning', icon: (props) => <PendingActionsIcon {...props} /> },
 	draft: { color: 'warning', icon: (props) => <PendingActionsIcon {...props} /> },
+	in_progress: { color: 'warning', icon: (props) => <PendingActionsIcon {...props} /> },
 	off: { color: 'warning', icon: (props) => <PendingActionsIcon {...props} /> },
 	payable: { color: 'warning', icon: (props) => <PendingActionsIcon {...props} /> },
 };

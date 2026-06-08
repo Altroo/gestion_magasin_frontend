@@ -175,6 +175,7 @@ export type TranslationDictionary = {
     countedQuantity: string;
     expectedQuantity: string;
     difference: string;
+    inventoryCountDate: string;
     validateInventory: string;
     inventoryValidated: string;
     inventoryValidateError: string;
@@ -226,6 +227,7 @@ export type TranslationDictionary = {
     saleCreated: string;
     saleCreateError: string;
     credit: string;
+    inProgress: string;
     seller: string;
     paymentStatus: string;
     paymentMode: string;
@@ -272,6 +274,7 @@ export type TranslationDictionary = {
     counterPrice: string;
     defaultStockAlert: string;
     expirationDate: string;
+    expirationTracking: string;
     shelfLifeDays: string;
     activeProduct: string;
     productCreated: string;
@@ -300,6 +303,22 @@ export type TranslationDictionary = {
     lowStockStatus: string;
     lowStockReached: string;
     stockSufficient: string;
+    stockQuantity: string;
+    stockValue: string;
+    ordersCount: string;
+    outOfStockProducts: string;
+    marginByProduct: string;
+    todayCashIn: string;
+    stockRequests: string;
+    newStockRequest: string;
+    stockRequestSent: string;
+    stockRequestCreateError: string;
+    approveStockRequest: string;
+    rejectStockRequest: string;
+    stockRequestApproved: string;
+    stockRequestRejected: string;
+    stockRequestApproveError: string;
+    stockRequestRejectError: string;
     stockAdjusted: string;
     stockUpdated: string;
     stockDeleted: string;
@@ -330,6 +349,8 @@ export type TranslationDictionary = {
     expenseDeleteError: string;
     deleteExpenseTitle: string;
     deleteExpenseBody: string;
+    invoice: string;
+    attachInvoice: string;
     purchaseCreated: string;
     purchaseUpdated: string;
     purchaseDeleted: string;
@@ -410,6 +431,8 @@ export type TranslationDictionary = {
     attendanceTrendTooltip: string;
     stockByStoreTooltip: string;
     lowStockByStoreTooltip: string;
+    outOfStockProductsTooltip: string;
+    marginByProductTooltip: string;
     transfersByStatusTooltip: string;
     inventoryByStatusTooltip: string;
     promotionsByStatusTooltip: string;

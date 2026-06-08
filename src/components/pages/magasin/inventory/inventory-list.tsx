@@ -105,7 +105,7 @@ const InventoryListClient = ({ session }: SessionProps) => {
 		{ field: 'code', headerName: t.magasin.reference, flex: 0.8, minWidth: 130, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
 		{ field: 'title', headerName: t.magasin.inventory, flex: 1.4, minWidth: 180, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <TooltipTextCell fontWeight={600}>{params.value}</TooltipTextCell> },
 		{ field: 'store_name', headerName: t.magasin.store, flex: 1, minWidth: 140, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
-		{ field: 'inventory_date', headerName: t.magasin.date, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <TooltipTextCell>{formatDate(params.value as string)}</TooltipTextCell> },
+		{ field: 'inventory_date', headerName: t.magasin.inventoryCountDate, flex: 0.8, minWidth: 140, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <TooltipTextCell>{formatDate(params.value as string)}</TooltipTextCell> },
 		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 140, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <WorkflowStatusChip t={t} status={params.value as string} /> },
 		{
 			field: 'actions',

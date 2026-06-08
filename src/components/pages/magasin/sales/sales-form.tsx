@@ -26,6 +26,7 @@ import {
 	Inventory2 as InventoryIcon,
 	ReceiptLong as ReceiptLongIcon,
 	Remove as RemoveIcon,
+	Storefront as StorefrontIcon,
 	Subject as RemarkIcon,
 	Warning as WarningIcon,
 } from '@mui/icons-material';
@@ -34,6 +35,7 @@ import { frFR } from '@mui/x-data-grid/locales';
 import { getIn, useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
+import CustomAutoCompleteSelect from '@/components/formikElements/customAutoCompleteSelect/customAutoCompleteSelect';
 import CustomTextInput from '@/components/formikElements/customTextInput/customTextInput';
 import PrimaryLoadingButton from '@/components/htmlElements/buttons/primaryLoadingButton/primaryLoadingButton';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
@@ -88,32 +90,23 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 	const router = useRouter();
 	const { t } = useLanguage();
 	const { onSuccess, onError } = useToast();
-	const { defaultStore } = useSelectedStore(token);
-	const storeId = initialStoreId ?? defaultStore?.id;
+	const { defaultStore, memberships } = useSelectedStore(token);
+	const initialActiveStoreId = initialStoreId ?? defaultStore?.id;
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [isPending, setIsPending] = useState(false);
 	const [linePaginationModel, setLinePaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 5 });
-	const { data: products } = useGetProductsQuery(
-		{ store: storeId, page: 1, pageSize: 100, is_active: 'true' },
-		{ skip: !token || !storeId },
-	);
-	const { data: promotions } = useGetPromotionsQuery(
-		{ store: storeId, page: 1, pageSize: 100, status: 'active' },
-		{ skip: !token || !storeId },
-	);
 	const { data: paymentModes } = useGetPaymentModesQuery(
 		{ page: 1, pageSize: 100, is_active: 'true' },
 		{ skip: !token },
 	);
 	const [createSale] = useCreateSaleMutation();
 
-	const productOptions = products?.results ?? [];
-	const promotionOptions = promotions?.results ?? [];
 	const paymentModeOptions = paymentModes?.results ?? [];
 	const defaultPaymentMode = paymentModeOptions.find((mode) => mode.code === 'cash') ?? paymentModeOptions.find((mode) => !mode.is_credit) ?? paymentModeOptions[0];
 
 	const formik = useFormik<SaleFormValues>({
 		initialValues: {
+			store: initialActiveStoreId ? String(initialActiveStoreId) : '',
 			payment_status: 'paid',
 			payment_mode: defaultPaymentMode ? String(defaultPaymentMode.id) : '',
 			paid_amount: '',
@@ -127,13 +120,14 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 		validationSchema: toFormikValidationSchema(saleSchema),
 		onSubmit: async (values, { setFieldError }) => {
 			setHasAttemptedSubmit(true);
-			if (!storeId) {
+			const selectedStoreId = Number(values.store);
+			if (!selectedStoreId) {
 				onError(t.errors.genericError);
 				return;
 			}
 			setIsPending(true);
 			const payload: SaleCreatePayload = {
-				store: storeId,
+				store: selectedStoreId,
 				payment_status: values.payment_status,
 				payment_mode: Number(values.payment_mode),
 				paid_amount: values.paid_amount,
@@ -158,7 +152,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 			try {
 				const created = await createSale(payload).unwrap();
 				onSuccess(t.magasin.saleCreated);
-				router.push(SALES_VIEW(created.id, storeId));
+				router.push(SALES_VIEW(created.id, selectedStoreId));
 			} catch (e) {
 				onError(extractApiErrorMessage(e, t.magasin.saleCreateError));
 				setFormikAutoErrors({ e, setFieldError });
@@ -167,6 +161,17 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 			}
 		},
 	});
+	const activeStoreId = Number(formik.values.store || initialActiveStoreId || 0);
+	const { data: products } = useGetProductsQuery(
+		{ store: activeStoreId, page: 1, pageSize: 100, is_active: 'true' },
+		{ skip: !token || !activeStoreId },
+	);
+	const { data: promotions } = useGetPromotionsQuery(
+		{ store: activeStoreId, page: 1, pageSize: 100, status: 'active' },
+		{ skip: !token || !activeStoreId },
+	);
+	const productOptions = products?.results ?? [];
+	const promotionOptions = promotions?.results ?? [];
 
 	const subtotal = useMemo(
 		() =>
@@ -180,6 +185,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 
 	const fieldLabels = useMemo<Record<string, string>>(
 		() => ({
+			store: t.magasin.store,
 			payment_status: t.magasin.paymentStatus,
 			payment_mode: t.magasin.paymentMode,
 			paid_amount: t.magasin.paidAmount,
@@ -209,18 +215,18 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 		const touched = getIn(formik.touched, `lines.${index}.${field}`);
 		return (touched || hasAttemptedSubmit) && typeof error === 'string' ? error : '';
 	};
-	const fieldError = (field: 'payment_status' | 'payment_mode' | 'paid_amount' | 'discount_amount' | 'note') =>
+	const fieldError = (field: 'store' | 'payment_status' | 'payment_mode' | 'paid_amount' | 'discount_amount' | 'note') =>
 		(formik.touched[field] || hasAttemptedSubmit) && typeof formik.errors[field] === 'string'
 			? formik.errors[field]
 			: '';
-	const handlePaymentStatusChange = (nextStatus: 'paid' | 'credit') => {
+	const handlePaymentStatusChange = (nextStatus: 'paid' | 'in_progress' | 'cancelled') => {
 		void formik.setFieldValue('payment_status', nextStatus);
 		const selectedMode = paymentModeOptions.find((mode) => String(mode.id) === formik.values.payment_mode);
-		if (nextStatus === 'credit' && !selectedMode?.is_credit) {
+		if (nextStatus === 'in_progress' && !selectedMode?.is_credit) {
 			const creditMode = paymentModeOptions.find((mode) => mode.is_credit);
 			if (creditMode) void formik.setFieldValue('payment_mode', String(creditMode.id));
 		}
-		if (nextStatus === 'paid' && selectedMode?.is_credit) {
+		if ((nextStatus === 'paid' || nextStatus === 'cancelled') && selectedMode?.is_credit) {
 			const paidMode = paymentModeOptions.find((mode) => !mode.is_credit && mode.code === 'cash') ?? paymentModeOptions.find((mode) => !mode.is_credit);
 			if (paidMode) void formik.setFieldValue('payment_mode', String(paidMode.id));
 		}
@@ -229,9 +235,11 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 		void formik.setFieldValue('payment_mode', paymentModeId);
 		const selectedMode = paymentModeOptions.find((mode) => String(mode.id) === paymentModeId);
 		if (selectedMode) {
-			void formik.setFieldValue('payment_status', selectedMode.is_credit ? 'credit' : 'paid');
+			void formik.setFieldValue('payment_status', selectedMode.is_credit ? 'in_progress' : formik.values.payment_status === 'cancelled' ? 'cancelled' : 'paid');
 		}
 	};
+	const storeItems = memberships.map((membership) => ({ code: String(membership.store.id), value: membership.store.name }));
+	const selectedStore = storeItems.find((store) => store.code === formik.values.store) ?? null;
 
 	const setLineProduct = (index: number, productId: string) => {
 		const product = productOptions.find((item) => item.id === Number(productId));
@@ -489,6 +497,24 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Stack spacing={2.5}>
+													<CustomAutoCompleteSelect
+														id="store"
+														size="small"
+														noOptionsText={t.common.noOptions}
+														label={`${t.magasin.store} *`}
+														items={storeItems}
+														theme={dropdownTheme}
+														value={selectedStore}
+														fullWidth
+														onChange={(_, nextStore) => {
+															void formik.setFieldValue('store', nextStore ? nextStore.code : '');
+															void formik.setFieldValue('lines', [{ ...emptyLine }]);
+														}}
+														onBlur={formik.handleBlur('store')}
+														error={Boolean(fieldError('store'))}
+														helperText={fieldError('store')}
+														startIcon={<StorefrontIcon fontSize="small" />}
+													/>
 													<ThemeProvider theme={dropdownTheme}>
 														<TextField
 															select
@@ -496,15 +522,16 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 															id="payment_status"
 															label={`${t.magasin.paymentStatus} *`}
 															value={formik.values.payment_status}
-															onChange={(event) => handlePaymentStatusChange(event.target.value as 'paid' | 'credit')}
+															onChange={(event) => handlePaymentStatusChange(event.target.value as 'paid' | 'in_progress' | 'cancelled')}
 															onBlur={formik.handleBlur('payment_status')}
 															error={Boolean(fieldError('payment_status'))}
 															helperText={fieldError('payment_status')}
 															InputProps={{ startAdornment: <InputAdornment position="start"><CreditCardIcon fontSize="small" /></InputAdornment> }}
 															fullWidth
 														>
-															<MenuItem value="paid">{t.magasin.paidAmount}</MenuItem>
-															<MenuItem value="credit">{t.magasin.credit}</MenuItem>
+															<MenuItem value="paid">{t.magasin.paid}</MenuItem>
+															<MenuItem value="in_progress">{t.magasin.inProgress}</MenuItem>
+															<MenuItem value="cancelled">{t.magasin.cancelled}</MenuItem>
 														</TextField>
 													</ThemeProvider>
 													<ThemeProvider theme={dropdownTheme}>

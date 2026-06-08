@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Alert, Box, Button, Chip, Divider, Stack } from '@mui/material';
 import {
 	ArrowBack as ArrowBackIcon,
+	AttachFile as AttachFileIcon,
 	CalendarMonth as CalendarIcon,
 	Close as CloseIcon,
 	Delete as DeleteIcon,
@@ -93,6 +94,16 @@ const ExpensesViewClient = ({ session, id }: Props) => {
 										<InfoRow icon={<PaymentIcon />} label={t.magasin.paymentMode} value={expense.payment_mode_name ?? expensePaymentModeLabel(t, expense.payment_mode)} />
 										<Divider />
 										<InfoRow icon={<NumbersIcon />} label={t.magasin.expenseAmount} value={`${formatNumber(expense.amount)} Dhs`} />
+										<Divider />
+										<InfoRow
+											icon={<AttachFileIcon />}
+											label={t.magasin.invoice}
+											value={expense.invoice_file_url ? (
+												<Button href={expense.invoice_file_url} target="_blank" rel="noopener noreferrer" size="small" startIcon={<AttachFileIcon />}>
+													{t.magasin.invoice}
+												</Button>
+											) : '-'}
+										/>
 										<Divider />
 										<InfoRow icon={<PersonIcon />} label={t.magasin.responsible} value={expense.created_by_email} />
 										<Divider />

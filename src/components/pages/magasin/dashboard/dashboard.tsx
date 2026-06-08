@@ -296,29 +296,50 @@ const DashboardClient = ({ session }: SessionProps) => {
 			labels: data?.stock_by_store.map((item) => item.store) ?? [],
 			datasets: [
 				{
-					label: t.magasin.currentStock,
+					label: t.magasin.stockQuantity,
 					data: data?.stock_by_store.map((item) => Number(item.quantity || 0)) ?? [],
 					backgroundColor: '#1d4ed8',
 					borderRadius: 4,
 				},
+				{
+					label: t.magasin.stockValue,
+					data: data?.stock_by_store.map((item) => Number(item.value || 0)) ?? [],
+					backgroundColor: '#047857',
+					borderRadius: 4,
+				},
 			],
 		}),
-		[data?.stock_by_store, t.magasin.currentStock],
+		[data?.stock_by_store, t.magasin.stockQuantity, t.magasin.stockValue],
 	);
 
-	const lowStockByStoreChart = useMemo(
+	const outOfStockChart = useMemo(
 		() => ({
-			labels: data?.low_stock_by_store.map((item) => item.store) ?? [],
+			labels: data?.out_of_stock_products.map((item) => `${item.store} - ${item.product}`) ?? [],
 			datasets: [
 				{
-					label: t.magasin.lowStock,
-					data: data?.low_stock_by_store.map((item) => item.count) ?? [],
+					label: t.magasin.outOfStockProducts,
+					data: data?.out_of_stock_products.map((item) => Number(item.quantity || 0)) ?? [],
 					backgroundColor: '#b91c1c',
 					borderRadius: 4,
 				},
 			],
 		}),
-		[data?.low_stock_by_store, t.magasin.lowStock],
+		[data?.out_of_stock_products, t.magasin.outOfStockProducts],
+	);
+
+	const marginByProductChart = useMemo(
+		() => ({
+			labels: data?.margin_by_product.map((item) => item.product) ?? [],
+			datasets: [
+				{
+					label: t.magasin.marginByProduct,
+					data: data?.margin_by_product.map((item) => Number(item.margin || 0)) ?? [],
+					backgroundColor: '#047857',
+					borderRadius: 4,
+				},
+			],
+		}),
+		[data?.margin_by_product, t.magasin.marginByProduct],
 	);
 
 	const attendanceChart = useMemo(
@@ -430,7 +451,11 @@ const DashboardClient = ({ session }: SessionProps) => {
 										<KpiCard label={t.magasin.purchases} value={`${formatNumber(String(data?.kpis.purchases_total ?? 0))} Dhs`} color="#1d4ed8" />
 										<KpiCard label={t.magasin.expenses} value={`${formatNumber(String(data?.kpis.expenses_total ?? 0))} Dhs`} color="#b91c1c" />
 										<KpiCard label={t.magasin.netTotal} value={`${formatNumber(String(data?.kpis.net_total ?? 0))} Dhs`} color="#334155" />
-										<KpiCard label={t.magasin.lowStock} value={data?.kpis.low_stock_count ?? 0} sub={t.magasin.currentStock} color="#b91c1c" />
+										<KpiCard label={t.magasin.stockQuantity} value={formatNumber(String(data?.kpis.stock_quantity_total ?? 0))} sub={t.magasin.currentStock} color="#1d4ed8" />
+										<KpiCard label={t.magasin.stockValue} value={`${formatNumber(String(data?.kpis.stock_value_total ?? 0))} Dhs`} color="#047857" />
+										<KpiCard label={t.magasin.outOfStockProducts} value={data?.kpis.out_of_stock_count ?? 0} color="#b91c1c" />
+										<KpiCard label={t.magasin.ordersCount} value={data?.kpis.orders_count ?? 0} color="#334155" />
+										<KpiCard label={t.magasin.todayCashIn} value={`${formatNumber(String(data?.kpis.today_cash_total ?? 0))} Dhs`} color="#047857" />
 										<KpiCard label={t.magasin.activePromotions} value={data?.kpis.promotions_active_count ?? 0} color="#6d28d9" />
 										<KpiCard label={t.magasin.transfersCount} value={data?.kpis.transfers_count ?? 0} color="#334155" />
 										<KpiCard label={t.magasin.expiringProducts} value={data?.kpis.expiring_count ?? 0} color="#c2410c" />
@@ -490,14 +515,23 @@ const DashboardClient = ({ session }: SessionProps) => {
 											subheader={t.magasin.stockByStoreTooltip}
 											height={320}
 										>
-											{renderChart(stockByStoreChart, <Bar data={stockByStoreChart} options={chartOptions} />)}
+											{renderChart(stockByStoreChart, <Bar data={stockByStoreChart} options={legendChartOptions} />)}
 										</ChartCard>
 										<ChartCard
-											title={t.magasin.lowStockByStore}
-											subheader={t.magasin.lowStockByStoreTooltip}
+											title={t.magasin.marginByProduct}
+											subheader={t.magasin.marginByProductTooltip}
 											height={320}
 										>
-											{renderChart(lowStockByStoreChart, <Bar data={lowStockByStoreChart} options={chartOptions} />)}
+											{renderChart(marginByProductChart, <Bar data={marginByProductChart} options={chartOptions} />)}
+										</ChartCard>
+									</Box>
+									<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2 }}>
+										<ChartCard
+											title={t.magasin.outOfStockProducts}
+											subheader={t.magasin.outOfStockProductsTooltip}
+											height={320}
+										>
+											{renderChart(outOfStockChart, <Bar data={outOfStockChart} options={chartOptions} />)}
 										</ChartCard>
 									</Box>
 									<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' }, gap: 2 }}>

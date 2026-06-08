@@ -127,7 +127,7 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 	const fieldLabels = useMemo<Record<string, string>>(() => ({
 		code: t.magasin.inventoryCode,
 		title: t.magasin.inventoryTitle,
-		inventory_date: t.magasin.date,
+		inventory_date: t.magasin.inventoryCountDate,
 		status: t.magasin.status,
 		note: t.magasin.note,
 		lines: t.magasin.inventoryLines,
@@ -342,7 +342,7 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 												<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2.5 }}>
 													<CustomTextInput id="code" type="text" label={`${t.magasin.inventoryCode} *`} value={formik.values.code} onChange={formik.handleChange('code')} onBlur={formik.handleBlur('code')} error={(formik.touched.code || hasAttemptedSubmit) && Boolean(formik.errors.code)} helperText={(formik.touched.code || hasAttemptedSubmit) ? formik.errors.code : ''} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
 													<CustomTextInput id="title" type="text" label={`${t.magasin.inventoryTitle} *`} value={formik.values.title} onChange={formik.handleChange('title')} onBlur={formik.handleBlur('title')} error={(formik.touched.title || hasAttemptedSubmit) && Boolean(formik.errors.title)} helperText={(formik.touched.title || hasAttemptedSubmit) ? formik.errors.title : ''} fullWidth size="small" theme={inputTheme} startIcon={<InventoryIcon fontSize="small" />} />
-													<MuiFormikDatePicker id="inventory_date" label={`${t.magasin.date} *`} value={formik.values.inventory_date} onChange={(value) => void formik.setFieldValue('inventory_date', value)} onBlur={formik.handleBlur('inventory_date')} error={(formik.touched.inventory_date || hasAttemptedSubmit) && Boolean(formik.errors.inventory_date)} helperText={(formik.touched.inventory_date || hasAttemptedSubmit) ? formik.errors.inventory_date : ''} fullWidth size="small" startIcon={<DescriptionIcon fontSize="small" />} />
+													<MuiFormikDatePicker id="inventory_date" label={`${t.magasin.inventoryCountDate} *`} value={formik.values.inventory_date} onChange={(value) => void formik.setFieldValue('inventory_date', value)} onBlur={formik.handleBlur('inventory_date')} error={(formik.touched.inventory_date || hasAttemptedSubmit) && Boolean(formik.errors.inventory_date)} helperText={(formik.touched.inventory_date || hasAttemptedSubmit) ? formik.errors.inventory_date : ''} fullWidth size="small" startIcon={<DescriptionIcon fontSize="small" />} />
 													<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={`${t.magasin.status} *`} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} onBlur={formik.handleBlur('status')} error={(formik.touched.status || hasAttemptedSubmit) && Boolean(formik.errors.status)} helperText={(formik.touched.status || hasAttemptedSubmit) ? formik.errors.status : ''} InputProps={{ startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> }} fullWidth>{stockWorkflowStatusOptions(t).map((option) => <MenuItem key={option.id} value={option.id}>{option.nom}</MenuItem>)}</TextField></ThemeProvider>
 												</Box>
 												<Box sx={{ mt: 2.5 }}><CustomTextInput id="note" type="text" label={t.magasin.note} value={formik.values.note} onChange={formik.handleChange('note')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} /></Box>

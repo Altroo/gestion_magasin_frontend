@@ -90,6 +90,7 @@ export type ProductType = {
 	counter_price: string;
 	default_stock_alert: string;
 	expiration_date: string | null;
+	requires_expiration_date: boolean;
 	shelf_life_days?: number | null;
 	is_active: boolean;
 	available_stock: string | null;
@@ -110,6 +111,7 @@ export type ProductPayload = {
 	counter_price: string;
 	default_stock_alert: string;
 	expiration_date?: string | null;
+	requires_expiration_date: boolean;
 	shelf_life_days?: number | null;
 	is_active: boolean;
 };
@@ -122,6 +124,7 @@ export type StockBalanceType = {
 	product_name: string;
 	product_reference: string | null;
 	product_barcode: string | null;
+	product_purchase_price: string;
 	category_name: string | null;
 	unit_name: string | null;
 	quantity: string;
@@ -173,7 +176,7 @@ export type SaleType = {
 	payment_mode?: number | null;
 	payment_mode_name?: string | null;
 	status: 'confirmed' | 'void';
-	payment_status: 'paid' | 'credit';
+	payment_status: 'paid' | 'in_progress' | 'cancelled';
 	subtotal: string;
 	discount_amount: string;
 	total: string;
@@ -205,7 +208,7 @@ export type SaleCreatePayload = {
 	}>;
 	payment_mode?: number;
 	payment_mode_code?: string;
-	payment_status?: 'paid' | 'credit';
+	payment_status?: 'paid' | 'in_progress' | 'cancelled';
 	discount_amount?: string;
 	paid_amount?: string;
 	idempotency_key?: string;
@@ -221,7 +224,8 @@ export type SaleFormLineValues = {
 };
 
 export type SaleFormValues = {
-	payment_status: 'paid' | 'credit';
+	store: string;
+	payment_status: 'paid' | 'in_progress' | 'cancelled';
 	payment_mode: string;
 	paid_amount: string;
 	discount_amount: string;
@@ -243,9 +247,14 @@ export type DashboardReportType = {
 	kpis: {
 		sales_count: number;
 		sales_total: string;
+		orders_count: number;
 		expenses_total: string;
 		purchases_total: string;
 		net_total: string;
+		stock_quantity_total: string;
+		stock_value_total: string;
+		out_of_stock_count: number;
+		today_cash_total: string;
 		low_stock_count: number;
 		expired_count: number;
 		expiring_count: number;
@@ -261,7 +270,9 @@ export type DashboardReportType = {
 	purchases_trend: Array<{ date: string; total: string; count: number }>;
 	expenses_trend: Array<{ date: string; total: string; count: number }>;
 	attendance_trend: Array<{ date: string; hours: string; delay: number }>;
-	stock_by_store: Array<{ store: string; quantity: string }>;
+	stock_by_store: Array<{ store: string; quantity: string; value: string }>;
+	out_of_stock_products: Array<{ id: number; store: string; product: string; quantity: string }>;
+	margin_by_product: Array<{ product: string; revenue: string; cost: string; margin: string }>;
 	low_stock_by_store: Array<{ store: string; count: number }>;
 	transfers_by_status: Array<{ status: string; count: number }>;
 	inventory_by_status: Array<{ status: string; count: number }>;
@@ -288,6 +299,8 @@ export type ExpenseType = {
 	payment_mode: 'cash' | 'card' | 'transfer' | 'other';
 	payment_mode_name?: string | null;
 	expense_date: string;
+	invoice_file?: string | null;
+	invoice_file_url?: string | null;
 	note: string;
 	created_by?: number | null;
 	created_by_email?: string | null;
@@ -303,6 +316,7 @@ export type ExpensePayload = {
 	payment_status: 'paid' | 'payable';
 	payment_mode: 'cash' | 'card' | 'transfer' | 'other';
 	expense_date: string;
+	invoice_file?: File | null;
 	note?: string;
 };
 
@@ -326,6 +340,8 @@ export type PurchaseType = {
 	purchase_date: string;
 	status: 'draft' | 'received' | 'cancelled';
 	subtotal: string;
+	invoice_file?: string | null;
+	invoice_file_url?: string | null;
 	note: string;
 	created_by?: number | null;
 	created_by_email?: string | null;
@@ -343,6 +359,7 @@ export type PurchasePayload = {
 	reference?: string;
 	purchase_date?: string;
 	status: 'draft' | 'received' | 'cancelled';
+	invoice_file?: File | null;
 	note?: string;
 	lines: Array<{ product: number; quantity: string; unit_cost: string }>;
 };
@@ -523,7 +540,7 @@ export type NotificationType = {
 	id: number;
 	title: string;
 	message: string;
-	notification_type: 'low_stock';
+	notification_type: 'low_stock' | 'stock_add_request';
 	object_id: number | null;
 	store?: number | null;
 	product?: number | null;
@@ -546,9 +563,32 @@ export type PosScanFormValues = {
 export type StockAdjustmentFormValues = {
 	product: string;
 	quantity: string;
+	unit_cost?: string;
 	min_stock?: string;
 	note?: string;
 	globalError: string;
+};
+
+export type StockAddRequestType = {
+	id: number;
+	store: number;
+	store_name: string;
+	product: number;
+	product_name: string;
+	product_reference: string | null;
+	product_barcode: string | null;
+	quantity: string;
+	unit_cost: string;
+	status: 'pending' | 'approved' | 'rejected';
+	note: string;
+	requested_by?: number | null;
+	requested_by_email?: string | null;
+	reviewed_by?: number | null;
+	reviewed_by_email?: string | null;
+	reviewed_at?: string | null;
+	rejection_reason?: string;
+	date_created?: string;
+	date_updated?: string;
 };
 
 export type AttendanceFormValues = {
@@ -579,6 +619,7 @@ export type ProductFormValues = {
 	counter_price: string;
 	default_stock_alert: string;
 	expiration_date: string;
+	requires_expiration_date: boolean;
 	shelf_life_days: string;
 	is_active: boolean;
 	globalError: string;

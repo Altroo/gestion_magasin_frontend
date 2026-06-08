@@ -104,7 +104,7 @@ const InventoryViewClient = ({ session, id }: Props) => {
 										<Divider />
 										<InfoRow icon={<StorefrontIcon />} label={t.magasin.store} value={inventory.store_name} />
 										<Divider />
-										<InfoRow icon={<CalendarIcon />} label={t.magasin.date} value={formatDate(inventory.inventory_date)} />
+										<InfoRow icon={<CalendarIcon />} label={t.magasin.inventoryCountDate} value={formatDate(inventory.inventory_date)} />
 										<Divider />
 										<InfoRow icon={<DescriptionIcon />} label={t.magasin.note} value={inventory.note} />
 									</DetailCard>

@@ -197,6 +197,8 @@ const CatalogViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
 											<Divider />
 											<InfoRow icon={<EventIcon />} label={t.magasin.expirationDate} value={formatDateShort(product.expiration_date)} />
 											<Divider />
+											<InfoRow icon={<EventIcon />} label={t.magasin.expirationTracking} value={product.requires_expiration_date ? t.common.yes : t.common.no} />
+											<Divider />
 											<InfoRow icon={<EventIcon />} label={t.magasin.shelfLifeDays} value={product.shelf_life_days} />
 										</CardContent>
 									</Card>

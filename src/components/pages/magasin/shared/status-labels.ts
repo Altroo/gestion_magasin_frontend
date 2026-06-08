@@ -44,6 +44,7 @@ export const magasinStatusLabel = (t: TranslationDictionary, value?: string | nu
 		confirmed: t.magasin.confirmed,
 		void: t.magasin.voided,
 		paid: t.magasin.paid,
+		in_progress: t.magasin.inProgress,
 		credit: t.magasin.credit,
 		payable: t.magasin.payable,
 		active: t.magasin.activePromotion,
@@ -56,6 +57,12 @@ export const magasinStatusLabel = (t: TranslationDictionary, value?: string | nu
 	};
 	return labels[value] ?? value;
 };
+
+export const salePaymentStatusOptions = (t: TranslationDictionary) => [
+	{ id: 'paid', nom: t.magasin.paid },
+	{ id: 'in_progress', nom: t.magasin.inProgress },
+	{ id: 'cancelled', nom: t.magasin.cancelled },
+];
 
 export const expensePaymentModeLabel = (t: TranslationDictionary, value?: string | null, paymentModes?: PaymentModeType[]) => {
 	if (!value) return '-';
