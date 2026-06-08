@@ -257,6 +257,7 @@ export const en: TranslationDictionary = {
     markAllRead: 'Mark all read',
     notificationPreferences: 'Notification preferences',
     notifyLowStock: 'Notify low stock',
+    notifyStockAddRequests: 'Notify stock addition requests',
     browserNotifications: 'Browser notifications',
     repeatHours: 'Repeat (hours)',
     savePreferences: 'Save',

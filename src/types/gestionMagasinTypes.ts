@@ -567,6 +567,7 @@ export type NotificationType = {
 export type NotificationPreferenceType = {
 	id: number;
 	notify_low_stock: boolean;
+	notify_stock_add_requests: boolean;
 	low_stock_repeat_hours: number;
 	browser_notifications: boolean;
 };
@@ -643,6 +644,7 @@ export type ProductFormValues = {
 
 export type NotificationPreferenceFormValues = {
 	notify_low_stock: boolean;
+	notify_stock_add_requests: boolean;
 	browser_notifications: boolean;
 	low_stock_repeat_hours: string;
 	globalError: string;

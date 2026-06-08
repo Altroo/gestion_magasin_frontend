@@ -357,6 +357,7 @@ export const attendanceSchema = z.object({
 
 export const notificationPreferencesSchema = z.object({
 	notify_low_stock: z.boolean(),
+	notify_stock_add_requests: z.boolean(),
 	browser_notifications: z.boolean(),
 	low_stock_repeat_hours: requiredPositiveIntegerTextField(),
 	globalError: optionalTextField(1, 500),

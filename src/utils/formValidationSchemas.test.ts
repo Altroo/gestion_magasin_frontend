@@ -316,6 +316,7 @@ describe('Zod Schema Validation', () => {
 			expect(() =>
 				notificationPreferencesSchema.parse({
 					notify_low_stock: true,
+					notify_stock_add_requests: true,
 					browser_notifications: false,
 					low_stock_repeat_hours: '24',
 					globalError: '',
@@ -327,6 +328,7 @@ describe('Zod Schema Validation', () => {
 			expect(() =>
 				notificationPreferencesSchema.parse({
 					notify_low_stock: true,
+					notify_stock_add_requests: true,
 					browser_notifications: true,
 					low_stock_repeat_hours: '0',
 				}),

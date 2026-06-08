@@ -39,6 +39,7 @@ const NotificationsClient = ({ session }: SessionProps) => {
 	const preferencesFormik = useFormik<NotificationPreferenceFormValues>({
 		initialValues: {
 			notify_low_stock: preferences?.notify_low_stock ?? false,
+			notify_stock_add_requests: preferences?.notify_stock_add_requests ?? false,
 			browser_notifications: preferences?.browser_notifications ?? false,
 			low_stock_repeat_hours: String(preferences?.low_stock_repeat_hours ?? 24),
 			globalError: '',
@@ -50,6 +51,7 @@ const NotificationsClient = ({ session }: SessionProps) => {
 			try {
 				await updatePreferences({
 					notify_low_stock: values.notify_low_stock,
+					notify_stock_add_requests: values.notify_stock_add_requests,
 					browser_notifications: values.browser_notifications,
 					low_stock_repeat_hours: Number(values.low_stock_repeat_hours),
 				}).unwrap();
@@ -89,6 +91,17 @@ const NotificationsClient = ({ session }: SessionProps) => {
 												/>
 											}
 											label={t.magasin.notifyLowStock}
+										/>
+										<FormControlLabel
+											control={
+												<Switch
+													checked={preferencesFormik.values.notify_stock_add_requests}
+													onChange={(_, checked) => void preferencesFormik.setFieldValue('notify_stock_add_requests', checked)}
+													name="notify_stock_add_requests"
+													disabled={updateState.isLoading}
+												/>
+											}
+											label={t.magasin.notifyStockAddRequests}
 										/>
 										<FormControlLabel
 											control={

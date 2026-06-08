@@ -257,6 +257,7 @@ export type TranslationDictionary = {
     markAllRead: string;
     notificationPreferences: string;
     notifyLowStock: string;
+    notifyStockAddRequests: string;
     browserNotifications: string;
     repeatHours: string;
     savePreferences: string;
