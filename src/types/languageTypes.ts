@@ -316,6 +316,8 @@ export type TranslationDictionary = {
     todayCashIn: string;
     stockRequests: string;
     newStockRequest: string;
+    stockRequestQuantity: string;
+    stockRequestInfo: string;
     stockRequestSent: string;
     stockRequestCreateError: string;
     approveStockRequest: string;

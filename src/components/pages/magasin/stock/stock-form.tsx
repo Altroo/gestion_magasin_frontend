@@ -204,14 +204,16 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 		(formik.touched[field] || hasAttemptedSubmit) && typeof formik.errors[field] === 'string'
 			? (formik.errors[field] as string)
 			: '';
-	const submitText = isEditMode
+	const formTitle = isEditMode
 		? t.magasin.editStock
 		: canAdjustDirectly
 			? t.magasin.newStock
 			: t.magasin.newStockRequest;
+	const submitText = formTitle;
+	const quantityLabel = !canAdjustDirectly ? t.magasin.stockRequestQuantity : t.magasin.adjustmentQuantity;
 
 	return (
-		<NavigationBar title={isEditMode ? t.magasin.editStock : t.magasin.newStock}>
+		<NavigationBar title={formTitle}>
 			<Protected permission={isEditMode ? 'can_edit' : 'can_create'}>
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
@@ -249,10 +251,15 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 											<CardContent sx={{ p: 3 }}>
 												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
 													<InventoryIcon color="primary" />
-													<Typography variant="h6" fontWeight={700}>{t.magasin.stockMovement}</Typography>
+													<Typography variant="h6" fontWeight={700}>{canAdjustDirectly ? t.magasin.stockMovement : t.magasin.newStockRequest}</Typography>
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Stack spacing={2.5}>
+													{!canAdjustDirectly && (
+														<Alert severity="info" sx={{ borderRadius: 2 }}>
+															{t.magasin.stockRequestInfo}
+														</Alert>
+													)}
 													<CustomAutoCompleteSelect
 														id="product"
 														label={`${t.magasin.selectProduct} *`}
@@ -272,7 +279,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 													<CustomTextInput
 														id="quantity"
 														type="number"
-														label={isEditMode ? t.magasin.adjustmentQuantity : `${t.magasin.adjustmentQuantity} *`}
+														label={isEditMode ? quantityLabel : `${quantityLabel} *`}
 														value={formik.values.quantity}
 														onChange={formik.handleChange('quantity')}
 														onBlur={formik.handleBlur('quantity')}

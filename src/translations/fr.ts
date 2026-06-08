@@ -316,6 +316,8 @@ export const fr: TranslationDictionary = {
     todayCashIn: 'Encaissements du jour',
     stockRequests: "Demandes d'ajout de stock",
     newStockRequest: "Demande d'ajout de stock",
+    stockRequestQuantity: 'Quantité demandée',
+    stockRequestInfo: "Cette demande sera envoyée à la direction pour validation. Le stock sera ajouté après approbation.",
     stockRequestSent: 'Demande envoyée à la direction.',
     stockRequestCreateError: "Erreur lors de l'envoi de la demande de stock.",
     approveStockRequest: 'Approuver la demande',

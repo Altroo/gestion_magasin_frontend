@@ -316,6 +316,8 @@ export const en: TranslationDictionary = {
     todayCashIn: "Today's cash-in",
     stockRequests: 'Stock addition requests',
     newStockRequest: 'Stock addition request',
+    stockRequestQuantity: 'Requested quantity',
+    stockRequestInfo: 'This request will be sent to direction for approval. Stock will be added after approval.',
     stockRequestSent: 'Request sent to direction.',
     stockRequestCreateError: 'Error sending the stock request.',
     approveStockRequest: 'Approve request',

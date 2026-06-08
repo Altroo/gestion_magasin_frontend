@@ -39,6 +39,15 @@ const requiredNumberTextField = () =>
 			.refine((val) => Number.isFinite(Number(val)), { error: INPUT_REQUIRED }),
 	);
 
+const optionalNumberTextField = () =>
+	z.preprocess(
+		(val) => (val === undefined || val === null || val === '' ? undefined : String(val)),
+		z
+			.string()
+			.refine((val) => Number.isFinite(Number(val)), { error: INPUT_REQUIRED })
+			.optional(),
+	);
+
 const requiredPositiveIntegerTextField = () =>
 	z.preprocess(
 		(val) => (val === undefined || val === null ? '' : String(val)),
@@ -316,15 +325,15 @@ export const promotionSchema = z.object({
 export const stockAdjustmentSchema = z.object({
 	product: requiredNumberTextField(),
 	quantity: requiredNumberTextField(),
-	unit_cost: optionalTextField(1, 20),
-	min_stock: optionalTextField(1, 20),
+	unit_cost: optionalNumberTextField(),
+	min_stock: optionalNumberTextField(),
 	note: optionalTextField(1, 500),
 	globalError: optionalTextField(1, 500),
 });
 
 export const stockThresholdSchema = z.object({
 	product: requiredNumberTextField(),
-	quantity: optionalTextField(1, 20),
+	quantity: optionalNumberTextField(),
 	min_stock: requiredNumberTextField(),
 	note: optionalTextField(1, 500),
 	globalError: optionalTextField(1, 500),

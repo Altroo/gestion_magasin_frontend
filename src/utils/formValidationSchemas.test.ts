@@ -259,6 +259,10 @@ describe('Zod Schema Validation', () => {
 			expect(() => stockAdjustmentSchema.parse({ product: '1', quantity: 6, globalError: '' })).not.toThrow();
 		});
 
+		it('validates numeric unit cost input from number fields', () => {
+			expect(() => stockAdjustmentSchema.parse({ product: '1', quantity: 6, unit_cost: 55, globalError: '' })).not.toThrow();
+		});
+
 		it('fails with an empty quantity', () => {
 			expect(() => stockAdjustmentSchema.parse({ product: '1', quantity: '' })).toThrow();
 		});
@@ -333,6 +337,7 @@ describe('Zod Schema Validation', () => {
 		describe('saleSchema', () => {
 			const validSale = {
 				store: '1',
+				stores: ['1'],
 				payment_status: 'paid',
 				payment_mode: '1',
 				paid_amount: '120',
