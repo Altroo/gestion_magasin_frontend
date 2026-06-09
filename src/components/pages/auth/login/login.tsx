@@ -29,7 +29,7 @@ import {
 	Lock as LockIcon,
 } from '@mui/icons-material';
 import Image from 'next/image';
-import Logo from '../../../../../public/assets/images/gestion-magasin-logo.svg';
+import Logo from '../../../../../public/assets/images/gestion-magasin-logo.png';
 
 const inputTheme = textInputTheme();
 

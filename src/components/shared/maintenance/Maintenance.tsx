@@ -6,7 +6,7 @@ import { Box, Chip, Divider, Paper, Stack, Typography } from '@mui/material';
 import BuildCircleOutlinedIcon from '@mui/icons-material/BuildCircleOutlined';
 import { useAppSelector, useLanguage } from '@/utils/hooks';
 import { getWSMaintenanceState } from '@/store/selectors';
-import Logo from '../../../../public/assets/images/gestion-magasin-logo.svg';
+import Logo from '../../../../public/assets/images/gestion-magasin-logo.png';
 import IlluSVG from '../../../../public/assets/images/auth_illu/pos-receipt.svg';
 
 const Maintenance: React.FC = () => {
