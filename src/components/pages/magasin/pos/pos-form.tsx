@@ -685,7 +685,7 @@ const PosClient = ({ session }: SessionProps) => {
 											value={effectivePaymentModeId}
 											onChange={(event) => setSelectedPaymentModeId(event.target.value)}
 											disabled={arePaymentModesLoading || paymentModeOptions.length === 0}
-											InputProps={{ startAdornment: <InputAdornment position="start"><CreditCardIcon fontSize="small" /></InputAdornment> }}
+											slotProps={{ input: { startAdornment: <InputAdornment position="start"><CreditCardIcon fontSize="small" /></InputAdornment> } }}
 											sx={{ minWidth: { xs: '100%', sm: 260 } }}
 										>
 											{paymentModeOptions.map((mode) => (

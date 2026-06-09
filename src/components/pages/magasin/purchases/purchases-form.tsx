@@ -23,6 +23,7 @@ import { useInitAccessToken } from '@/contexts/InitContext';
 import { useAddPurchaseMutation, useEditPurchaseMutation, useGetProductsQuery, useGetPurchaseQuery } from '@/store/services/magasin';
 import { purchaseSchema } from '@/utils/formValidationSchemas';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
+import { splitAutocompleteRenderParams } from '@/utils/muiAutocompleteSlots';
 import { PURCHASES_LIST, PURCHASES_VIEW } from '@/utils/routes';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { useLanguage, useToast } from '@/utils/hooks';
@@ -227,23 +228,29 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 								transform: 'translateY(-50%)',
 							},
 						}}
-						renderInput={(inputParams) => (
-							<TextField
-								{...inputParams}
-								placeholder={`${t.magasin.product} *`}
-								error={Boolean(lineError(params.row.index, 'product'))}
-								variant="standard"
-								InputProps={{ ...inputParams.InputProps, disableUnderline: true }}
-								fullWidth
-								sx={{
-									...gridPlainInputSx,
-									'& .MuiInputBase-input::placeholder': {
-										color: lineError(params.row.index, 'product') ? 'error.main' : 'inherit',
-										opacity: 0.7,
-									},
-								}}
-							/>
-						)}
+						renderInput={(inputParams) => {
+							const { textFieldParams, inputSlot, htmlInputSlot } = splitAutocompleteRenderParams(inputParams);
+							return (
+								<TextField
+									{...textFieldParams}
+									placeholder={`${t.magasin.product} *`}
+									error={Boolean(lineError(params.row.index, 'product'))}
+									variant="standard"
+									slotProps={{
+										input: { ...inputSlot, disableUnderline: true },
+										htmlInput: htmlInputSlot,
+									}}
+									fullWidth
+									sx={{
+										...gridPlainInputSx,
+										'& .MuiInputBase-input::placeholder': {
+											color: lineError(params.row.index, 'product') ? 'error.main' : 'inherit',
+											opacity: 0.7,
+										},
+									}}
+								/>
+							);
+						}}
 					/>
 				</Box>
 			),
@@ -285,8 +292,10 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 					placeholder={`${t.magasin.purchasePrice} *`}
 					error={Boolean(lineError(params.row.index, 'unit_cost'))}
 					variant="standard"
-					InputProps={{ disableUnderline: true }}
-					inputProps={{ min: 0, step: '0.01' }}
+					slotProps={{
+						input: { disableUnderline: true },
+						htmlInput: { min: 0, step: '0.01' },
+					}}
 					fullWidth
 					sx={{
 						...gridPlainInputSx,
@@ -371,7 +380,7 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 														/>
 													</Button>
 													<ThemeProvider theme={dropdownTheme}>
-														<TextField select size="small" label={`${t.magasin.status} *`} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} onBlur={formik.handleBlur('status')} error={Boolean(fieldError('status'))} helperText={fieldError('status')} InputProps={{ startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> }} fullWidth>
+														<TextField select size="small" label={`${t.magasin.status} *`} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} onBlur={formik.handleBlur('status')} error={Boolean(fieldError('status'))} helperText={fieldError('status')} slotProps={{ input: { startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> } }} fullWidth>
 															{purchaseStatusOptions(t).map((option) => <MenuItem key={option.id} value={option.id}>{option.nom}</MenuItem>)}
 														</TextField>
 													</ThemeProvider>

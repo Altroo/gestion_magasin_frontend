@@ -52,6 +52,7 @@ import { useInitAccessToken } from '@/contexts/InitContext';
 import { useAddPromotionMutation, useEditPromotionMutation, useGetProductsQuery, useGetPromotionEligibleStoresQuery, useGetPromotionQuery, useGetStoresQuery } from '@/store/services/magasin';
 import { promotionSchema } from '@/utils/formValidationSchemas';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
+import { splitAutocompleteRenderParams } from '@/utils/muiAutocompleteSlots';
 import { PROMOTIONS_LIST, PROMOTIONS_VIEW } from '@/utils/routes';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { useLanguage, useToast } from '@/utils/hooks';
@@ -353,17 +354,23 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 							isOptionEqualToValue={(option, value) => option.id === value.id}
 							noOptionsText={t.common.noOptions}
 							sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', '& .MuiFormControl-root': { width: '100%' } }}
-							renderInput={(inputParams) => (
-								<TextField
-									{...inputParams}
-									placeholder={`${t.magasin.product} *`}
-									error={Boolean(error)}
-									variant="standard"
-									InputProps={{ ...inputParams.InputProps, disableUnderline: true }}
-									fullWidth
-									sx={gridPlainInputSx}
-								/>
-							)}
+							renderInput={(inputParams) => {
+								const { textFieldParams, inputSlot, htmlInputSlot } = splitAutocompleteRenderParams(inputParams);
+								return (
+									<TextField
+										{...textFieldParams}
+										placeholder={`${t.magasin.product} *`}
+										error={Boolean(error)}
+										variant="standard"
+										slotProps={{
+											input: { ...inputSlot, disableUnderline: true },
+											htmlInput: htmlInputSlot,
+										}}
+										fullWidth
+										sx={gridPlainInputSx}
+									/>
+								);
+							}}
 						/>
 					</Box>
 				);
@@ -479,7 +486,7 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 															onBlur={formik.handleBlur('status')}
 															error={Boolean(fieldError('status'))}
 															helperText={fieldError('status')}
-															InputProps={{ startAdornment: <InputAdornment position="start"><LocalOfferIcon fontSize="small" /></InputAdornment> }}
+															slotProps={{ input: { startAdornment: <InputAdornment position="start"><LocalOfferIcon fontSize="small" /></InputAdornment> } }}
 															fullWidth
 														>
 															<MenuItem value="active">{t.magasin.activePromotion}</MenuItem>

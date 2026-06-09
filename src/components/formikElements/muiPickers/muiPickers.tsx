@@ -120,11 +120,13 @@ const textFieldSlotProps = ({ id, onBlur, error, helperText, fullWidth, size, st
 	size: size ?? 'small',
 	variant: 'outlined' as const,
 	sx: pickerTextFieldSx,
-	InputProps: startIcon
-		? {
-				startAdornment: <InputAdornment position="start">{startIcon}</InputAdornment>,
-			}
-		: undefined,
+	slotProps: {
+		input: startIcon
+			? {
+					startAdornment: <InputAdornment position="start">{startIcon}</InputAdornment>,
+				}
+			: undefined,
+	},
 });
 
 export const MuiFormikDatePicker = (props: PickerFieldProps) => (

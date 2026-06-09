@@ -3,6 +3,7 @@ import { Autocomplete, InputAdornment, TextField, ThemeProvider } from '@mui/mat
 import type { AutocompleteProps } from '@mui/material/Autocomplete';
 import type { TextFieldProps } from '@mui/material/TextField';
 import type { Theme } from '@mui/material/styles';
+import { splitAutocompleteRenderParams } from '@/utils/muiAutocompleteSlots';
 import { customDropdownTheme } from '@/utils/themes';
 
 type RoundedAutocompleteProps<T> = Omit<AutocompleteProps<T, false, false, false>, 'renderInput'> & {
@@ -37,34 +38,48 @@ const RoundedAutocomplete = <T,>({
 				{...autocompleteProps}
 				size={size}
 				fullWidth={fullWidth}
-				renderInput={(params) => (
-					<TextField
-						{...params}
-						{...textFieldProps}
-						label={label}
-						placeholder={placeholder}
-						error={error}
-						helperText={helperText}
-						InputProps={{
-							...params.InputProps,
-							...textFieldProps?.InputProps,
-							startAdornment: (
-								<>
-									{startIcon && <InputAdornment position="start">{startIcon}</InputAdornment>}
-									{params.InputProps.startAdornment}
-									{textFieldProps?.InputProps?.startAdornment}
-								</>
-							),
-							endAdornment: (
-								<>
-									{params.InputProps.endAdornment}
-									{endIcon && <InputAdornment position="end">{endIcon}</InputAdornment>}
-									{textFieldProps?.InputProps?.endAdornment}
-								</>
-							),
-						}}
-					/>
-				)}
+				renderInput={(params) => {
+					const { textFieldParams, inputSlot, htmlInputSlot } = splitAutocompleteRenderParams(params);
+					const { slotProps, ...restTextFieldProps } = textFieldProps ?? {};
+					const inputSlotProps = slotProps?.input && typeof slotProps.input === 'object' ? slotProps.input : {};
+					const htmlInputSlotProps = slotProps?.htmlInput && typeof slotProps.htmlInput === 'object' ? slotProps.htmlInput : {};
+
+					return (
+						<TextField
+							{...textFieldParams}
+							{...restTextFieldProps}
+							label={label}
+							placeholder={placeholder}
+							error={error}
+							helperText={helperText}
+							slotProps={{
+								...slotProps,
+								input: {
+									...inputSlot,
+									...inputSlotProps,
+									startAdornment: (
+										<>
+											{startIcon && <InputAdornment position="start">{startIcon}</InputAdornment>}
+											{'startAdornment' in inputSlot ? inputSlot.startAdornment : null}
+											{'startAdornment' in inputSlotProps ? inputSlotProps.startAdornment : null}
+										</>
+									),
+									endAdornment: (
+										<>
+											{'endAdornment' in inputSlot ? inputSlot.endAdornment : null}
+											{endIcon && <InputAdornment position="end">{endIcon}</InputAdornment>}
+											{'endAdornment' in inputSlotProps ? inputSlotProps.endAdornment : null}
+										</>
+									),
+								},
+								htmlInput: {
+									...htmlInputSlot,
+									...htmlInputSlotProps,
+								},
+							}}
+						/>
+					);
+				}}
 			/>
 		</ThemeProvider>
 	);

@@ -33,7 +33,7 @@ interface CustomFilterPanelProps {
 	onChange: (model: CustomFilterModel) => void;
 }
 
-interface FilterValueInputProps {
+interface FilterValueFieldProps {
 	item: CustomFilterItem;
 	applyValue: (item: CustomFilterItem) => void;
 }
@@ -41,7 +41,7 @@ interface FilterValueInputProps {
 interface OperatorInfo {
 	value: string;
 	label: string;
-	InputComponent?: React.ComponentType<FilterValueInputProps>;
+	InputComponent?: React.ComponentType<FilterValueFieldProps>;
 }
 
 /** Operators that don't require a value input */
@@ -69,7 +69,7 @@ export function filterHasValue(item: CustomFilterItem): boolean {
 }
 
 // Simple text input for text-based filters
-const TextFilterInput: React.FC<FilterValueInputProps> = ({ item, applyValue }) => {
+const TextFilterInput: React.FC<FilterValueFieldProps> = ({ item, applyValue }) => {
 	const { t } = useLanguage();
 	const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		applyValue({ ...item, value: event.target.value });
@@ -98,7 +98,7 @@ function extractOperators(col: GridColDef, t: TranslationDictionary): OperatorIn
 		return col.filterOperators.map((op) => ({
 			value: op.value,
 			label: op.label ?? op.value,
-			InputComponent: op.InputComponent as React.ComponentType<FilterValueInputProps> | undefined,
+			InputComponent: op.InputComponent as React.ComponentType<FilterValueFieldProps> | undefined,
 		}));
 	}
 	return getDefaultTextOperators(t);

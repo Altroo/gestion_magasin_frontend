@@ -22,6 +22,7 @@ import { useInitAccessToken } from '@/contexts/InitContext';
 import { useAddInventorySessionMutation, useEditInventorySessionMutation, useGetInventorySessionQuery, useGetProductsQuery } from '@/store/services/magasin';
 import { inventorySchema } from '@/utils/formValidationSchemas';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
+import { splitAutocompleteRenderParams } from '@/utils/muiAutocompleteSlots';
 import { INVENTORY_LIST, INVENTORY_VIEW } from '@/utils/routes';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { useLanguage, useToast } from '@/utils/hooks';
@@ -240,23 +241,29 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 								transform: 'translateY(-50%)',
 							},
 						}}
-						renderInput={(inputParams) => (
-							<TextField
-								{...inputParams}
-								placeholder={`${t.magasin.product} *`}
-								error={Boolean(lineError(params.row.index, 'product'))}
-								variant="standard"
-								InputProps={{ ...inputParams.InputProps, disableUnderline: true }}
-								fullWidth
-								sx={{
-									...gridPlainInputSx,
-									'& .MuiInputBase-input::placeholder': {
-										color: lineError(params.row.index, 'product') ? 'error.main' : 'inherit',
-										opacity: 0.7,
-									},
-								}}
-							/>
-						)}
+						renderInput={(inputParams) => {
+							const { textFieldParams, inputSlot, htmlInputSlot } = splitAutocompleteRenderParams(inputParams);
+							return (
+								<TextField
+									{...textFieldParams}
+									placeholder={`${t.magasin.product} *`}
+									error={Boolean(lineError(params.row.index, 'product'))}
+									variant="standard"
+									slotProps={{
+										input: { ...inputSlot, disableUnderline: true },
+										htmlInput: htmlInputSlot,
+									}}
+									fullWidth
+									sx={{
+										...gridPlainInputSx,
+										'& .MuiInputBase-input::placeholder': {
+											color: lineError(params.row.index, 'product') ? 'error.main' : 'inherit',
+											opacity: 0.7,
+										},
+									}}
+								/>
+							);
+						}}
 					/>
 				</Box>
 			),
@@ -298,7 +305,7 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 					onBlur={() => void formik.setFieldTouched(`lines.${params.row.index}.note`, true)}
 					fullWidth
 					variant="standard"
-					InputProps={{ disableUnderline: true }}
+					slotProps={{ input: { disableUnderline: true } }}
 					sx={gridPlainInputSx}
 				/>
 			),
@@ -343,7 +350,7 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 													<CustomTextInput id="code" type="text" label={`${t.magasin.inventoryCode} *`} value={formik.values.code} onChange={formik.handleChange('code')} onBlur={formik.handleBlur('code')} error={(formik.touched.code || hasAttemptedSubmit) && Boolean(formik.errors.code)} helperText={(formik.touched.code || hasAttemptedSubmit) ? formik.errors.code : ''} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
 													<CustomTextInput id="title" type="text" label={`${t.magasin.inventoryTitle} *`} value={formik.values.title} onChange={formik.handleChange('title')} onBlur={formik.handleBlur('title')} error={(formik.touched.title || hasAttemptedSubmit) && Boolean(formik.errors.title)} helperText={(formik.touched.title || hasAttemptedSubmit) ? formik.errors.title : ''} fullWidth size="small" theme={inputTheme} startIcon={<InventoryIcon fontSize="small" />} />
 													<MuiFormikDatePicker id="inventory_date" label={`${t.magasin.inventoryCountDate} *`} value={formik.values.inventory_date} onChange={(value) => void formik.setFieldValue('inventory_date', value)} onBlur={formik.handleBlur('inventory_date')} error={(formik.touched.inventory_date || hasAttemptedSubmit) && Boolean(formik.errors.inventory_date)} helperText={(formik.touched.inventory_date || hasAttemptedSubmit) ? formik.errors.inventory_date : ''} fullWidth size="small" startIcon={<DescriptionIcon fontSize="small" />} />
-													<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={`${t.magasin.status} *`} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} onBlur={formik.handleBlur('status')} error={(formik.touched.status || hasAttemptedSubmit) && Boolean(formik.errors.status)} helperText={(formik.touched.status || hasAttemptedSubmit) ? formik.errors.status : ''} InputProps={{ startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> }} fullWidth>{stockWorkflowStatusOptions(t).map((option) => <MenuItem key={option.id} value={option.id}>{option.nom}</MenuItem>)}</TextField></ThemeProvider>
+													<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={`${t.magasin.status} *`} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} onBlur={formik.handleBlur('status')} error={(formik.touched.status || hasAttemptedSubmit) && Boolean(formik.errors.status)} helperText={(formik.touched.status || hasAttemptedSubmit) ? formik.errors.status : ''} slotProps={{ input: { startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> } }} fullWidth>{stockWorkflowStatusOptions(t).map((option) => <MenuItem key={option.id} value={option.id}>{option.nom}</MenuItem>)}</TextField></ThemeProvider>
 												</Box>
 												<Box sx={{ mt: 2.5 }}><CustomTextInput id="note" type="text" label={t.magasin.note} value={formik.values.note} onChange={formik.handleChange('note')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} /></Box>
 											</CardContent>

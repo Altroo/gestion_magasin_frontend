@@ -407,7 +407,7 @@ const StoresFormClient = ({ session, id }: Props) => {
 																								}}
 																								fullWidth
 																								disabled={isCurrentUser}
-																								InputProps={{ startAdornment: <InputAdornment position="start"><SecurityIcon fontSize="small" /></InputAdornment> }}
+																								slotProps={{ input: { startAdornment: <InputAdornment position="start"><SecurityIcon fontSize="small" /></InputAdornment> } }}
 																							>
 																								{rolesData.map((role) => (
 																									<MenuItem key={role.id} value={role.code}>{role.name}</MenuItem>
@@ -454,7 +454,7 @@ const StoresFormClient = ({ session, id }: Props) => {
 																		value={selectedRole}
 																		onChange={(event) => setSelectedRole(event.target.value as StoreRoleCode)}
 																		fullWidth
-																		InputProps={{ startAdornment: <InputAdornment position="start"><SecurityIcon fontSize="small" /></InputAdornment> }}
+																		slotProps={{ input: { startAdornment: <InputAdornment position="start"><SecurityIcon fontSize="small" /></InputAdornment> } }}
 																	>
 																		{rolesData.map((role) => (
 																			<MenuItem key={role.id} value={role.code}>{role.name}</MenuItem>

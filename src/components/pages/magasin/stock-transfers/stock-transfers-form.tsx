@@ -23,6 +23,7 @@ import { useInitAccessToken } from '@/contexts/InitContext';
 import { useAddStockTransferMutation, useEditStockTransferMutation, useGetProductsQuery, useGetStockTransferQuery } from '@/store/services/magasin';
 import { stockTransferSchema } from '@/utils/formValidationSchemas';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
+import { splitAutocompleteRenderParams } from '@/utils/muiAutocompleteSlots';
 import { STOCK_TRANSFERS_LIST, STOCK_TRANSFERS_VIEW } from '@/utils/routes';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { useLanguage, useToast } from '@/utils/hooks';
@@ -215,23 +216,29 @@ const StockTransfersFormClient = ({ session, id }: Props) => {
 								transform: 'translateY(-50%)',
 							},
 						}}
-						renderInput={(inputParams) => (
-							<TextField
-								{...inputParams}
-								placeholder={`${t.magasin.product} *`}
-								error={Boolean(lineError(params.row.index, 'product'))}
-								variant="standard"
-								InputProps={{ ...inputParams.InputProps, disableUnderline: true }}
-								fullWidth
-								sx={{
-									...gridPlainInputSx,
-									'& .MuiInputBase-input::placeholder': {
-										color: lineError(params.row.index, 'product') ? 'error.main' : 'inherit',
-										opacity: 0.7,
-									},
-								}}
-							/>
-						)}
+						renderInput={(inputParams) => {
+							const { textFieldParams, inputSlot, htmlInputSlot } = splitAutocompleteRenderParams(inputParams);
+							return (
+								<TextField
+									{...textFieldParams}
+									placeholder={`${t.magasin.product} *`}
+									error={Boolean(lineError(params.row.index, 'product'))}
+									variant="standard"
+									slotProps={{
+										input: { ...inputSlot, disableUnderline: true },
+										htmlInput: htmlInputSlot,
+									}}
+									fullWidth
+									sx={{
+										...gridPlainInputSx,
+										'& .MuiInputBase-input::placeholder': {
+											color: lineError(params.row.index, 'product') ? 'error.main' : 'inherit',
+											opacity: 0.7,
+										},
+									}}
+								/>
+							);
+						}}
 					/>
 				</Box>
 			),
@@ -307,7 +314,7 @@ const StockTransfersFormClient = ({ session, id }: Props) => {
 													/>
 													<CustomTextInput id="reference" type="text" label={t.magasin.transferReference} value={formik.values.reference} onChange={formik.handleChange('reference')} onBlur={formik.handleBlur('reference')} error={Boolean(fieldError('reference'))} helperText={fieldError('reference')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
 													<MuiFormikDatePicker id="transfer_date" label={`${t.magasin.transferDate} *`} value={formik.values.transfer_date} onChange={(value) => void formik.setFieldValue('transfer_date', value)} onBlur={formik.handleBlur('transfer_date')} error={Boolean(fieldError('transfer_date'))} helperText={fieldError('transfer_date')} fullWidth size="small" startIcon={<DescriptionIcon fontSize="small" />} />
-													<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={`${t.magasin.status} *`} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} onBlur={formik.handleBlur('status')} error={Boolean(fieldError('status'))} helperText={fieldError('status')} InputProps={{ startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> }} fullWidth>{stockWorkflowStatusOptions(t).map((option) => <MenuItem key={option.id} value={option.id}>{option.nom}</MenuItem>)}</TextField></ThemeProvider>
+													<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={`${t.magasin.status} *`} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} onBlur={formik.handleBlur('status')} error={Boolean(fieldError('status'))} helperText={fieldError('status')} slotProps={{ input: { startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> } }} fullWidth>{stockWorkflowStatusOptions(t).map((option) => <MenuItem key={option.id} value={option.id}>{option.nom}</MenuItem>)}</TextField></ThemeProvider>
 												</Box>
 											</CardContent>
 										</Card>

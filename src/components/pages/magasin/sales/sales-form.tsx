@@ -49,6 +49,7 @@ import type { SessionProps } from '@/types/_initTypes';
 import type { SaleCreatePayload, SaleFormLineValues, SaleFormValues } from '@/types/gestionMagasinTypes';
 import { extractApiErrorMessage, formatNumber, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
 import { saleSchema } from '@/utils/formValidationSchemas';
+import { splitAutocompleteRenderParams } from '@/utils/muiAutocompleteSlots';
 import { SALES_LIST, SALES_VIEW } from '@/utils/routes';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { useLanguage, useToast } from '@/utils/hooks';
@@ -329,7 +330,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 					}}
 					onBlur={() => void formik.setFieldTouched(`lines.${params.row.index}.type`, true)}
 					variant="standard"
-					InputProps={{ disableUnderline: true }}
+					slotProps={{ input: { disableUnderline: true } }}
 					fullWidth
 					sx={gridPlainInputSx}
 				>
@@ -361,17 +362,23 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 								isOptionEqualToValue={(option, value) => option.id === value.id}
 								noOptionsText={t.common.noOptions}
 								sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', '& .MuiFormControl-root': { width: '100%' } }}
-								renderInput={(inputParams) => (
-									<TextField
-										{...inputParams}
-										placeholder={`${t.magasin.promotion} *`}
-										error={Boolean(error)}
-										variant="standard"
-										InputProps={{ ...inputParams.InputProps, disableUnderline: true }}
-										fullWidth
-										sx={gridPlainInputSx}
-									/>
-								)}
+								renderInput={(inputParams) => {
+									const { textFieldParams, inputSlot, htmlInputSlot } = splitAutocompleteRenderParams(inputParams);
+									return (
+										<TextField
+											{...textFieldParams}
+											placeholder={`${t.magasin.promotion} *`}
+											error={Boolean(error)}
+											variant="standard"
+											slotProps={{
+												input: { ...inputSlot, disableUnderline: true },
+												htmlInput: htmlInputSlot,
+											}}
+											fullWidth
+											sx={gridPlainInputSx}
+										/>
+									);
+								}}
 							/>
 						) : (
 							<Autocomplete
@@ -384,17 +391,23 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 								isOptionEqualToValue={(option, value) => option.id === value.id}
 								noOptionsText={t.common.noOptions}
 								sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', '& .MuiFormControl-root': { width: '100%' } }}
-								renderInput={(inputParams) => (
-									<TextField
-										{...inputParams}
-										placeholder={`${t.magasin.product} *`}
-										error={Boolean(error)}
-										variant="standard"
-										InputProps={{ ...inputParams.InputProps, disableUnderline: true }}
-										fullWidth
-										sx={gridPlainInputSx}
-									/>
-								)}
+								renderInput={(inputParams) => {
+									const { textFieldParams, inputSlot, htmlInputSlot } = splitAutocompleteRenderParams(inputParams);
+									return (
+										<TextField
+											{...textFieldParams}
+											placeholder={`${t.magasin.product} *`}
+											error={Boolean(error)}
+											variant="standard"
+											slotProps={{
+												input: { ...inputSlot, disableUnderline: true },
+												htmlInput: htmlInputSlot,
+											}}
+											fullWidth
+											sx={gridPlainInputSx}
+										/>
+									);
+								}}
 							/>
 						)}
 					</Box>
@@ -425,7 +438,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 					onChange={(event) => void formik.setFieldValue(`lines.${params.row.index}.unit_price`, event.target.value)}
 					onBlur={() => void formik.setFieldTouched(`lines.${params.row.index}.unit_price`, true)}
 					variant="standard"
-					InputProps={{ disableUnderline: true }}
+					slotProps={{ input: { disableUnderline: true } }}
 					fullWidth
 					sx={gridPlainInputSx}
 				/>
@@ -526,7 +539,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 															onBlur={formik.handleBlur('payment_status')}
 															error={Boolean(fieldError('payment_status'))}
 															helperText={fieldError('payment_status')}
-															InputProps={{ startAdornment: <InputAdornment position="start"><CreditCardIcon fontSize="small" /></InputAdornment> }}
+															slotProps={{ input: { startAdornment: <InputAdornment position="start"><CreditCardIcon fontSize="small" /></InputAdornment> } }}
 															fullWidth
 														>
 															<MenuItem value="paid">{t.magasin.paid}</MenuItem>
@@ -545,7 +558,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 															onBlur={formik.handleBlur('payment_mode')}
 															error={Boolean(fieldError('payment_mode'))}
 															helperText={fieldError('payment_mode')}
-															InputProps={{ startAdornment: <InputAdornment position="start"><CreditCardIcon fontSize="small" /></InputAdornment> }}
+															slotProps={{ input: { startAdornment: <InputAdornment position="start"><CreditCardIcon fontSize="small" /></InputAdornment> } }}
 															fullWidth
 														>
 															{paymentModeOptions.map((mode) => (
