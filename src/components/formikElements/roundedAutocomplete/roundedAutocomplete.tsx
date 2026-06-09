@@ -43,6 +43,26 @@ const RoundedAutocomplete = <T,>({
 					const { slotProps, ...restTextFieldProps } = textFieldProps ?? {};
 					const inputSlotProps = slotProps?.input && typeof slotProps.input === 'object' ? slotProps.input : {};
 					const htmlInputSlotProps = slotProps?.htmlInput && typeof slotProps.htmlInput === 'object' ? slotProps.htmlInput : {};
+					const inputStartAdornment = inputSlot.startAdornment as ReactNode;
+					const customStartAdornment = inputSlotProps.startAdornment as ReactNode;
+					const inputEndAdornment = inputSlot.endAdornment as ReactNode;
+					const customEndAdornment = inputSlotProps.endAdornment as ReactNode;
+					const startAdornment =
+						startIcon || inputStartAdornment || customStartAdornment ? (
+							<>
+								{startIcon ? <InputAdornment position="start">{startIcon}</InputAdornment> : undefined}
+								{inputStartAdornment}
+								{customStartAdornment}
+							</>
+						) : undefined;
+					const endAdornment =
+						inputEndAdornment || endIcon || customEndAdornment ? (
+							<>
+								{inputEndAdornment}
+								{endIcon ? <InputAdornment position="end">{endIcon}</InputAdornment> : undefined}
+								{customEndAdornment}
+							</>
+						) : undefined;
 
 					return (
 						<TextField
@@ -57,20 +77,8 @@ const RoundedAutocomplete = <T,>({
 								input: {
 									...inputSlot,
 									...inputSlotProps,
-									startAdornment: (
-										<>
-											{startIcon && <InputAdornment position="start">{startIcon}</InputAdornment>}
-											{'startAdornment' in inputSlot ? inputSlot.startAdornment : null}
-											{'startAdornment' in inputSlotProps ? inputSlotProps.startAdornment : null}
-										</>
-									),
-									endAdornment: (
-										<>
-											{'endAdornment' in inputSlot ? inputSlot.endAdornment : null}
-											{endIcon && <InputAdornment position="end">{endIcon}</InputAdornment>}
-											{'endAdornment' in inputSlotProps ? inputSlotProps.endAdornment : null}
-										</>
-									),
+									startAdornment,
+									endAdornment,
 								},
 								htmlInput: {
 									...htmlInputSlot,
