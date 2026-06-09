@@ -1,9 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, Box, Button, Card, CardContent, Divider, InputAdornment, MenuItem, Stack, TextField, ThemeProvider, Typography } from '@mui/material';
-import { Add as AddIcon, ArrowBack as ArrowBackIcon, Badge as BadgeIcon, Edit as EditIcon, Event as EventIcon, Schedule as ScheduleIcon, Subject as RemarkIcon, Warning as WarningIcon } from '@mui/icons-material';
+import {
+	Add as AddIcon, ArrowBack as ArrowBackIcon, Badge as BadgeIcon,
+	Edit as EditIcon, Event as EventIcon, Schedule as ScheduleIcon,
+	Subject as RemarkIcon, Warning as WarningIcon }
+	from '@mui/icons-material';
 import { useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
@@ -241,15 +245,26 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={3}>
-							<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(ATTENDANCE_LIST)} sx={{ alignSelf: 'flex-start' }}>
+							<Button
+								variant="outlined"
+								startIcon={<ArrowBackIcon />}
+								onClick={() => router.push(ATTENDANCE_LIST)}
+								sx={{ alignSelf: 'flex-start' }}
+							>
 								{t.magasin.backToAttendance}
 							</Button>
 							{Object.keys(validationErrors).length > 0 && (
 								<Alert severity="error" icon={<WarningIcon />}>
-									<Typography variant="subtitle2" fontWeight={600}>{t.users.validationErrorsDetected}</Typography>
+									<Typography variant="subtitle2" fontWeight={600}>
+										{t.users.validationErrorsDetected}
+									</Typography>
 									<ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
 										{Object.entries(validationErrors).map(([key, errorMessage]) => (
-											<li key={key}><Typography variant="body2">{getLabelForKey(fieldLabels, key)} : {errorMessage}</Typography></li>
+											<li key={key}>
+												<Typography variant="body2">
+													{getLabelForKey(fieldLabels, key)} : {errorMessage}
+												</Typography>
+											</li>
 										))}
 									</ul>
 								</Alert>
@@ -261,89 +276,211 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 							) : (
 								<form onSubmit={formik.handleSubmit}>
 									<Stack spacing={3}>
-									<Card elevation={2}>
-										<CardContent sx={{ p: 3 }}>
-											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-												<BadgeIcon color="primary" />
-												<Typography variant="h6" fontWeight={700}>{t.magasin.attendanceInformation}</Typography>
-											</Stack>
-											<Divider sx={{ mb: 3 }} />
-											<Stack spacing={2.5}>
-												<ThemeProvider theme={dropdownTheme}>
-													<TextField
-														select
-														size="small"
-														id="employee"
-														label={`${t.magasin.employee} *`}
-														value={formik.values.employee}
-														onChange={(event) => void formik.setFieldValue('employee', event.target.value)}
-														onBlur={formik.handleBlur('employee')}
-														error={Boolean(fieldError('employee'))}
-														helperText={fieldError('employee')}
-														InputProps={{ startAdornment: <InputAdornment position="start"><BadgeIcon fontSize="small" /></InputAdornment> }}
-														fullWidth
+										<Card elevation={2}>
+											<CardContent sx={{ p: 3 }}>
+												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+													<BadgeIcon color="primary" />
+													<Typography variant="h6" fontWeight={700}>
+														{t.magasin.attendanceInformation}
+													</Typography>
+												</Stack>
+												<Divider sx={{ mb: 3 }} />
+												<Stack spacing={2.5}>
+													<ThemeProvider theme={dropdownTheme}>
+														<TextField
+															select
+															size="small"
+															id="employee"
+															label={`${t.magasin.employee} *`}
+															value={formik.values.employee}
+															onChange={(event) => void formik.setFieldValue('employee', event.target.value)}
+															onBlur={formik.handleBlur('employee')}
+															error={Boolean(fieldError('employee'))}
+															helperText={fieldError('employee')}
+															slotProps={{
+																input: {
+																	startAdornment: (
+																		<InputAdornment position="start">
+																			<BadgeIcon fontSize="small" />
+																		</InputAdornment>
+																	),
+																},
+															}}
+															fullWidth
+														>
+															<MenuItem value="">{t.common.selectValue}</MenuItem>
+															{employees?.results.map((employee) => (
+																<MenuItem key={employee.id} value={String(employee.id)}>
+																	{employee.full_name}
+																</MenuItem>
+															))}
+														</TextField>
+													</ThemeProvider>
+													<Box
+														sx={{
+															display: 'grid',
+															gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+															gap: 2.5,
+														}}
 													>
-														<MenuItem value="">{t.common.selectValue}</MenuItem>
-														{employees?.results.map((employee) => (
-															<MenuItem key={employee.id} value={String(employee.id)}>{employee.full_name}</MenuItem>
+														<MuiFormikDatePicker
+															id="date"
+															label={`${t.magasin.date} *`}
+															value={formik.values.date}
+															onChange={(value) => void formik.setFieldValue('date', value)}
+															onBlur={formik.handleBlur('date')}
+															error={Boolean(fieldError('date'))}
+															helperText={fieldError('date')}
+															fullWidth
+															size="small"
+															startIcon={<EventIcon fontSize="small" />}
+														/>
+														<ThemeProvider theme={dropdownTheme}>
+															<TextField
+																select
+																size="small"
+																id="status"
+																label={`${t.magasin.status} *`}
+																value={formik.values.status}
+																onChange={(event) =>
+																	handleStatusChange(event.target.value as AttendanceFormValues['status'])
+																}
+																onBlur={formik.handleBlur('status')}
+																error={Boolean(fieldError('status'))}
+																helperText={fieldError('status')}
+																fullWidth
+															>
+																<MenuItem value="present">{t.magasin.present}</MenuItem>
+																<MenuItem value="off">{t.magasin.off}</MenuItem>
+																<MenuItem value="absent">{t.magasin.absent}</MenuItem>
+															</TextField>
+														</ThemeProvider>
+														<ThemeProvider theme={dropdownTheme}>
+															<TextField
+																select
+																size="small"
+																id="shift"
+																label={`${t.magasin.shift} *`}
+																value={formik.values.shift}
+																onChange={(event) => void formik.setFieldValue('shift', event.target.value)}
+																onBlur={formik.handleBlur('shift')}
+																error={Boolean(fieldError('shift'))}
+																helperText={fieldError('shift')}
+																disabled={formik.values.status === 'off'}
+																fullWidth
+															>
+																<MenuItem value="morning">{t.magasin.morningShift}</MenuItem>
+																<MenuItem value="evening">{t.magasin.eveningShift}</MenuItem>
+																<MenuItem value="off">{t.magasin.off}</MenuItem>
+															</TextField>
+														</ThemeProvider>
+														{(['clock_in', 'break_start', 'break_end', 'clock_out'] as const).map((field) => (
+															<MuiFormikTimePicker
+																key={field}
+																id={field}
+																label={fieldLabels[field]}
+																value={formik.values[field]}
+																onChange={(value) => void formik.setFieldValue(field, value)}
+																onBlur={formik.handleBlur(field)}
+																error={Boolean(fieldError(field))}
+																helperText={fieldError(field)}
+																fullWidth
+																size="small"
+																startIcon={<ScheduleIcon fontSize="small" />}
+															/>
 														))}
-													</TextField>
-												</ThemeProvider>
-												<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2.5 }}>
-													<MuiFormikDatePicker id="date" label={`${t.magasin.date} *`} value={formik.values.date} onChange={(value) => void formik.setFieldValue('date', value)} onBlur={formik.handleBlur('date')} error={Boolean(fieldError('date'))} helperText={fieldError('date')} fullWidth size="small" startIcon={<EventIcon fontSize="small" />} />
-													<ThemeProvider theme={dropdownTheme}>
-														<TextField select size="small" id="status" label={`${t.magasin.status} *`} value={formik.values.status} onChange={(event) => handleStatusChange(event.target.value as AttendanceFormValues['status'])} onBlur={formik.handleBlur('status')} error={Boolean(fieldError('status'))} helperText={fieldError('status')} fullWidth>
-															<MenuItem value="present">{t.magasin.present}</MenuItem>
-															<MenuItem value="off">{t.magasin.off}</MenuItem>
-															<MenuItem value="absent">{t.magasin.absent}</MenuItem>
-														</TextField>
-													</ThemeProvider>
-													<ThemeProvider theme={dropdownTheme}>
-														<TextField select size="small" id="shift" label={`${t.magasin.shift} *`} value={formik.values.shift} onChange={(event) => void formik.setFieldValue('shift', event.target.value)} onBlur={formik.handleBlur('shift')} error={Boolean(fieldError('shift'))} helperText={fieldError('shift')} disabled={formik.values.status === 'off'} fullWidth>
-															<MenuItem value="morning">{t.magasin.morningShift}</MenuItem>
-															<MenuItem value="evening">{t.magasin.eveningShift}</MenuItem>
-															<MenuItem value="off">{t.magasin.off}</MenuItem>
-														</TextField>
-													</ThemeProvider>
-													{(['clock_in', 'break_start', 'break_end', 'clock_out'] as const).map((field) => (
-														<MuiFormikTimePicker key={field} id={field} label={fieldLabels[field]} value={formik.values[field]} onChange={(value) => void formik.setFieldValue(field, value)} onBlur={formik.handleBlur(field)} error={Boolean(fieldError(field))} helperText={fieldError(field)} fullWidth size="small" startIcon={<ScheduleIcon fontSize="small" />} />
-													))}
-													<CustomTextInput id="hours_worked" type="number" label={t.magasin.hours} value={formik.values.hours_worked} onChange={formik.handleChange('hours_worked')} onBlur={formik.handleBlur('hours_worked')} error={Boolean(fieldError('hours_worked'))} helperText={fieldError('hours_worked')} fullWidth size="small" theme={inputTheme} startIcon={<ScheduleIcon fontSize="small" />} disabled />
-													<CustomTextInput id="delay_minutes" type="number" label={t.magasin.delayMinutes} value={formik.values.delay_minutes} onChange={formik.handleChange('delay_minutes')} onBlur={formik.handleBlur('delay_minutes')} error={Boolean(fieldError('delay_minutes'))} helperText={fieldError('delay_minutes')} fullWidth size="small" theme={inputTheme} startIcon={<ScheduleIcon fontSize="small" />} disabled />
-												</Box>
-												<CustomTextInput id="responsible" type="text" label={t.magasin.responsible} value={formik.values.responsible} onChange={formik.handleChange('responsible')} onBlur={formik.handleBlur('responsible')} error={Boolean(fieldError('responsible'))} helperText={fieldError('responsible')} fullWidth size="small" theme={inputTheme} startIcon={<BadgeIcon fontSize="small" />} />
-											</Stack>
-										</CardContent>
-									</Card>
-									<Card elevation={2} sx={{ borderRadius: 2 }}>
-										<CardContent sx={{ p: 3 }}>
-											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-												<RemarkIcon color="primary" />
-												<Typography variant="h6" fontWeight={700}>{t.magasin.movementNote}</Typography>
-											</Stack>
-											<Divider sx={{ mb: 3 }} />
-											<CustomTextInput id="observations" type="text" label={t.magasin.movementNote} value={formik.values.observations} onChange={formik.handleChange('observations')} onBlur={formik.handleBlur('observations')} error={Boolean(fieldError('observations'))} helperText={fieldError('observations')} fullWidth size="small" theme={inputTheme} startIcon={<RemarkIcon fontSize="small" />} />
-										</CardContent>
-									</Card>
-									<Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 2 }}>
-										<PrimaryLoadingButton
-											type="submit"
-											buttonText={isEditMode ? t.magasin.editAttendance : t.magasin.newAttendance}
-											active={!isPending}
-											loading={isPending}
-											startIcon={isEditMode ? <EditIcon /> : <AddIcon />}
-											onClick={(event) => {
-												setHasAttemptedSubmit(true);
-												if (!formik.isValid) {
-													event.preventDefault();
-													formik.handleSubmit();
-													onError(t.magasin.fixValidationErrors);
-													window.scrollTo({ top: 0, behavior: 'smooth' });
-												}
-											}}
-											cssClass={`${Styles.maxWidth} ${Styles.mobileButton} ${Styles.submitButton}`}
-										/>
-									</Box>
+														<CustomTextInput
+															id="hours_worked"
+															type="number"
+															label={t.magasin.hours}
+															value={formik.values.hours_worked}
+															onChange={formik.handleChange('hours_worked')}
+															onBlur={formik.handleBlur('hours_worked')}
+															error={Boolean(fieldError('hours_worked'))}
+															helperText={fieldError('hours_worked')}
+															fullWidth
+															size="small"
+															theme={inputTheme}
+															startIcon={<ScheduleIcon fontSize="small" />}
+															disabled
+														/>
+														<CustomTextInput
+															id="delay_minutes"
+															type="number"
+															label={t.magasin.delayMinutes}
+															value={formik.values.delay_minutes}
+															onChange={formik.handleChange('delay_minutes')}
+															onBlur={formik.handleBlur('delay_minutes')}
+															error={Boolean(fieldError('delay_minutes'))}
+															helperText={fieldError('delay_minutes')}
+															fullWidth
+															size="small"
+															theme={inputTheme}
+															startIcon={<ScheduleIcon fontSize="small" />}
+															disabled
+														/>
+													</Box>
+													<CustomTextInput
+														id="responsible"
+														type="text"
+														label={t.magasin.responsible}
+														value={formik.values.responsible}
+														onChange={formik.handleChange('responsible')}
+														onBlur={formik.handleBlur('responsible')}
+														error={Boolean(fieldError('responsible'))}
+														helperText={fieldError('responsible')}
+														fullWidth
+														size="small"
+														theme={inputTheme}
+														startIcon={<BadgeIcon fontSize="small" />}
+													/>
+												</Stack>
+											</CardContent>
+										</Card>
+										<Card elevation={2} sx={{ borderRadius: 2 }}>
+											<CardContent sx={{ p: 3 }}>
+												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+													<RemarkIcon color="primary" />
+													<Typography variant="h6" fontWeight={700}>
+														{t.magasin.movementNote}
+													</Typography>
+												</Stack>
+												<Divider sx={{ mb: 3 }} />
+												<CustomTextInput
+													id="observations"
+													type="text"
+													label={t.magasin.movementNote}
+													value={formik.values.observations}
+													onChange={formik.handleChange('observations')}
+													onBlur={formik.handleBlur('observations')}
+													error={Boolean(fieldError('observations'))}
+													helperText={fieldError('observations')}
+													fullWidth
+													size="small"
+													theme={inputTheme}
+													startIcon={<RemarkIcon fontSize="small" />}
+												/>
+											</CardContent>
+										</Card>
+										<Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 2 }}>
+											<PrimaryLoadingButton
+												type="submit"
+												buttonText={isEditMode ? t.magasin.editAttendance : t.magasin.newAttendance}
+												active={!isPending}
+												loading={isPending}
+												startIcon={isEditMode ? <EditIcon /> : <AddIcon />}
+												onClick={(event) => {
+													setHasAttemptedSubmit(true);
+													if (!formik.isValid) {
+														event.preventDefault();
+														formik.handleSubmit();
+														onError(t.magasin.fixValidationErrors);
+														window.scrollTo({ top: 0, behavior: 'smooth' });
+													}
+												}}
+												cssClass={`${Styles.maxWidth} ${Styles.mobileButton} ${Styles.submitButton}`}
+											/>
+										</Box>
 									</Stack>
 								</form>
 							)}
