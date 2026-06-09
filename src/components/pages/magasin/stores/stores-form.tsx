@@ -53,9 +53,19 @@ import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useGetUsersListQuery } from '@/store/services/account';
-import { useAddStoreMutation, useEditStoreMutation, useGetStoreQuery, useGetStoreRolesQuery } from '@/store/services/magasin';
+import {
+	useAddStoreMutation,
+	useEditStoreMutation,
+	useGetStoreQuery,
+	useGetStoreRolesQuery,
+} from '@/store/services/magasin';
 import Styles from '@/styles/dashboard/dashboard.module.sass';
-import type { ApiErrorResponseType, PaginationResponseType, ResponseDataInterface, SessionProps } from '@/types/_initTypes';
+import type {
+	ApiErrorResponseType,
+	PaginationResponseType,
+	ResponseDataInterface,
+	SessionProps,
+} from '@/types/_initTypes';
 import type { UserClass } from '@/models/classes';
 import type { StoreFormValues, StorePayload, StoreRoleCode } from '@/types/gestionMagasinTypes';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
@@ -93,7 +103,11 @@ const StoresFormClient = ({ session, id }: Props) => {
 	const [selectedRole, setSelectedRole] = useState<StoreRoleCode | ''>('');
 	const profile = useAppSelector(getProfilState);
 
-	const { data: store, isLoading: isStoreLoading, error: storeError } = useGetStoreQuery({ id: id! }, { skip: !token || !isEditMode });
+	const {
+		data: store,
+		isLoading: isStoreLoading,
+		error: storeError,
+	} = useGetStoreQuery({ id: id! }, { skip: !token || !isEditMode });
 	const { data: usersRaw } = useGetUsersListQuery({ with_pagination: true, page: 1, pageSize: 100 }, { skip: !token });
 	const { data: rolesRaw } = useGetStoreRolesQuery(undefined, { skip: !token });
 	const [addStore, addState] = useAddStoreMutation();
@@ -107,24 +121,21 @@ const StoresFormClient = ({ session, id }: Props) => {
 	const rolesData = rolesRaw?.results ?? [];
 	const directionRole = rolesData.find((role) => role.code === 'direction');
 	const currentUserId = Number(profile?.id);
-	const defaultManagedBy = useMemo(
-		() => {
-			if (isEditMode) {
-				return store?.managed_by ?? [];
-			}
-			if (!currentUserId || !directionRole) {
-				return [];
-			}
-			return [
-				{
-					pk: currentUserId,
-					role: directionRole.code,
-					role_name: directionRole.name,
-				},
-			];
-		},
-		[currentUserId, directionRole, isEditMode, store?.managed_by],
-	);
+	const defaultManagedBy = useMemo(() => {
+		if (isEditMode) {
+			return store?.managed_by ?? [];
+		}
+		if (!currentUserId || !directionRole) {
+			return [];
+		}
+		return [
+			{
+				pk: currentUserId,
+				role: directionRole.code,
+				role_name: directionRole.name,
+			},
+		];
+	}, [currentUserId, directionRole, isEditMode, store?.managed_by]);
 
 	const formik = useFormik<StoreFormValues>({
 		initialValues: {
@@ -231,9 +242,10 @@ const StoresFormClient = ({ session, id }: Props) => {
 		(formik.touched[field] || hasAttemptedSubmit) && typeof formik.errors[field] === 'string'
 			? (formik.errors[field] as string)
 			: '';
-	const managedByError = (formik.touched.managed_by || hasAttemptedSubmit) && typeof formik.errors.managed_by === 'string'
-		? formik.errors.managed_by
-		: '';
+	const managedByError =
+		(formik.touched.managed_by || hasAttemptedSubmit) && typeof formik.errors.managed_by === 'string'
+			? formik.errors.managed_by
+			: '';
 
 	return (
 		<NavigationBar title={isEditMode ? t.magasin.editStore : t.magasin.newStore}>
@@ -241,12 +253,22 @@ const StoresFormClient = ({ session, id }: Props) => {
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={3}>
-							<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(STORES_LIST)} sx={{ alignSelf: 'flex-start' }}>
+							<Button
+								variant="outlined"
+								startIcon={<ArrowBackIcon />}
+								onClick={() => router.push(STORES_LIST)}
+								sx={{ alignSelf: 'flex-start' }}
+							>
 								{t.magasin.backToStores}
 							</Button>
 							{Object.keys(validationErrors).length > 0 && (
 								<Alert severity="error" icon={<WarningIcon />} sx={{ mb: 2 }}>
-									<Typography variant="subtitle2" fontWeight={600}>
+									<Typography
+										variant="subtitle2"
+										sx={{
+											fontWeight: 600,
+										}}
+									>
 										{t.users.validationErrorsDetected}
 									</Typography>
 									<ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
@@ -270,9 +292,23 @@ const StoresFormClient = ({ session, id }: Props) => {
 									<Stack spacing={3}>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+												<Stack
+													direction="row"
+													spacing={2}
+													sx={{
+														alignItems: 'center',
+														mb: 2,
+													}}
+												>
 													<StorefrontIcon color="primary" />
-													<Typography variant="h6" fontWeight={700}>{t.magasin.storeInformation}</Typography>
+													<Typography
+														variant="h6"
+														sx={{
+															fontWeight: 700,
+														}}
+													>
+														{t.magasin.storeInformation}
+													</Typography>
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Stack spacing={2.5}>
@@ -333,56 +369,123 @@ const StoresFormClient = ({ session, id }: Props) => {
 														startIcon={<PhoneIcon fontSize="small" />}
 													/>
 													<FormControlLabel
-														control={<Checkbox checked={formik.values.is_active} onChange={formik.handleChange} name="is_active" />}
-														label={<Stack direction="row" spacing={1} alignItems="center"><CheckCircleIcon fontSize="small" /> <Typography>{t.magasin.activeStore}</Typography></Stack>}
+														control={
+															<Checkbox
+																checked={formik.values.is_active}
+																onChange={formik.handleChange}
+																name="is_active"
+															/>
+														}
+														label={
+															<Stack
+																direction="row"
+																spacing={1}
+																sx={{
+																	alignItems: 'center',
+																}}
+															>
+																<CheckCircleIcon fontSize="small" /> <Typography>{t.magasin.activeStore}</Typography>
+															</Stack>
+														}
 													/>
 												</Stack>
 											</CardContent>
 										</Card>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+												<Stack
+													direction="row"
+													spacing={2}
+													sx={{
+														alignItems: 'center',
+														mb: 2,
+													}}
+												>
 													<PeopleIcon color="primary" />
-													<Typography variant="h6" fontWeight={700}>
-														{t.users.storeAccess} {formik.values.managed_by.length > 0 && `(${formik.values.managed_by.length})`}
+													<Typography
+														variant="h6"
+														sx={{
+															fontWeight: 700,
+														}}
+													>
+														{t.users.storeAccess}{' '}
+														{formik.values.managed_by.length > 0 && `(${formik.values.managed_by.length})`}
 													</Typography>
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Stack spacing={2}>
-													<TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'grey.200' }}>
+													<TableContainer
+														component={Paper}
+														elevation={0}
+														sx={{ border: '1px solid', borderColor: 'grey.200' }}
+													>
 														<Table>
 															<TableHead sx={{ backgroundColor: 'grey.50' }}>
 																<TableRow>
 																	<TableCell sx={{ fontWeight: 700 }}>
-																		<Stack direction="row" spacing={1} alignItems="center">
+																		<Stack
+																			direction="row"
+																			spacing={1}
+																			sx={{
+																				alignItems: 'center',
+																			}}
+																		>
 																			<PeopleIcon color="primary" fontSize="small" />
 																			<span>{t.users.userHeader}</span>
 																		</Stack>
 																	</TableCell>
 																	<TableCell sx={{ fontWeight: 700 }}>{t.users.roleHeader}</TableCell>
-																	<TableCell align="right" sx={{ fontWeight: 700 }}>{t.common.actions}</TableCell>
+																	<TableCell align="right" sx={{ fontWeight: 700 }}>
+																		{t.common.actions}
+																	</TableCell>
 																</TableRow>
 															</TableHead>
 															<TableBody>
-														{formik.values.managed_by.length === 0 ? (
+																{formik.values.managed_by.length === 0 ? (
 																	<TableRow>
 																		<TableCell colSpan={3} align="center" sx={{ py: 4 }}>
-																			<Stack spacing={1} alignItems="center">
+																			<Stack
+																				spacing={1}
+																				sx={{
+																					alignItems: 'center',
+																				}}
+																			>
 																				<PeopleIcon sx={{ fontSize: 48, color: 'grey.400' }} />
-																				<Typography variant="body2" color="text.secondary">{t.users.noStore}</Typography>
+																				<Typography
+																					variant="body2"
+																					sx={{
+																						color: 'text.secondary',
+																					}}
+																				>
+																					{t.users.noStore}
+																				</Typography>
 																			</Stack>
 																		</TableCell>
 																	</TableRow>
-														) : (
-															formik.values.managed_by.map((item) => {
+																) : (
+																	formik.values.managed_by.map((item) => {
 																		const isCurrentUser = item.pk === currentUserId;
 																		const label = getManagedUserLabel(item.pk);
-																return (
+																		return (
 																			<TableRow key={item.pk} sx={{ '&:hover': { backgroundColor: 'grey.50' } }}>
 																				<TableCell>
-																					<Stack direction="row" spacing={1} alignItems="center">
-																						<Typography fontWeight={600}>{label}</Typography>
-																						{isCurrentUser && <Chip label="vous" size="small" color="primary" variant="outlined" />}
+																					<Stack
+																						direction="row"
+																						spacing={1}
+																						sx={{
+																							alignItems: 'center',
+																						}}
+																					>
+																						<Typography
+																							sx={{
+																								fontWeight: 600,
+																							}}
+																						>
+																							{label}
+																						</Typography>
+																						{isCurrentUser && (
+																							<Chip label="vous" size="small" color="primary" variant="outlined" />
+																						)}
 																					</Stack>
 																				</TableCell>
 																				<TableCell>
@@ -400,36 +503,64 @@ const StoresFormClient = ({ session, id }: Props) => {
 																										'managed_by',
 																										formik.values.managed_by.map((managedItem) =>
 																											managedItem.pk === item.pk
-																												? { ...managedItem, role: nextRole, role_name: role?.name ?? roleNameByCode[nextRole] ?? managedItem.role_name }
+																												? {
+																														...managedItem,
+																														role: nextRole,
+																														role_name:
+																															role?.name ??
+																															roleNameByCode[nextRole] ??
+																															managedItem.role_name,
+																													}
 																												: managedItem,
 																										),
 																									);
 																								}}
 																								fullWidth
 																								disabled={isCurrentUser}
-																								slotProps={{ input: { startAdornment: <InputAdornment position="start"><SecurityIcon fontSize="small" /></InputAdornment> } }}
+																								slotProps={{
+																									input: {
+																										startAdornment: (
+																											<InputAdornment position="start">
+																												<SecurityIcon fontSize="small" />
+																											</InputAdornment>
+																										),
+																									},
+																								}}
 																							>
 																								{rolesData.map((role) => (
-																									<MenuItem key={role.id} value={role.code}>{role.name}</MenuItem>
+																									<MenuItem key={role.id} value={role.code}>
+																										{role.name}
+																									</MenuItem>
 																								))}
 																							</TextField>
 																						</ThemeProvider>
 																					</Box>
 																				</TableCell>
 																				<TableCell align="right">
-																					<IconButton color="error" onClick={() => removeManagedUser(item.pk)} disabled={isCurrentUser}>
+																					<IconButton
+																						color="error"
+																						onClick={() => removeManagedUser(item.pk)}
+																						disabled={isCurrentUser}
+																					>
 																						<DeleteIcon />
 																					</IconButton>
 																				</TableCell>
 																			</TableRow>
-																);
-															})
-														)}
+																		);
+																	})
+																)}
 															</TableBody>
 														</Table>
 													</TableContainer>
 													<Box sx={{ mt: 3 }}>
-														<Typography variant="subtitle1" fontWeight={600}>{t.users.addManagedUser}</Typography>
+														<Typography
+															variant="subtitle1"
+															sx={{
+																fontWeight: 600,
+															}}
+														>
+															{t.users.addManagedUser}
+														</Typography>
 														<Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mt: 2 }}>
 															<Box sx={{ flex: 1 }}>
 																<RoundedAutocomplete
@@ -437,7 +568,9 @@ const StoresFormClient = ({ session, id }: Props) => {
 																	options={availableUsers}
 																	value={selectedUser}
 																	onChange={(_, nextUser) => setSelectedUserId(nextUser ? String(nextUser.id) : '')}
-																	getOptionLabel={(user) => `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.email}
+																	getOptionLabel={(user) =>
+																		`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.email
+																	}
 																	isOptionEqualToValue={(option, value) => option.id === value.id}
 																	noOptionsText={t.common.noOptions}
 																	fullWidth
@@ -454,15 +587,31 @@ const StoresFormClient = ({ session, id }: Props) => {
 																		value={selectedRole}
 																		onChange={(event) => setSelectedRole(event.target.value as StoreRoleCode)}
 																		fullWidth
-																		slotProps={{ input: { startAdornment: <InputAdornment position="start"><SecurityIcon fontSize="small" /></InputAdornment> } }}
+																		slotProps={{
+																			input: {
+																				startAdornment: (
+																					<InputAdornment position="start">
+																						<SecurityIcon fontSize="small" />
+																					</InputAdornment>
+																				),
+																			},
+																		}}
 																	>
 																		{rolesData.map((role) => (
-																			<MenuItem key={role.id} value={role.code}>{role.name}</MenuItem>
+																			<MenuItem key={role.id} value={role.code}>
+																				{role.name}
+																			</MenuItem>
 																		))}
 																	</TextField>
 																</ThemeProvider>
 															</Box>
-															<Button variant="contained" startIcon={<AddIcon />} onClick={addManagedUser} disabled={!selectedUserId || !selectedRole} sx={{ minWidth: 120, height: 40 }}>
+															<Button
+																variant="contained"
+																startIcon={<AddIcon />}
+																onClick={addManagedUser}
+																disabled={!selectedUserId || !selectedRole}
+																sx={{ minWidth: 120, height: 40 }}
+															>
 																{t.common.add}
 															</Button>
 														</Stack>

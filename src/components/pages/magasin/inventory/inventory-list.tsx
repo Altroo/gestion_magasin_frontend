@@ -24,7 +24,12 @@ import TooltipTextCell from '@/components/shared/dataGridCells/tooltipTextCell';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
 import { useInitAccessToken } from '@/contexts/InitContext';
-import { useBulkDeleteInventorySessionsMutation, useDeleteInventorySessionMutation, useGetInventorySessionsQuery, useValidateInventorySessionMutation } from '@/store/services/magasin';
+import {
+	useBulkDeleteInventorySessionsMutation,
+	useDeleteInventorySessionMutation,
+	useGetInventorySessionsQuery,
+	useValidateInventorySessionMutation,
+} from '@/store/services/magasin';
 import type { SessionProps } from '@/types/_initTypes';
 import type { InventorySessionType } from '@/types/gestionMagasinTypes';
 import { extractApiErrorMessage, formatDate } from '@/utils/helpers';
@@ -49,17 +54,32 @@ const InventoryListClient = ({ session }: SessionProps) => {
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 	const [validateTarget, setValidateTarget] = useState<number | null>(null);
 	const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
-	const mergedFilterParams = useMemo(() => ({ ...chipFilterParams, ...customFilterParams }), [chipFilterParams, customFilterParams]);
+	const mergedFilterParams = useMemo(
+		() => ({ ...chipFilterParams, ...customFilterParams }),
+		[chipFilterParams, customFilterParams],
+	);
 	const { data, isLoading, refetch } = useGetInventorySessionsQuery(
-		{ store: storeId, search: searchTerm, page: paginationModel.page + 1, pageSize: paginationModel.pageSize, ...mergedFilterParams },
+		{
+			store: storeId,
+			search: searchTerm,
+			page: paginationModel.page + 1,
+			pageSize: paginationModel.pageSize,
+			...mergedFilterParams,
+		},
 		{ skip: !token || !storeId },
 	);
 	const [deleteInventory] = useDeleteInventorySessionMutation();
 	const [bulkDeleteInventory] = useBulkDeleteInventorySessionsMutation();
 	const [validateInventory] = useValidateInventorySessionMutation();
 
-	const chipFilters = useMemo(() => [{ key: 'status', label: t.magasin.status, paramName: 'status', options: stockWorkflowStatusOptions(t) }], [t]);
-	const handleChipFilterChange = useCallback((params: Record<string, string>) => { setChipFilterParams(params); setPaginationModel((current) => ({ ...current, page: 0 })); }, []);
+	const chipFilters = useMemo(
+		() => [{ key: 'status', label: t.magasin.status, paramName: 'status', options: stockWorkflowStatusOptions(t) }],
+		[t],
+	);
+	const handleChipFilterChange = useCallback((params: Record<string, string>) => {
+		setChipFilterParams(params);
+		setPaginationModel((current) => ({ ...current, page: 0 }));
+	}, []);
 
 	const handleDelete = async () => {
 		if (!deleteTarget) return;
@@ -102,11 +122,51 @@ const InventoryListClient = ({ session }: SessionProps) => {
 	};
 
 	const columns: GridColDef[] = [
-		{ field: 'code', headerName: t.magasin.reference, flex: 0.8, minWidth: 130, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
-		{ field: 'title', headerName: t.magasin.inventory, flex: 1.4, minWidth: 180, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <TooltipTextCell fontWeight={600}>{params.value}</TooltipTextCell> },
-		{ field: 'store_name', headerName: t.magasin.store, flex: 1, minWidth: 140, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
-		{ field: 'inventory_date', headerName: t.magasin.inventoryCountDate, flex: 0.8, minWidth: 140, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <TooltipTextCell>{formatDate(params.value as string)}</TooltipTextCell> },
-		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 140, renderCell: (params: GridRenderCellParams<InventorySessionType>) => <WorkflowStatusChip t={t} status={params.value as string} /> },
+		{
+			field: 'code',
+			headerName: t.magasin.reference,
+			flex: 0.8,
+			minWidth: 130,
+			renderCell: (params: GridRenderCellParams<InventorySessionType>) => (
+				<TooltipTextCell>{params.value ?? '-'}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'title',
+			headerName: t.magasin.inventory,
+			flex: 1.4,
+			minWidth: 180,
+			renderCell: (params: GridRenderCellParams<InventorySessionType>) => (
+				<TooltipTextCell fontWeight={600}>{params.value}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'store_name',
+			headerName: t.magasin.store,
+			flex: 1,
+			minWidth: 140,
+			renderCell: (params: GridRenderCellParams<InventorySessionType>) => (
+				<TooltipTextCell>{params.value ?? '-'}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'inventory_date',
+			headerName: t.magasin.inventoryCountDate,
+			flex: 0.8,
+			minWidth: 140,
+			renderCell: (params: GridRenderCellParams<InventorySessionType>) => (
+				<TooltipTextCell>{formatDate(params.value as string)}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'status',
+			headerName: t.magasin.status,
+			flex: 0.7,
+			minWidth: 140,
+			renderCell: (params: GridRenderCellParams<InventorySessionType>) => (
+				<WorkflowStatusChip t={t} status={params.value as string} />
+			),
+		},
 		{
 			field: 'actions',
 			headerName: t.common.actions,
@@ -116,10 +176,34 @@ const InventoryListClient = ({ session }: SessionProps) => {
 			renderCell: (params: GridRenderCellParams<InventorySessionType>) => (
 				<MobileActionsMenu
 					actions={[
-						{ label: t.common.view, icon: <VisibilityIcon />, onClick: () => router.push(INVENTORY_VIEW(params.row.id, storeId)), color: 'info', show: permissions.can_view },
-						{ label: t.common.edit, icon: <EditIcon />, onClick: () => router.push(INVENTORY_EDIT(params.row.id, storeId)), color: 'primary', show: permissions.can_create && params.row.status === 'draft' },
-						{ label: t.magasin.validateInventory, icon: <ValidateIcon />, onClick: () => setValidateTarget(params.row.id), color: 'success', show: permissions.can_create && params.row.status === 'draft' },
-						{ label: t.common.delete, icon: <DeleteIcon />, onClick: () => setDeleteTarget(params.row.id), color: 'error', show: permissions.can_delete && params.row.status !== 'validated' },
+						{
+							label: t.common.view,
+							icon: <VisibilityIcon />,
+							onClick: () => router.push(INVENTORY_VIEW(params.row.id, storeId)),
+							color: 'info',
+							show: permissions.can_view,
+						},
+						{
+							label: t.common.edit,
+							icon: <EditIcon />,
+							onClick: () => router.push(INVENTORY_EDIT(params.row.id, storeId)),
+							color: 'primary',
+							show: permissions.can_create && params.row.status === 'draft',
+						},
+						{
+							label: t.magasin.validateInventory,
+							icon: <ValidateIcon />,
+							onClick: () => setValidateTarget(params.row.id),
+							color: 'success',
+							show: permissions.can_create && params.row.status === 'draft',
+						},
+						{
+							label: t.common.delete,
+							icon: <DeleteIcon />,
+							onClick: () => setDeleteTarget(params.row.id),
+							color: 'error',
+							show: permissions.can_delete && params.row.status !== 'validated',
+						},
 					]}
 				/>
 			),
@@ -132,9 +216,32 @@ const InventoryListClient = ({ session }: SessionProps) => {
 				<Box sx={magasinPageContainerSx}>
 					<StoreTabs selectedStoreId={storeId} onChange={setSelectedStoreId} token={token} />
 					<Box sx={magasinPageContentSx}>
-						<Stack direction="row" spacing={1} flexWrap="wrap">
-							{permissions.can_create && <Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => router.push(INVENTORY_ADD(storeId))}>{t.magasin.newInventory}</Button>}
-							{permissions.can_delete && selectedIds.length > 0 && <Button variant="outlined" color="error" startIcon={<DeleteIcon fontSize="small" />} onClick={() => setShowBulkDeleteModal(true)}>{t.common.delete} ({selectedIds.length})</Button>}
+						<Stack
+							direction="row"
+							spacing={1}
+							sx={{
+								flexWrap: 'wrap',
+							}}
+						>
+							{permissions.can_create && (
+								<Button
+									variant="contained"
+									startIcon={<AddIcon fontSize="small" />}
+									onClick={() => router.push(INVENTORY_ADD(storeId))}
+								>
+									{t.magasin.newInventory}
+								</Button>
+							)}
+							{permissions.can_delete && selectedIds.length > 0 && (
+								<Button
+									variant="outlined"
+									color="error"
+									startIcon={<DeleteIcon fontSize="small" />}
+									onClick={() => setShowBulkDeleteModal(true)}
+								>
+									{t.common.delete} ({selectedIds.length})
+								</Button>
+							)}
 						</Stack>
 					</Box>
 					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} />
@@ -156,9 +263,66 @@ const InventoryListClient = ({ session }: SessionProps) => {
 					/>
 				</Box>
 			</Protected>
-			{deleteTarget && <ActionModals title={t.magasin.deleteInventoryTitle} body={t.magasin.deleteInventoryBody} titleIcon={<DeleteIcon />} titleIconColor="#D32F2F" actions={[{ text: t.common.cancel, active: false, onClick: () => setDeleteTarget(null), icon: <CloseIcon />, color: '#6B6B6B' }, { text: t.common.delete, active: true, onClick: handleDelete, icon: <DeleteIcon />, color: '#D32F2F' }]} />}
-			{showBulkDeleteModal && <ActionModals title={t.magasin.deleteInventoryTitle} body={t.magasin.deleteInventoryBody} titleIcon={<DeleteIcon />} titleIconColor="#D32F2F" actions={[{ text: t.common.cancel, active: false, onClick: () => setShowBulkDeleteModal(false), icon: <CloseIcon />, color: '#6B6B6B' }, { text: t.common.delete, active: true, onClick: handleBulkDelete, icon: <DeleteIcon />, color: '#D32F2F' }]} />}
-			{validateTarget && <ActionModals title={t.magasin.validateInventory} body={t.magasin.inventoryDetails} titleIcon={<ValidateIcon />} titleIconColor="#2E7D32" actions={[{ text: t.common.cancel, active: false, onClick: () => setValidateTarget(null), icon: <CloseIcon />, color: '#6B6B6B' }, { text: t.magasin.validateInventory, active: true, onClick: handleValidate, icon: <ValidateIcon />, color: '#2E7D32' }]} />}
+			{deleteTarget && (
+				<ActionModals
+					title={t.magasin.deleteInventoryTitle}
+					body={t.magasin.deleteInventoryBody}
+					titleIcon={<DeleteIcon />}
+					titleIconColor="#D32F2F"
+					actions={[
+						{
+							text: t.common.cancel,
+							active: false,
+							onClick: () => setDeleteTarget(null),
+							icon: <CloseIcon />,
+							color: '#6B6B6B',
+						},
+						{ text: t.common.delete, active: true, onClick: handleDelete, icon: <DeleteIcon />, color: '#D32F2F' },
+					]}
+				/>
+			)}
+			{showBulkDeleteModal && (
+				<ActionModals
+					title={t.magasin.deleteInventoryTitle}
+					body={t.magasin.deleteInventoryBody}
+					titleIcon={<DeleteIcon />}
+					titleIconColor="#D32F2F"
+					actions={[
+						{
+							text: t.common.cancel,
+							active: false,
+							onClick: () => setShowBulkDeleteModal(false),
+							icon: <CloseIcon />,
+							color: '#6B6B6B',
+						},
+						{ text: t.common.delete, active: true, onClick: handleBulkDelete, icon: <DeleteIcon />, color: '#D32F2F' },
+					]}
+				/>
+			)}
+			{validateTarget && (
+				<ActionModals
+					title={t.magasin.validateInventory}
+					body={t.magasin.inventoryDetails}
+					titleIcon={<ValidateIcon />}
+					titleIconColor="#2E7D32"
+					actions={[
+						{
+							text: t.common.cancel,
+							active: false,
+							onClick: () => setValidateTarget(null),
+							icon: <CloseIcon />,
+							color: '#6B6B6B',
+						},
+						{
+							text: t.magasin.validateInventory,
+							active: true,
+							onClick: handleValidate,
+							icon: <ValidateIcon />,
+							color: '#2E7D32',
+						},
+					]}
+				/>
+			)}
 		</NavigationBar>
 	);
 };

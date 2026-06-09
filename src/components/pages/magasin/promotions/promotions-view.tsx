@@ -2,14 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-	Alert,
-	Box,
-	Button,
-	Chip,
-	Divider,
-	Stack,
-} from '@mui/material';
+import { Alert, Box, Button, Chip, Divider, Stack } from '@mui/material';
 import {
 	ArrowBack as ArrowBackIcon,
 	CalendarMonth as CalendarIcon,
@@ -28,7 +21,13 @@ import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiP
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
-import { DetailCard, DetailHeaderCard, InfoRow, LineItemsCard, StatusChip } from '@/components/pages/magasin/shared/view-components';
+import {
+	DetailCard,
+	DetailHeaderCard,
+	InfoRow,
+	LineItemsCard,
+	StatusChip,
+} from '@/components/pages/magasin/shared/view-components';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeletePromotionMutation, useGetPromotionQuery } from '@/store/services/magasin';
 import { PROMOTIONS_EDIT, PROMOTIONS_LIST } from '@/utils/routes';
@@ -49,7 +48,10 @@ const PromotionsViewClient = ({ session, id }: Props) => {
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const { data: promotion, isLoading, error } = useGetPromotionQuery({ id }, { skip: !token });
 	const [deletePromotion] = useDeletePromotionMutation();
-	const axiosError = useMemo(() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined), [error]);
+	const axiosError = useMemo(
+		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
+		[error],
+	);
 
 	const handleDelete = async () => {
 		try {
@@ -69,19 +71,36 @@ const PromotionsViewClient = ({ session, id }: Props) => {
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={3}>
-							<Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={2}>
+							<Stack
+								direction={{ xs: 'column', sm: 'row' }}
+								spacing={2}
+								sx={{
+									justifyContent: 'space-between',
+								}}
+							>
 								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(PROMOTIONS_LIST)}>
 									{t.magasin.backToPromotions}
 								</Button>
 								{promotion && (
 									<Stack direction="row" spacing={1}>
 										{permissions.can_create_promotion && (
-											<Button variant="outlined" size="small" startIcon={<EditIcon />} onClick={() => router.push(PROMOTIONS_EDIT(id))}>
+											<Button
+												variant="outlined"
+												size="small"
+												startIcon={<EditIcon />}
+												onClick={() => router.push(PROMOTIONS_EDIT(id))}
+											>
 												{t.common.edit}
 											</Button>
 										)}
 										{permissions.can_create_promotion && (
-											<Button variant="outlined" color="error" size="small" startIcon={<DeleteIcon />} onClick={() => setShowDeleteModal(true)}>
+											<Button
+												variant="outlined"
+												color="error"
+												size="small"
+												startIcon={<DeleteIcon />}
+												onClick={() => setShowDeleteModal(true)}
+											>
 												{t.common.delete}
 											</Button>
 										)}
@@ -99,19 +118,27 @@ const PromotionsViewClient = ({ session, id }: Props) => {
 									<DetailHeaderCard
 										icon={<LocalOfferIcon />}
 										title={promotion.name}
-										chips={(
+										chips={
 											<>
 												<Chip label={`ID: ${promotion.id}`} size="small" variant="outlined" />
 												<StatusChip t={t} status={promotion.status} />
 											</>
-										)}
+										}
 									/>
 									<DetailCard icon={<LocalOfferIcon />} title={t.magasin.promotionDetails}>
 										<InfoRow icon={<StorefrontIcon />} label={t.magasin.store} value={promotion.store_name} />
 										<Divider />
-										<InfoRow icon={<NumbersIcon />} label={t.magasin.sellingPrice} value={`${formatNumber(promotion.selling_price)} Dhs`} />
+										<InfoRow
+											icon={<NumbersIcon />}
+											label={t.magasin.sellingPrice}
+											value={`${formatNumber(promotion.selling_price)} Dhs`}
+										/>
 										<Divider />
-										<InfoRow icon={<CalendarIcon />} label={t.magasin.startDate} value={formatDate(promotion.start_date)} />
+										<InfoRow
+											icon={<CalendarIcon />}
+											label={t.magasin.startDate}
+											value={formatDate(promotion.start_date)}
+										/>
 										<Divider />
 										<InfoRow icon={<CalendarIcon />} label={t.magasin.endDate} value={formatDate(promotion.end_date)} />
 										<Divider />
@@ -125,8 +152,17 @@ const PromotionsViewClient = ({ session, id }: Props) => {
 										emptyLabel={t.magasin.noRows}
 										columns={[
 											{ key: 'product', label: t.magasin.product, render: (line) => line.product_name },
-											{ key: 'reference', label: t.magasin.reference, render: (line) => line.product_reference ?? line.product_barcode ?? '-' },
-											{ key: 'quantity', label: t.magasin.quantity, align: 'right', render: (line) => formatNumber(line.quantity) },
+											{
+												key: 'reference',
+												label: t.magasin.reference,
+												render: (line) => line.product_reference ?? line.product_barcode ?? '-',
+											},
+											{
+												key: 'quantity',
+												label: t.magasin.quantity,
+												align: 'right',
+												render: (line) => formatNumber(line.quantity),
+											},
 										]}
 									/>
 								</Stack>
@@ -142,7 +178,13 @@ const PromotionsViewClient = ({ session, id }: Props) => {
 					titleIcon={<DeleteIcon />}
 					titleIconColor="#D32F2F"
 					actions={[
-						{ text: t.common.cancel, active: false, onClick: () => setShowDeleteModal(false), icon: <CloseIcon />, color: '#6B6B6B' },
+						{
+							text: t.common.cancel,
+							active: false,
+							onClick: () => setShowDeleteModal(false),
+							icon: <CloseIcon />,
+							color: '#6B6B6B',
+						},
 						{ text: t.common.delete, active: true, onClick: handleDelete, icon: <DeleteIcon />, color: '#D32F2F' },
 					]}
 				/>

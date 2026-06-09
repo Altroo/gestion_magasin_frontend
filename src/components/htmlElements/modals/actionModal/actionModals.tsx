@@ -22,14 +22,23 @@ type Props = {
 	onClose?: () => void;
 };
 
-const ActionModals: React.FC<Props> = ({ title, actions, actionsStyle, body, children, titleIcon, titleIconColor, onClose }) => {
+const ActionModals: React.FC<Props> = ({
+	title,
+	actions,
+	actionsStyle,
+	body,
+	children,
+	titleIcon,
+	titleIconColor,
+	onClose,
+}) => {
 	const handleClose = () => {
 		if (onClose) {
 			onClose();
 			return;
 		}
 		// Fallback: find the first non-active action (typically the cancel button)
-		const cancelAction = actions.find(a => !a.active);
+		const cancelAction = actions.find((a) => !a.active);
 		if (cancelAction) {
 			cancelAction.onClick();
 		}
@@ -38,7 +47,13 @@ const ActionModals: React.FC<Props> = ({ title, actions, actionsStyle, body, chi
 	return (
 		<Dialog open onClose={handleClose}>
 			<DialogTitle>
-				<Stack direction="row" alignItems="center" spacing={1}>
+				<Stack
+					direction="row"
+					spacing={1}
+					sx={{
+						alignItems: 'center',
+					}}
+				>
 					{titleIcon && (
 						<Avatar
 							variant="rounded"
@@ -55,12 +70,10 @@ const ActionModals: React.FC<Props> = ({ title, actions, actionsStyle, body, chi
 					<Typography variant="h6">{title}</Typography>
 				</Stack>
 			</DialogTitle>
-
 			<DialogContent dividers>
 				{body && <Typography variant="body2">{body}</Typography>}
 				{children}
 			</DialogContent>
-
 			<DialogActions className={actionsStyle?.join(' ') ?? undefined} sx={{ padding: 2 }}>
 				{actions.map((action, index) => {
 					const bg = action.active ? (action.color ?? '#0D070B') : '#FFFFFF';

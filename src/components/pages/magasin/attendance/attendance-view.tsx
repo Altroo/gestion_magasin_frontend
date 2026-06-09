@@ -3,7 +3,19 @@
 import { isValidElement, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert, Box, Button, Card, CardContent, Chip, Divider, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
+import {
+	Alert,
+	Box,
+	Button,
+	Card,
+	CardContent,
+	Chip,
+	Divider,
+	Stack,
+	Typography,
+	useMediaQuery,
+	useTheme,
+} from '@mui/material';
 import {
 	AccessTime as AccessTimeIcon,
 	ArrowBack as ArrowBackIcon,
@@ -43,14 +55,41 @@ const InfoRow = ({ icon, label, value }: { icon: ReactNode; label: string; value
 	const displayValue = isValidElement(value) ? value : value || '-';
 
 	return (
-		<Stack direction="row" spacing={2} alignItems="flex-start" sx={{ py: 1.5, flexWrap: 'wrap' }}>
+		<Stack
+			direction="row"
+			spacing={2}
+			sx={{
+				alignItems: 'flex-start',
+				py: 1.5,
+				flexWrap: 'wrap',
+			}}
+		>
 			<Box sx={{ color: 'primary.main', display: 'flex', alignItems: 'center', minWidth: 40 }}>{icon}</Box>
-			<Stack direction="row" spacing={isMobile ? 0 : 2} alignItems="center" sx={{ flex: 1, flexWrap: 'wrap' }}>
-				<Typography fontWeight={600} color="text.secondary" sx={{ minWidth: { xs: '100%', sm: 220 }, wordBreak: 'break-word' }}>
+			<Stack
+				direction="row"
+				spacing={isMobile ? 0 : 2}
+				sx={{
+					alignItems: 'center',
+					flex: 1,
+					flexWrap: 'wrap',
+				}}
+			>
+				<Typography
+					sx={{
+						fontWeight: 600,
+						color: 'text.secondary',
+						minWidth: { xs: '100%', sm: 220 },
+						wordBreak: 'break-word',
+					}}
+				>
 					{label}
 				</Typography>
 				<Box sx={{ flex: 1 }}>
-					{isValidElement(displayValue) ? displayValue : <Typography sx={{ color: 'text.primary' }}>{displayValue}</Typography>}
+					{isValidElement(displayValue) ? (
+						displayValue
+					) : (
+						<Typography sx={{ color: 'text.primary' }}>{displayValue}</Typography>
+					)}
 				</Box>
 			</Stack>
 		</Stack>
@@ -68,7 +107,10 @@ const AttendanceViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const { data: attendance, isLoading, error } = useGetAttendanceRecordQuery({ id }, { skip: !token });
 	const [deleteAttendance] = useDeleteAttendanceRecordMutation();
-	const axiosError = useMemo(() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined), [error]);
+	const axiosError = useMemo(
+		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
+		[error],
+	);
 
 	const handleDelete = async () => {
 		try {
@@ -88,19 +130,36 @@ const AttendanceViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={3}>
-							<Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={2}>
+							<Stack
+								direction={{ xs: 'column', sm: 'row' }}
+								spacing={2}
+								sx={{
+									justifyContent: 'space-between',
+								}}
+							>
 								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(ATTENDANCE_LIST)}>
 									{t.magasin.backToAttendance}
 								</Button>
 								{attendance && (
 									<Stack direction="row" spacing={1}>
 										{permissions.can_edit && (
-											<Button variant="outlined" size="small" startIcon={<EditIcon />} onClick={() => router.push(ATTENDANCE_EDIT(id, storeId))}>
+											<Button
+												variant="outlined"
+												size="small"
+												startIcon={<EditIcon />}
+												onClick={() => router.push(ATTENDANCE_EDIT(id, storeId))}
+											>
 												{t.common.edit}
 											</Button>
 										)}
 										{permissions.can_delete && (
-											<Button variant="outlined" color="error" size="small" startIcon={<DeleteIcon />} onClick={() => setShowDeleteModal(true)}>
+											<Button
+												variant="outlined"
+												color="error"
+												size="small"
+												startIcon={<DeleteIcon />}
+												onClick={() => setShowDeleteModal(true)}
+											>
 												{t.common.delete}
 											</Button>
 										)}
@@ -117,12 +176,43 @@ const AttendanceViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 								<Stack spacing={3}>
 									<Card elevation={2} sx={{ borderRadius: 2 }}>
 										<CardContent sx={{ p: 3 }}>
-											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2, flexWrap: 'wrap' }}>
+											<Stack
+												direction="row"
+												spacing={2}
+												sx={{
+													alignItems: 'center',
+													mb: 2,
+													flexWrap: 'wrap',
+												}}
+											>
 												<BadgeIcon color="primary" />
-												<Typography variant="h6" fontWeight={700}>{attendance.employee_name}</Typography>
-												<Chip size="small" label={magasinStatusLabel(t, attendance.status)} color={attendance.status === 'present' ? 'success' : attendance.status === 'absent' ? 'error' : 'default'} />
+												<Typography
+													variant="h6"
+													sx={{
+														fontWeight: 700,
+													}}
+												>
+													{attendance.employee_name}
+												</Typography>
+												<Chip
+													size="small"
+													label={magasinStatusLabel(t, attendance.status)}
+													color={
+														attendance.status === 'present'
+															? 'success'
+															: attendance.status === 'absent'
+																? 'error'
+																: 'default'
+													}
+												/>
 											</Stack>
-											<Stack direction="row" spacing={1} flexWrap="wrap">
+											<Stack
+												direction="row"
+												spacing={1}
+												sx={{
+													flexWrap: 'wrap',
+												}}
+											>
 												<Chip label={`ID: ${attendance.id}`} size="small" variant="outlined" />
 												<Chip label={formatDate(attendance.date)} size="small" variant="outlined" />
 											</Stack>
@@ -130,9 +220,23 @@ const AttendanceViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 									</Card>
 									<Card elevation={2} sx={{ borderRadius: 2 }}>
 										<CardContent sx={{ p: 3 }}>
-											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+											<Stack
+												direction="row"
+												spacing={2}
+												sx={{
+													alignItems: 'center',
+													mb: 2,
+												}}
+											>
 												<StorefrontIcon color="primary" />
-												<Typography variant="h6" fontWeight={700}>{t.magasin.attendanceInformation}</Typography>
+												<Typography
+													variant="h6"
+													sx={{
+														fontWeight: 700,
+													}}
+												>
+													{t.magasin.attendanceInformation}
+												</Typography>
 											</Stack>
 											<Divider sx={{ mb: 2 }} />
 											<InfoRow icon={<StorefrontIcon />} label={t.magasin.store} value={attendance.store_name} />
@@ -146,9 +250,23 @@ const AttendanceViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 									</Card>
 									<Card elevation={2} sx={{ borderRadius: 2 }}>
 										<CardContent sx={{ p: 3 }}>
-											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+											<Stack
+												direction="row"
+												spacing={2}
+												sx={{
+													alignItems: 'center',
+													mb: 2,
+												}}
+											>
 												<TimerIcon color="primary" />
-												<Typography variant="h6" fontWeight={700}>{t.magasin.hours}</Typography>
+												<Typography
+													variant="h6"
+													sx={{
+														fontWeight: 700,
+													}}
+												>
+													{t.magasin.hours}
+												</Typography>
 											</Stack>
 											<Divider sx={{ mb: 2 }} />
 											<InfoRow icon={<AccessTimeIcon />} label={t.magasin.clockIn} value={attendance.clock_in} />
@@ -159,18 +277,40 @@ const AttendanceViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 											<Divider />
 											<InfoRow icon={<AccessTimeIcon />} label={t.magasin.clockOut} value={attendance.clock_out} />
 											<Divider />
-											<InfoRow icon={<AccessTimeIcon />} label={t.magasin.shift} value={magasinStatusLabel(t, attendance.shift)} />
+											<InfoRow
+												icon={<AccessTimeIcon />}
+												label={t.magasin.shift}
+												value={magasinStatusLabel(t, attendance.shift)}
+											/>
 											<Divider />
-											<InfoRow icon={<TimerIcon />} label={t.magasin.hours} value={formatNumber(attendance.hours_worked)} />
+											<InfoRow
+												icon={<TimerIcon />}
+												label={t.magasin.hours}
+												value={formatNumber(attendance.hours_worked)}
+											/>
 											<Divider />
 											<InfoRow icon={<WarningIcon />} label={t.magasin.delayMinutes} value={attendance.delay_minutes} />
 										</CardContent>
 									</Card>
 									<Card elevation={2} sx={{ borderRadius: 2 }}>
 										<CardContent sx={{ p: 3 }}>
-											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+											<Stack
+												direction="row"
+												spacing={2}
+												sx={{
+													alignItems: 'center',
+													mb: 2,
+												}}
+											>
 												<RemarkIcon color="primary" />
-												<Typography variant="h6" fontWeight={700}>{t.magasin.movementNote}</Typography>
+												<Typography
+													variant="h6"
+													sx={{
+														fontWeight: 700,
+													}}
+												>
+													{t.magasin.movementNote}
+												</Typography>
 											</Stack>
 											<Divider sx={{ mb: 2 }} />
 											<Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
@@ -191,7 +331,13 @@ const AttendanceViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 					titleIcon={<DeleteIcon />}
 					titleIconColor="#D32F2F"
 					actions={[
-						{ text: t.common.cancel, active: false, onClick: () => setShowDeleteModal(false), icon: <CloseIcon />, color: '#6B6B6B' },
+						{
+							text: t.common.cancel,
+							active: false,
+							onClick: () => setShowDeleteModal(false),
+							icon: <CloseIcon />,
+							color: '#6B6B6B',
+						},
 						{ text: t.common.delete, active: true, onClick: handleDelete, icon: <DeleteIcon />, color: '#D32F2F' },
 					]}
 				/>

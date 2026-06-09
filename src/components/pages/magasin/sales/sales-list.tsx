@@ -61,7 +61,10 @@ const SalesClient = ({ session }: SessionProps) => {
 		},
 		{ skip: !token || !storeId },
 	);
-	const { data: paymentModes } = useGetPaymentModesQuery({ page: 1, pageSize: 100, is_active: 'true' }, { skip: !token });
+	const { data: paymentModes } = useGetPaymentModesQuery(
+		{ page: 1, pageSize: 100, is_active: 'true' },
+		{ skip: !token },
+	);
 
 	const statusOptions = [
 		{ value: 'confirmed', label: t.magasin.confirmed },
@@ -106,15 +109,52 @@ const SalesClient = ({ session }: SessionProps) => {
 	const renderStatusChip = (status?: string | null) => {
 		const label = magasinStatusLabel(t, status);
 		if (status === 'confirmed' || status === 'paid') {
-			return <DarkTooltip title={label}><Chip size="small" color="success" variant="outlined" icon={<CheckCircleIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
+			return (
+				<DarkTooltip title={label}>
+					<Chip
+						size="small"
+						color="success"
+						variant="outlined"
+						icon={<CheckCircleIcon fontSize="small" />}
+						label={label}
+						sx={{ fontWeight: 600 }}
+					/>
+				</DarkTooltip>
+			);
 		}
 		if (status === 'void' || status === 'cancelled') {
-			return <DarkTooltip title={label}><Chip size="small" color="error" variant="outlined" icon={<CancelIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
+			return (
+				<DarkTooltip title={label}>
+					<Chip
+						size="small"
+						color="error"
+						variant="outlined"
+						icon={<CancelIcon fontSize="small" />}
+						label={label}
+						sx={{ fontWeight: 600 }}
+					/>
+				</DarkTooltip>
+			);
 		}
 		if (status === 'credit' || status === 'in_progress') {
-			return <DarkTooltip title={label}><Chip size="small" color="warning" variant="outlined" icon={<PendingActionsIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
+			return (
+				<DarkTooltip title={label}>
+					<Chip
+						size="small"
+						color="warning"
+						variant="outlined"
+						icon={<PendingActionsIcon fontSize="small" />}
+						label={label}
+						sx={{ fontWeight: 600 }}
+					/>
+				</DarkTooltip>
+			);
 		}
-		return <DarkTooltip title={label}><Chip size="small" color="default" variant="outlined" label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
+		return (
+			<DarkTooltip title={label}>
+				<Chip size="small" color="default" variant="outlined" label={label} sx={{ fontWeight: 600 }} />
+			</DarkTooltip>
+		);
 	};
 
 	const columns: GridColDef[] = [
@@ -135,7 +175,9 @@ const SalesClient = ({ session }: SessionProps) => {
 			minWidth: 160,
 			renderCell: (params: GridRenderCellParams<SaleType>) => (
 				<DarkTooltip title={params.value ?? '-'}>
-					<Typography variant="body2" noWrap>{params.value ?? '-'}</Typography>
+					<Typography variant="body2" noWrap>
+						{params.value ?? '-'}
+					</Typography>
 				</DarkTooltip>
 			),
 		},
@@ -144,9 +186,7 @@ const SalesClient = ({ session }: SessionProps) => {
 			headerName: t.magasin.paymentMode,
 			flex: 1,
 			minWidth: 130,
-			renderCell: (params: GridRenderCellParams<SaleType>) => (
-				<TooltipTextCell>{params.value ?? '-'}</TooltipTextCell>
-			),
+			renderCell: (params: GridRenderCellParams<SaleType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell>,
 		},
 		{
 			field: 'payment_status',
@@ -212,9 +252,19 @@ const SalesClient = ({ session }: SessionProps) => {
 						token={token}
 					/>
 					<Box sx={magasinPageContentSx}>
-						<Stack direction="row" spacing={1} flexWrap="wrap">
+						<Stack
+							direction="row"
+							spacing={1}
+							sx={{
+								flexWrap: 'wrap',
+							}}
+						>
 							{permissions.can_create && canCreateSale && (
-								<Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => router.push(SALES_ADD(storeId))}>
+								<Button
+									variant="contained"
+									startIcon={<AddIcon fontSize="small" />}
+									onClick={() => router.push(SALES_ADD(storeId))}
+								>
 									{t.magasin.newSale}
 								</Button>
 							)}

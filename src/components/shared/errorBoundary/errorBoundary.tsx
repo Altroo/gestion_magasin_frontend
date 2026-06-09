@@ -3,7 +3,7 @@
 import React, { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import { Box, Typography, Button, Paper } from '@mui/material';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined';
 import type { Language } from '@/types/languageTypes';
 import { translations } from '@/translations';
 
@@ -63,25 +63,43 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 			return (
 				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px', p: 3 }}>
 					<Paper elevation={3} sx={{ p: 4, maxWidth: 500, textAlign: 'center' }}>
-						<ErrorOutlineIcon sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
+						<ErrorOutlinedIcon sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
 						<Typography variant="h5" gutterBottom>
 							{t.errors.errorOccurred}
 						</Typography>
-						<Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+						<Typography
+							variant="body1"
+							sx={{
+								color: 'text.secondary',
+								mb: 3,
+							}}
+						>
 							{t.errors.errorApology}
 						</Typography>
 						{process.env.NODE_ENV !== 'production' && this.state.error && (
 							<Typography
 								variant="caption"
 								component="pre"
-								sx={{ textAlign: 'left', bgcolor: 'grey.100', p: 2, borderRadius: 1, overflow: 'auto', maxHeight: 150, mb: 2 }}
+								sx={{
+									textAlign: 'left',
+									bgcolor: 'grey.100',
+									p: 2,
+									borderRadius: 1,
+									overflow: 'auto',
+									maxHeight: 150,
+									mb: 2,
+								}}
 							>
 								{this.state.error.message}
 							</Typography>
 						)}
 						<Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-							<Button variant="contained" onClick={this.handleReset}>{t.common.retry}</Button>
-							<Button variant="outlined" onClick={() => window.location.reload()}>{t.common.refresh}</Button>
+							<Button variant="contained" onClick={this.handleReset}>
+								{t.common.retry}
+							</Button>
+							<Button variant="outlined" onClick={() => window.location.reload()}>
+								{t.common.refresh}
+							</Button>
 						</Box>
 					</Paper>
 				</Box>

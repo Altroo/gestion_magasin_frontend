@@ -2,7 +2,19 @@
 
 import React, { isValidElement, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert, Box, Button, Card, CardContent, Chip, Divider, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
+import {
+	Alert,
+	Box,
+	Button,
+	Card,
+	CardContent,
+	Chip,
+	Divider,
+	Stack,
+	Typography,
+	useMediaQuery,
+	useTheme,
+} from '@mui/material';
 import {
 	ArrowBack as ArrowBackIcon,
 	CheckCircle as CheckCircleIcon,
@@ -44,14 +56,41 @@ const InfoRow = ({ icon, label, value }: InfoRowProps) => {
 	const displayValue = isValidElement(value) ? value : value || '-';
 
 	return (
-		<Stack direction="row" spacing={2} alignItems="flex-start" sx={{ py: 1.5, flexWrap: 'wrap' }}>
+		<Stack
+			direction="row"
+			spacing={2}
+			sx={{
+				alignItems: 'flex-start',
+				py: 1.5,
+				flexWrap: 'wrap',
+			}}
+		>
 			<Box sx={{ color: 'primary.main', display: 'flex', alignItems: 'center', minWidth: 40 }}>{icon}</Box>
-			<Stack direction="row" spacing={isMobile ? 0 : 2} alignItems="center" sx={{ flex: 1, flexWrap: 'wrap' }}>
-				<Typography fontWeight={600} color="text.secondary" sx={{ minWidth: { xs: '100%', sm: 220 }, wordBreak: 'break-word' }}>
+			<Stack
+				direction="row"
+				spacing={isMobile ? 0 : 2}
+				sx={{
+					alignItems: 'center',
+					flex: 1,
+					flexWrap: 'wrap',
+				}}
+			>
+				<Typography
+					sx={{
+						fontWeight: 600,
+						color: 'text.secondary',
+						minWidth: { xs: '100%', sm: 220 },
+						wordBreak: 'break-word',
+					}}
+				>
 					{label}
 				</Typography>
 				<Box sx={{ flex: 1 }}>
-					{isValidElement(displayValue) ? displayValue : <Typography sx={{ color: 'text.primary' }}>{displayValue}</Typography>}
+					{isValidElement(displayValue) ? (
+						displayValue
+					) : (
+						<Typography sx={{ color: 'text.primary' }}>{displayValue}</Typography>
+					)}
 				</Box>
 			</Stack>
 		</Stack>
@@ -89,16 +128,40 @@ const StoresViewClient = ({ session, id }: Props) => {
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={3}>
-							<Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'center' }} spacing={2}>
+							<Stack
+								direction={{ xs: 'column', sm: 'row' }}
+								spacing={2}
+								sx={{
+									justifyContent: 'space-between',
+									alignItems: { xs: 'stretch', sm: 'center' },
+								}}
+							>
 								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(STORES_LIST)}>
 									{t.magasin.backToStores}
 								</Button>
 								{!isLoading && !error && store && (
-									<Stack direction="row" gap={1} flexWrap="wrap">
-										<Button variant="outlined" size="small" startIcon={<EditIcon />} onClick={() => router.push(STORES_EDIT(id))}>
+									<Stack
+										direction="row"
+										sx={{
+											gap: 1,
+											flexWrap: 'wrap',
+										}}
+									>
+										<Button
+											variant="outlined"
+											size="small"
+											startIcon={<EditIcon />}
+											onClick={() => router.push(STORES_EDIT(id))}
+										>
 											{t.common.edit}
 										</Button>
-										<Button variant="outlined" color="error" size="small" startIcon={<DeleteIcon />} onClick={() => setShowDeleteModal(true)}>
+										<Button
+											variant="outlined"
+											color="error"
+											size="small"
+											startIcon={<DeleteIcon />}
+											onClick={() => setShowDeleteModal(true)}
+										>
 											{t.common.delete}
 										</Button>
 									</Stack>
@@ -114,11 +177,31 @@ const StoresViewClient = ({ session, id }: Props) => {
 								<Stack spacing={3}>
 									<Card elevation={2} sx={{ borderRadius: 2 }}>
 										<CardContent sx={{ p: 3 }}>
-											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+											<Stack
+												direction="row"
+												spacing={2}
+												sx={{
+													alignItems: 'center',
+													mb: 2,
+												}}
+											>
 												<StorefrontIcon color="primary" />
-												<Typography variant="h6" fontWeight={700}>{store.name}</Typography>
+												<Typography
+													variant="h6"
+													sx={{
+														fontWeight: 700,
+													}}
+												>
+													{store.name}
+												</Typography>
 											</Stack>
-											<Stack direction="row" spacing={1} flexWrap="wrap">
+											<Stack
+												direction="row"
+												spacing={1}
+												sx={{
+													flexWrap: 'wrap',
+												}}
+											>
 												<Chip label={`ID: ${store.id}`} size="small" variant="outlined" />
 												{store.is_active ? (
 													<Chip icon={<CheckCircleIcon />} label={t.users.active} color="success" size="small" />
@@ -130,9 +213,23 @@ const StoresViewClient = ({ session, id }: Props) => {
 									</Card>
 									<Card elevation={2} sx={{ borderRadius: 2 }}>
 										<CardContent sx={{ p: 3 }}>
-											<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+											<Stack
+												direction="row"
+												spacing={2}
+												sx={{
+													alignItems: 'center',
+													mb: 2,
+												}}
+											>
 												<StorefrontIcon color="primary" />
-												<Typography variant="h6" fontWeight={700}>{t.magasin.storeInformation}</Typography>
+												<Typography
+													variant="h6"
+													sx={{
+														fontWeight: 700,
+													}}
+												>
+													{t.magasin.storeInformation}
+												</Typography>
 											</Stack>
 											<Divider sx={{ mb: 2 }} />
 											<InfoRow icon={<StorefrontIcon />} label={t.magasin.store} value={store.name} />
@@ -157,7 +254,13 @@ const StoresViewClient = ({ session, id }: Props) => {
 					title={t.magasin.deleteStoreTitle}
 					body={t.magasin.deleteStoreBody}
 					actions={[
-						{ text: t.common.cancel, active: false, onClick: () => setShowDeleteModal(false), icon: <CloseIcon />, color: '#6B6B6B' },
+						{
+							text: t.common.cancel,
+							active: false,
+							onClick: () => setShowDeleteModal(false),
+							icon: <CloseIcon />,
+							color: '#6B6B6B',
+						},
 						{ text: t.common.delete, active: true, onClick: handleDelete, icon: <DeleteIcon />, color: '#D32F2F' },
 					]}
 					titleIcon={<DeleteIcon />}

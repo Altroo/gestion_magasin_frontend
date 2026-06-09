@@ -17,7 +17,7 @@ type PickerFieldProps = {
 	label: string;
 	value: string;
 	onChange: (value: string) => void;
-	onBlur?: TextFieldProps['onBlur'];
+	onBlur?: React.FocusEventHandler<HTMLDivElement>;
 	error?: boolean;
 	helperText?: React.ReactNode;
 	fullWidth?: boolean;
@@ -45,9 +45,10 @@ const pickerTextFieldSx = {
 	'&:hover .MuiOutlinedInput-notchedOutline, &:hover .MuiPickersOutlinedInput-notchedOutline': {
 		borderColor: '#0274d7',
 	},
-	'& .Mui-focused .MuiOutlinedInput-notchedOutline, & .MuiPickersOutlinedInput-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline': {
-		borderColor: '#0274d7',
-	},
+	'& .Mui-focused .MuiOutlinedInput-notchedOutline, & .MuiPickersOutlinedInput-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline':
+		{
+			borderColor: '#0274d7',
+		},
 	'& .MuiInputBase-root': {
 		borderRadius: FORM_FIELD_RADIUS,
 		minHeight: FORM_FIELD_HEIGHT,

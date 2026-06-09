@@ -11,6 +11,7 @@ import {
 	FormHelperText,
 	InputAdornment,
 } from '@mui/material';
+import type { MenuProps as MuiMenuProps } from '@mui/material/Menu';
 import type { Theme } from '@mui/material/styles';
 import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import { DropDownType } from '@/types/accountTypes';
@@ -18,11 +19,13 @@ import { useLanguage } from '@/utils/hooks';
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
-const MenuProps = {
-	PaperProps: {
-		style: {
-			maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-			width: 250,
+const selectMenuProps: Partial<MuiMenuProps> = {
+	slotProps: {
+		paper: {
+			style: {
+				maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+				width: 250,
+			},
 		},
 	},
 };
@@ -66,7 +69,7 @@ const CustomDropDownSelect: React.FC<Props> = (props: Props) => {
 							endAdornment={props.endIcon ? <InputAdornment position="end">{props.endIcon}</InputAdornment> : undefined}
 						/>
 					}
-					MenuProps={MenuProps}
+					MenuProps={selectMenuProps}
 					renderValue={(selected) => selected}
 					onBlur={props.onBlur}
 					error={props.error}
@@ -76,7 +79,13 @@ const CustomDropDownSelect: React.FC<Props> = (props: Props) => {
 						const value = isObject ? item?.value : item;
 						return (
 							<MenuItem key={index} value={value} sx={{ minHeight: ITEM_HEIGHT }}>
-								<Stack direction="row" justifyContent="space-between" sx={{ width: '100%' }}>
+								<Stack
+									direction="row"
+									sx={{
+										justifyContent: 'space-between',
+										width: '100%',
+									}}
+								>
 									<span>{value || t.common.selectValue}</span>
 									{props.value === value && <CheckCircleIcon sx={{ fontSize: 20 }} color="primary" />}
 								</Stack>

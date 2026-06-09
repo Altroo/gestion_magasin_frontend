@@ -33,7 +33,14 @@ const NotFound = () => {
 				<Typography variant="h5" gutterBottom sx={{ fontWeight: 500 }}>
 					{t.errors.pageNotFound}
 				</Typography>
-				<Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+
+				<Typography
+					variant="body1"
+					sx={{
+						color: 'text.secondary',
+						mb: 4,
+					}}
+				>
 					{t.errors.pageNotFoundText}
 				</Typography>
 				<Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ justifyContent: 'center' }}>

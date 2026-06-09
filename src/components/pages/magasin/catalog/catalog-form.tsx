@@ -104,10 +104,11 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [isPending, setIsPending] = useState(false);
 
-	const { data: product, isLoading: isProductLoading, error: productError } = useGetProductQuery(
-		{ id: id!, store: storeId },
-		{ skip: !token || !isEditMode || !storeId },
-	);
+	const {
+		data: product,
+		isLoading: isProductLoading,
+		error: productError,
+	} = useGetProductQuery({ id: id!, store: storeId }, { skip: !token || !isEditMode || !storeId });
 	const { data: categories } = useGetCategoriesQuery(undefined, { skip: !token });
 	const { data: units } = useGetProductUnitsQuery(undefined, { skip: !token });
 	const [addCategory] = useAddCategoryMutation();
@@ -231,14 +232,25 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={3}>
-							<Stack direction={isMobile ? 'column' : 'row'} justifyContent="space-between" spacing={2}>
+							<Stack
+								direction={isMobile ? 'column' : 'row'}
+								spacing={2}
+								sx={{
+									justifyContent: 'space-between',
+								}}
+							>
 								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(CATALOG_LIST)}>
 									{t.magasin.backToCatalog}
 								</Button>
 							</Stack>
 							{Object.keys(validationErrors).length > 0 && (
 								<Alert severity="error" icon={<WarningIcon />} sx={{ mb: 2 }}>
-									<Typography variant="subtitle2" fontWeight={600}>
+									<Typography
+										variant="subtitle2"
+										sx={{
+											fontWeight: 600,
+										}}
+									>
 										{t.users.validationErrorsDetected}
 									</Typography>
 									<ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
@@ -262,9 +274,23 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 									<Stack spacing={3}>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+												<Stack
+													direction="row"
+													spacing={2}
+													sx={{
+														alignItems: 'center',
+														mb: 2,
+													}}
+												>
 													<DescriptionIcon color="primary" />
-													<Typography variant="h6" fontWeight={700}>{t.magasin.productInformation}</Typography>
+													<Typography
+														variant="h6"
+														sx={{
+															fontWeight: 700,
+														}}
+													>
+														{t.magasin.productInformation}
+													</Typography>
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Stack spacing={2.5}>
@@ -319,10 +345,12 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														theme={dropdownTheme}
 														value={selectedCategory}
 														fullWidth
-														onChange={(_, nextCategory) => void formik.setFieldValue('category', nextCategory ? nextCategory.code : '')}
+														onChange={(_, nextCategory) =>
+															void formik.setFieldValue('category', nextCategory ? nextCategory.code : '')
+														}
 														onBlur={formik.handleBlur('category')}
 														error={categoryError}
-														helperText={(formik.touched.category || hasAttemptedSubmit) ? formik.errors.category : ''}
+														helperText={formik.touched.category || hasAttemptedSubmit ? formik.errors.category : ''}
 														startIcon={<CategoryIcon fontSize="small" />}
 														endIcon={
 															<EntityCrudControls
@@ -350,7 +378,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														onChange={(_, nextUnit) => void formik.setFieldValue('unit', nextUnit ? nextUnit.code : '')}
 														onBlur={formik.handleBlur('unit')}
 														error={unitError}
-														helperText={(formik.touched.unit || hasAttemptedSubmit) ? formik.errors.unit : ''}
+														helperText={formik.touched.unit || hasAttemptedSubmit ? formik.errors.unit : ''}
 														startIcon={<StraightenIcon fontSize="small" />}
 														endIcon={
 															<EntityCrudControls
@@ -359,7 +387,9 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 																inputTheme={inputTheme}
 																selectedItem={selectedUnit}
 																addEntity={(data) => addProductUnit(data).unwrap()}
-																editEntity={({ id: entityId, data }) => editProductUnit({ id: entityId, data }).unwrap()}
+																editEntity={({ id: entityId, data }) =>
+																	editProductUnit({ id: entityId, data }).unwrap()
+																}
 																deleteEntity={({ id: entityId }) => deleteProductUnit({ id: entityId }).unwrap()}
 																onAddSuccess={(newId) => void formik.setFieldValue('unit', String(newId))}
 																onDeleteSuccess={() => void formik.setFieldValue('unit', '')}
@@ -371,12 +401,32 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 										</Card>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+												<Stack
+													direction="row"
+													spacing={2}
+													sx={{
+														alignItems: 'center',
+														mb: 2,
+													}}
+												>
 													<CreditCardIcon color="primary" />
-													<Typography variant="h6" fontWeight={700}>{t.magasin.pricing}</Typography>
+													<Typography
+														variant="h6"
+														sx={{
+															fontWeight: 700,
+														}}
+													>
+														{t.magasin.pricing}
+													</Typography>
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
-												<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2.5 }}>
+												<Box
+													sx={{
+														display: 'grid',
+														gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+														gap: 2.5,
+													}}
+												>
 													{[
 														['purchase_price', t.magasin.purchasePrice],
 														['wholesale_price', t.magasin.wholesalePrice],
@@ -404,9 +454,23 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 										</Card>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+												<Stack
+													direction="row"
+													spacing={2}
+													sx={{
+														alignItems: 'center',
+														mb: 2,
+													}}
+												>
 													<InventoryIcon color="primary" />
-													<Typography variant="h6" fontWeight={700}>{t.magasin.stockSettings}</Typography>
+													<Typography
+														variant="h6"
+														sx={{
+															fontWeight: 700,
+														}}
+													>
+														{t.magasin.stockSettings}
+													</Typography>
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Stack spacing={2.5}>
@@ -444,7 +508,17 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 																name="requires_expiration_date"
 															/>
 														}
-														label={<Stack direction="row" spacing={1} alignItems="center"><EventIcon fontSize="small" /> <Typography>{t.magasin.expirationTracking}</Typography></Stack>}
+														label={
+															<Stack
+																direction="row"
+																spacing={1}
+																sx={{
+																	alignItems: 'center',
+																}}
+															>
+																<EventIcon fontSize="small" /> <Typography>{t.magasin.expirationTracking}</Typography>
+															</Stack>
+														}
 													/>
 													<CustomTextInput
 														id="shelf_life_days"
@@ -461,8 +535,24 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														startIcon={<EventIcon fontSize="small" />}
 													/>
 													<FormControlLabel
-														control={<Checkbox checked={formik.values.is_active} onChange={formik.handleChange} name="is_active" />}
-														label={<Stack direction="row" spacing={1} alignItems="center"><CheckCircleIcon fontSize="small" /> <Typography>{t.magasin.activeProduct}</Typography></Stack>}
+														control={
+															<Checkbox
+																checked={formik.values.is_active}
+																onChange={formik.handleChange}
+																name="is_active"
+															/>
+														}
+														label={
+															<Stack
+																direction="row"
+																spacing={1}
+																sx={{
+																	alignItems: 'center',
+																}}
+															>
+																<CheckCircleIcon fontSize="small" /> <Typography>{t.magasin.activeProduct}</Typography>
+															</Stack>
+														}
 													/>
 												</Stack>
 											</CardContent>

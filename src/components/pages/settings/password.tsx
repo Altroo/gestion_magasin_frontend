@@ -57,12 +57,26 @@ const FormikContent: React.FC = () => {
 	});
 
 	return (
-		<Stack direction="column" alignItems="center" spacing={2} className={`${Styles.flexRootStack}`} mt="32px">
+		<Stack
+			direction="column"
+			spacing={2}
+			className={`${Styles.flexRootStack}`}
+			sx={{
+				alignItems: 'center',
+				mt: '32px',
+			}}
+		>
 			{(isChangePasswordLoading || isPending) && <ApiProgress backdropColor="#FFFFFF" circularColor="#0D070B" />}
 			<h2 className={Styles.pageTitle}>{t.settings.changePassword}</h2>
-
 			<form className={Styles.form} onSubmit={(e) => e.preventDefault()}>
-				<Stack direction="column" justifyContent="center" alignItems="center" spacing={2}>
+				<Stack
+					direction="column"
+					spacing={2}
+					sx={{
+						justifyContent: 'center',
+						alignItems: 'center',
+					}}
+				>
 					{profil && profil.default_password_set && (
 						<Alert severity="warning" sx={{ maxWidth: '365px', width: '100%' }}>
 							{t.settings.defaultPasswordWarning}
@@ -77,8 +91,8 @@ const FormikContent: React.FC = () => {
 						error={formik.touched.old_password && Boolean(formik.errors.old_password)}
 						fullWidth={false}
 						size="small"
-					label={t.settings.oldPassword}
-					placeholder={t.settings.oldPassword}
+						label={t.settings.oldPassword}
+						placeholder={t.settings.oldPassword}
 						theme={inputTheme}
 						startIcon={<LockIcon fontSize="small" />}
 						cssClass={Styles.maxInputWidth}
@@ -92,8 +106,8 @@ const FormikContent: React.FC = () => {
 						error={formik.touched.new_password && Boolean(formik.errors.new_password)}
 						fullWidth={false}
 						size="small"
-					label={t.settings.newPassword}
-					placeholder={t.settings.newPassword}
+						label={t.settings.newPassword}
+						placeholder={t.settings.newPassword}
 						theme={inputTheme}
 						startIcon={<LockIcon fontSize="small" />}
 						cssClass={Styles.maxInputWidth}
@@ -107,14 +121,14 @@ const FormikContent: React.FC = () => {
 						error={formik.touched.new_password2 && Boolean(formik.errors.new_password2)}
 						fullWidth={false}
 						size="small"
-					label={t.settings.confirmNewPassword}
-					placeholder={t.settings.confirmNewPassword}
+						label={t.settings.confirmNewPassword}
+						placeholder={t.settings.confirmNewPassword}
 						theme={inputTheme}
 						startIcon={<LockIcon fontSize="small" />}
 						cssClass={Styles.maxInputWidth}
 					/>
 					<PrimaryLoadingButton
-					buttonText={t.settings.modify}
+						buttonText={t.settings.modify}
 						active={!isPending}
 						onClick={formik.handleSubmit}
 						cssClass={`${Styles.maxWidth} ${Styles.mobileButton} ${Styles.submitButton}`}

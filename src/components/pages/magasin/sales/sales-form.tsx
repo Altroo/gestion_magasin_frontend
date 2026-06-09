@@ -43,7 +43,12 @@ import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
-import { useCreateSaleMutation, useGetPaymentModesQuery, useGetProductsQuery, useGetPromotionsQuery } from '@/store/services/magasin';
+import {
+	useCreateSaleMutation,
+	useGetPaymentModesQuery,
+	useGetProductsQuery,
+	useGetPromotionsQuery,
+} from '@/store/services/magasin';
 import Styles from '@/styles/dashboard/dashboard.module.sass';
 import type { SessionProps } from '@/types/_initTypes';
 import type { SaleCreatePayload, SaleFormLineValues, SaleFormValues } from '@/types/gestionMagasinTypes';
@@ -103,7 +108,10 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 	const [createSale] = useCreateSaleMutation();
 
 	const paymentModeOptions = paymentModes?.results ?? [];
-	const defaultPaymentMode = paymentModeOptions.find((mode) => mode.code === 'cash') ?? paymentModeOptions.find((mode) => !mode.is_credit) ?? paymentModeOptions[0];
+	const defaultPaymentMode =
+		paymentModeOptions.find((mode) => mode.code === 'cash') ??
+		paymentModeOptions.find((mode) => !mode.is_credit) ??
+		paymentModeOptions[0];
 
 	const formik = useFormik<SaleFormValues>({
 		initialValues: {
@@ -175,11 +183,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 	const promotionOptions = promotions?.results ?? [];
 
 	const subtotal = useMemo(
-		() =>
-			formik.values.lines.reduce(
-				(sum, line) => sum + Number(line.quantity || 0) * Number(line.unit_price || 0),
-				0,
-			),
+		() => formik.values.lines.reduce((sum, line) => sum + Number(line.quantity || 0) * Number(line.unit_price || 0), 0),
 		[formik.values.lines],
 	);
 	const total = Math.max(0, subtotal - Number(formik.values.discount_amount || 0));
@@ -216,7 +220,9 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 		const touched = getIn(formik.touched, `lines.${index}.${field}`);
 		return (touched || hasAttemptedSubmit) && typeof error === 'string' ? error : '';
 	};
-	const fieldError = (field: 'store' | 'payment_status' | 'payment_mode' | 'paid_amount' | 'discount_amount' | 'note') =>
+	const fieldError = (
+		field: 'store' | 'payment_status' | 'payment_mode' | 'paid_amount' | 'discount_amount' | 'note',
+	) =>
 		(formik.touched[field] || hasAttemptedSubmit) && typeof formik.errors[field] === 'string'
 			? formik.errors[field]
 			: '';
@@ -228,7 +234,9 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 			if (creditMode) void formik.setFieldValue('payment_mode', String(creditMode.id));
 		}
 		if ((nextStatus === 'paid' || nextStatus === 'cancelled') && selectedMode?.is_credit) {
-			const paidMode = paymentModeOptions.find((mode) => !mode.is_credit && mode.code === 'cash') ?? paymentModeOptions.find((mode) => !mode.is_credit);
+			const paidMode =
+				paymentModeOptions.find((mode) => !mode.is_credit && mode.code === 'cash') ??
+				paymentModeOptions.find((mode) => !mode.is_credit);
 			if (paidMode) void formik.setFieldValue('payment_mode', String(paidMode.id));
 		}
 	};
@@ -236,10 +244,16 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 		void formik.setFieldValue('payment_mode', paymentModeId);
 		const selectedMode = paymentModeOptions.find((mode) => String(mode.id) === paymentModeId);
 		if (selectedMode) {
-			void formik.setFieldValue('payment_status', selectedMode.is_credit ? 'in_progress' : formik.values.payment_status === 'cancelled' ? 'cancelled' : 'paid');
+			void formik.setFieldValue(
+				'payment_status',
+				selectedMode.is_credit ? 'in_progress' : formik.values.payment_status === 'cancelled' ? 'cancelled' : 'paid',
+			);
 		}
 	};
-	const storeItems = memberships.map((membership) => ({ code: String(membership.store.id), value: membership.store.name }));
+	const storeItems = memberships.map((membership) => ({
+		code: String(membership.store.id),
+		value: membership.store.name,
+	}));
 	const selectedStore = storeItems.find((store) => store.code === formik.values.store) ?? null;
 
 	const setLineProduct = (index: number, productId: string) => {
@@ -268,7 +282,10 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 
 	const removeLine = (index: number) => {
 		if (formik.values.lines.length === 1) return;
-		void formik.setFieldValue('lines', formik.values.lines.filter((_, lineIndex) => lineIndex !== index));
+		void formik.setFieldValue(
+			'lines',
+			formik.values.lines.filter((_, lineIndex) => lineIndex !== index),
+		);
 	};
 	const formatQuantityValue = (value: number) => {
 		if (!Number.isFinite(value)) return '0';
@@ -297,7 +314,16 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 		},
 	};
 	const renderQuantityStepper = (params: GridRenderCellParams<SaleLineGridRow>) => (
-		<Stack direction="row" spacing={0.5} justifyContent="center" alignItems="center" sx={{ width: '100%', height: '100%' }}>
+		<Stack
+			direction="row"
+			spacing={0.5}
+			sx={{
+				justifyContent: 'center',
+				alignItems: 'center',
+				width: '100%',
+				height: '100%',
+			}}
+		>
 			<IconButton size="small" onClick={() => updateLineQuantity(params.row.index, -1)} aria-label="Diminuer">
 				<RemoveIcon fontSize="small" />
 			</IconButton>
@@ -356,12 +382,20 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 								size="small"
 								options={promotionOptions}
 								value={promotionOptions.find((promotion) => String(promotion.id) === params.row.promotion) ?? null}
-								onChange={(_, nextPromotion) => setLinePromotion(params.row.index, nextPromotion ? String(nextPromotion.id) : '')}
+								onChange={(_, nextPromotion) =>
+									setLinePromotion(params.row.index, nextPromotion ? String(nextPromotion.id) : '')
+								}
 								onBlur={() => void formik.setFieldTouched(`lines.${params.row.index}.promotion`, true)}
 								getOptionLabel={(promotion) => promotion.name}
 								isOptionEqualToValue={(option, value) => option.id === value.id}
 								noOptionsText={t.common.noOptions}
-								sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', '& .MuiFormControl-root': { width: '100%' } }}
+								sx={{
+									width: '100%',
+									height: '100%',
+									display: 'flex',
+									alignItems: 'center',
+									'& .MuiFormControl-root': { width: '100%' },
+								}}
 								renderInput={(inputParams) => {
 									const { textFieldParams, inputSlot, htmlInputSlot } = splitAutocompleteRenderParams(inputParams);
 									return (
@@ -385,12 +419,20 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 								size="small"
 								options={productOptions}
 								value={productOptions.find((product) => String(product.id) === params.row.product) ?? null}
-								onChange={(_, nextProduct) => setLineProduct(params.row.index, nextProduct ? String(nextProduct.id) : '')}
+								onChange={(_, nextProduct) =>
+									setLineProduct(params.row.index, nextProduct ? String(nextProduct.id) : '')
+								}
 								onBlur={() => void formik.setFieldTouched(`lines.${params.row.index}.product`, true)}
 								getOptionLabel={productLabel}
 								isOptionEqualToValue={(option, value) => option.id === value.id}
 								noOptionsText={t.common.noOptions}
-								sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', '& .MuiFormControl-root': { width: '100%' } }}
+								sx={{
+									width: '100%',
+									height: '100%',
+									display: 'flex',
+									alignItems: 'center',
+									'& .MuiFormControl-root': { width: '100%' },
+								}}
 								renderInput={(inputParams) => {
 									const { textFieldParams, inputSlot, htmlInputSlot } = splitAutocompleteRenderParams(inputParams);
 									return (
@@ -452,7 +494,12 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 			headerAlign: 'left',
 			valueGetter: (_value, row) => Number(row.quantity || 0) * Number(row.unit_price || 0),
 			renderCell: (params: GridRenderCellParams<SaleLineGridRow>) => (
-				<Typography variant="body2" fontWeight={600}>
+				<Typography
+					variant="body2"
+					sx={{
+						fontWeight: 600,
+					}}
+				>
 					{formatNumber(String(Number(params.row.quantity || 0) * Number(params.row.unit_price || 0)))} Dhs
 				</Typography>
 			),
@@ -465,7 +512,12 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 			filterable: false,
 			disableColumnMenu: true,
 			renderCell: (params: GridRenderCellParams<SaleLineGridRow>) => (
-				<IconButton color="error" size="small" onClick={() => removeLine(params.row.index)} aria-label={t.magasin.removeSaleLine}>
+				<IconButton
+					color="error"
+					size="small"
+					onClick={() => removeLine(params.row.index)}
+					aria-label={t.magasin.removeSaleLine}
+				>
 					<DeleteIcon fontSize="small" />
 				</IconButton>
 			),
@@ -478,12 +530,22 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={3}>
-							<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(SALES_LIST)} sx={{ alignSelf: 'flex-start' }}>
+							<Button
+								variant="outlined"
+								startIcon={<ArrowBackIcon />}
+								onClick={() => router.push(SALES_LIST)}
+								sx={{ alignSelf: 'flex-start' }}
+							>
 								{t.magasin.backToSales}
 							</Button>
 							{Object.keys(validationErrors).length > 0 && (
 								<Alert severity="error" icon={<WarningIcon />}>
-									<Typography variant="subtitle2" fontWeight={600}>
+									<Typography
+										variant="subtitle2"
+										sx={{
+											fontWeight: 600,
+										}}
+									>
 										{t.users.validationErrorsDetected}
 									</Typography>
 									<ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
@@ -504,9 +566,23 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 									<Stack spacing={3}>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+												<Stack
+													direction="row"
+													spacing={2}
+													sx={{
+														alignItems: 'center',
+														mb: 2,
+													}}
+												>
 													<ReceiptLongIcon color="primary" />
-													<Typography variant="h6" fontWeight={700}>{t.magasin.saleInformation}</Typography>
+													<Typography
+														variant="h6"
+														sx={{
+															fontWeight: 700,
+														}}
+													>
+														{t.magasin.saleInformation}
+													</Typography>
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Stack spacing={2.5}>
@@ -535,11 +611,21 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 															id="payment_status"
 															label={`${t.magasin.paymentStatus} *`}
 															value={formik.values.payment_status}
-															onChange={(event) => handlePaymentStatusChange(event.target.value as 'paid' | 'in_progress' | 'cancelled')}
+															onChange={(event) =>
+																handlePaymentStatusChange(event.target.value as 'paid' | 'in_progress' | 'cancelled')
+															}
 															onBlur={formik.handleBlur('payment_status')}
 															error={Boolean(fieldError('payment_status'))}
 															helperText={fieldError('payment_status')}
-															slotProps={{ input: { startAdornment: <InputAdornment position="start"><CreditCardIcon fontSize="small" /></InputAdornment> } }}
+															slotProps={{
+																input: {
+																	startAdornment: (
+																		<InputAdornment position="start">
+																			<CreditCardIcon fontSize="small" />
+																		</InputAdornment>
+																	),
+																},
+															}}
 															fullWidth
 														>
 															<MenuItem value="paid">{t.magasin.paid}</MenuItem>
@@ -558,15 +644,31 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 															onBlur={formik.handleBlur('payment_mode')}
 															error={Boolean(fieldError('payment_mode'))}
 															helperText={fieldError('payment_mode')}
-															slotProps={{ input: { startAdornment: <InputAdornment position="start"><CreditCardIcon fontSize="small" /></InputAdornment> } }}
+															slotProps={{
+																input: {
+																	startAdornment: (
+																		<InputAdornment position="start">
+																			<CreditCardIcon fontSize="small" />
+																		</InputAdornment>
+																	),
+																},
+															}}
 															fullWidth
 														>
 															{paymentModeOptions.map((mode) => (
-																<MenuItem key={mode.id} value={String(mode.id)}>{mode.name}</MenuItem>
+																<MenuItem key={mode.id} value={String(mode.id)}>
+																	{mode.name}
+																</MenuItem>
 															))}
 														</TextField>
 													</ThemeProvider>
-													<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2.5 }}>
+													<Box
+														sx={{
+															display: 'grid',
+															gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+															gap: 2.5,
+														}}
+													>
 														<CustomTextInput
 															id="paid_amount"
 															type="number"
@@ -601,10 +703,31 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 										</Card>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-													<Stack direction="row" spacing={2} alignItems="center">
+												<Stack
+													direction="row"
+													spacing={2}
+													sx={{
+														alignItems: 'center',
+														justifyContent: 'space-between',
+														mb: 2,
+													}}
+												>
+													<Stack
+														direction="row"
+														spacing={2}
+														sx={{
+															alignItems: 'center',
+														}}
+													>
 														<InventoryIcon color="primary" />
-														<Typography variant="h6" fontWeight={700}>{t.magasin.saleLines}</Typography>
+														<Typography
+															variant="h6"
+															sx={{
+																fontWeight: 700,
+															}}
+														>
+															{t.magasin.saleLines}
+														</Typography>
 													</Stack>
 													<Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={addLine}>
 														{t.magasin.addSaleLine}
@@ -652,17 +775,50 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 										</Card>
 										<Card elevation={1} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" spacing={3}>
-													<Typography fontWeight={600}>{t.magasin.subtotal}: {formatNumber(String(subtotal))} Dhs</Typography>
-													<Typography fontWeight={700} color="primary">{t.magasin.total}: {formatNumber(String(total))} Dhs</Typography>
+												<Stack
+													direction={{ xs: 'column', sm: 'row' }}
+													spacing={3}
+													sx={{
+														justifyContent: 'flex-end',
+													}}
+												>
+													<Typography
+														sx={{
+															fontWeight: 600,
+														}}
+													>
+														{t.magasin.subtotal}: {formatNumber(String(subtotal))} Dhs
+													</Typography>
+													<Typography
+														color="primary"
+														sx={{
+															fontWeight: 700,
+														}}
+													>
+														{t.magasin.total}: {formatNumber(String(total))} Dhs
+													</Typography>
 												</Stack>
 											</CardContent>
 										</Card>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+												<Stack
+													direction="row"
+													spacing={2}
+													sx={{
+														alignItems: 'center',
+														mb: 2,
+													}}
+												>
 													<RemarkIcon color="primary" />
-													<Typography variant="h6" fontWeight={700}>{t.magasin.movementNote}</Typography>
+													<Typography
+														variant="h6"
+														sx={{
+															fontWeight: 700,
+														}}
+													>
+														{t.magasin.movementNote}
+													</Typography>
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
 												<CustomTextInput

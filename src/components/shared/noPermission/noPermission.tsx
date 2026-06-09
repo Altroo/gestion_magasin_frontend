@@ -44,12 +44,25 @@ const NoPermission = () => {
 				</Box>
 
 				{/* Title */}
-				<Typography variant="h5" fontWeight={600} gutterBottom color="text.primary">
+				<Typography
+					variant="h5"
+					gutterBottom
+					sx={{
+						fontWeight: 600,
+						color: 'text.primary',
+					}}
+				>
 					{t.errors.accessDenied}
 				</Typography>
 
 				{/* Description */}
-				<Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+				<Typography
+					variant="body1"
+					sx={{
+						color: 'text.secondary',
+						mb: 3,
+					}}
+				>
 					{t.errors.accessDeniedText}
 				</Typography>
 			</Paper>

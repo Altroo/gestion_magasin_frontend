@@ -2,8 +2,33 @@
 
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert, Autocomplete, Box, Button, Card, CardContent, Divider, IconButton, InputAdornment, MenuItem, Stack, TextField, ThemeProvider, Typography } from '@mui/material';
-import { Add as AddIcon, ArrowBack as ArrowBackIcon, Delete as DeleteIcon, Description as DescriptionIcon, Edit as EditIcon, Inventory2 as InventoryIcon, Remove as RemoveIcon, Storefront as StorefrontIcon, Warning as WarningIcon } from '@mui/icons-material';
+import {
+	Alert,
+	Autocomplete,
+	Box,
+	Button,
+	Card,
+	CardContent,
+	Divider,
+	IconButton,
+	InputAdornment,
+	MenuItem,
+	Stack,
+	TextField,
+	ThemeProvider,
+	Typography,
+} from '@mui/material';
+import {
+	Add as AddIcon,
+	ArrowBack as ArrowBackIcon,
+	Delete as DeleteIcon,
+	Description as DescriptionIcon,
+	Edit as EditIcon,
+	Inventory2 as InventoryIcon,
+	Remove as RemoveIcon,
+	Storefront as StorefrontIcon,
+	Warning as WarningIcon,
+} from '@mui/icons-material';
 import { DataGrid, type GridColDef, type GridPaginationModel, type GridRenderCellParams } from '@mui/x-data-grid';
 import { frFR } from '@mui/x-data-grid/locales';
 import { getIn, useFormik } from 'formik';
@@ -19,7 +44,12 @@ import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages
 import { stockWorkflowStatusOptions } from '@/components/pages/magasin/shared/status-labels';
 import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
-import { useAddInventorySessionMutation, useEditInventorySessionMutation, useGetInventorySessionQuery, useGetProductsQuery } from '@/store/services/magasin';
+import {
+	useAddInventorySessionMutation,
+	useEditInventorySessionMutation,
+	useGetInventorySessionQuery,
+	useGetProductsQuery,
+} from '@/store/services/magasin';
 import { inventorySchema } from '@/utils/formValidationSchemas';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
 import { splitAutocompleteRenderParams } from '@/utils/muiAutocompleteSlots';
@@ -63,15 +93,19 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 	const [linePaginationModel, setLinePaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 5 });
 	const [addInventory, addState] = useAddInventorySessionMutation();
 	const [editInventory, editState] = useEditInventorySessionMutation();
-	const { data: inventory, isLoading: isInventoryLoading, error: inventoryError } = useGetInventorySessionQuery(
-		{ id: id! },
-		{ skip: !token || !isEditMode },
-	);
+	const {
+		data: inventory,
+		isLoading: isInventoryLoading,
+		error: inventoryError,
+	} = useGetInventorySessionQuery({ id: id! }, { skip: !token || !isEditMode });
 	const { data: products, isLoading: areProductsLoading } = useGetProductsQuery(
 		{ store: storeId, page: 1, pageSize: 200 },
 		{ skip: !token || !storeId },
 	);
-	const axiosError = useMemo(() => (inventoryError ? (inventoryError as ResponseDataInterface<ApiErrorResponseType>) : undefined), [inventoryError]);
+	const axiosError = useMemo(
+		() => (inventoryError ? (inventoryError as ResponseDataInterface<ApiErrorResponseType>) : undefined),
+		[inventoryError],
+	);
 
 	const toPayload = (values: InventoryFormValues): InventoryPayload => ({
 		store: storeId ?? inventory?.store ?? 0,
@@ -95,12 +129,14 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 			inventory_date: inventory?.inventory_date ?? new Date().toISOString().slice(0, 10),
 			status: inventory?.status ?? 'draft',
 			note: inventory?.note ?? '',
-			lines: inventory?.lines.length ? inventory.lines.map((line) => ({
-				product: String(line.product),
-				expected_quantity: line.expected_quantity,
-				counted_quantity: line.counted_quantity,
-				note: line.note ?? '',
-			})) : [{ ...emptyLine }],
+			lines: inventory?.lines.length
+				? inventory.lines.map((line) => ({
+						product: String(line.product),
+						expected_quantity: line.expected_quantity,
+						counted_quantity: line.counted_quantity,
+						note: line.note ?? '',
+					}))
+				: [{ ...emptyLine }],
 			globalError: '',
 		},
 		enableReinitialize: true,
@@ -119,21 +155,26 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 					router.push(INVENTORY_VIEW(created.id, created.store));
 				}
 			} catch (e) {
-				onError(extractApiErrorMessage(e, isEditMode ? t.magasin.inventoryUpdateError : t.magasin.inventoryCreateError));
+				onError(
+					extractApiErrorMessage(e, isEditMode ? t.magasin.inventoryUpdateError : t.magasin.inventoryCreateError),
+				);
 				setFormikAutoErrors({ e, setFieldError });
 			}
 		},
 	});
 
-	const fieldLabels = useMemo<Record<string, string>>(() => ({
-		code: t.magasin.inventoryCode,
-		title: t.magasin.inventoryTitle,
-		inventory_date: t.magasin.inventoryCountDate,
-		status: t.magasin.status,
-		note: t.magasin.note,
-		lines: t.magasin.inventoryLines,
-		globalError: t.errors.globalError,
-	}), [t]);
+	const fieldLabels = useMemo<Record<string, string>>(
+		() => ({
+			code: t.magasin.inventoryCode,
+			title: t.magasin.inventoryTitle,
+			inventory_date: t.magasin.inventoryCountDate,
+			status: t.magasin.status,
+			note: t.magasin.note,
+			lines: t.magasin.inventoryLines,
+			globalError: t.errors.globalError,
+		}),
+		[t],
+	);
 	const validationErrors = useMemo(() => {
 		const errors: Record<string, string> = {};
 		if (hasAttemptedSubmit) {
@@ -191,9 +232,12 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 		<Stack
 			direction="row"
 			spacing={0.5}
-			justifyContent="center"
-			alignItems="center"
-			sx={{ width: '100%', height: '100%' }}
+			sx={{
+				justifyContent: 'center',
+				alignItems: 'center',
+				width: '100%',
+				height: '100%',
+			}}
 		>
 			<IconButton size="small" onClick={() => updateLineQuantity(params.row.index, field, -1)} aria-label="Diminuer">
 				<RemoveIcon fontSize="small" />
@@ -220,7 +264,9 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 						size="small"
 						options={productOptions}
 						value={productOptions.find((product) => String(product.id) === params.row.product) ?? null}
-						onChange={(_, nextProduct) => void formik.setFieldValue(`lines.${params.row.index}.product`, nextProduct ? String(nextProduct.id) : '')}
+						onChange={(_, nextProduct) =>
+							void formik.setFieldValue(`lines.${params.row.index}.product`, nextProduct ? String(nextProduct.id) : '')
+						}
 						onBlur={() => void formik.setFieldTouched(`lines.${params.row.index}.product`, true)}
 						getOptionLabel={productLabel}
 						isOptionEqualToValue={(option, value) => option.id === value.id}
@@ -276,7 +322,8 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 			headerAlign: 'center',
 			sortable: false,
 			filterable: false,
-			renderCell: (params: GridRenderCellParams<InventoryLineGridRow>) => renderQuantityStepper(params, 'expected_quantity'),
+			renderCell: (params: GridRenderCellParams<InventoryLineGridRow>) =>
+				renderQuantityStepper(params, 'expected_quantity'),
 		},
 		{
 			field: 'counted_quantity',
@@ -286,7 +333,8 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 			headerAlign: 'center',
 			sortable: false,
 			filterable: false,
-			renderCell: (params: GridRenderCellParams<InventoryLineGridRow>) => renderQuantityStepper(params, 'counted_quantity'),
+			renderCell: (params: GridRenderCellParams<InventoryLineGridRow>) =>
+				renderQuantityStepper(params, 'counted_quantity'),
 		},
 		{
 			field: 'note',
@@ -331,33 +379,185 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={3}>
-							<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(INVENTORY_LIST)} sx={{ width: 'fit-content' }}>{t.magasin.backToInventory}</Button>
+							<Button
+								variant="outlined"
+								startIcon={<ArrowBackIcon />}
+								onClick={() => router.push(INVENTORY_LIST)}
+								sx={{ width: 'fit-content' }}
+							>
+								{t.magasin.backToInventory}
+							</Button>
 							{Object.keys(validationErrors).length > 0 && (
 								<Alert severity="error" icon={<WarningIcon />}>
-									<Typography variant="subtitle2" fontWeight={600}>{t.users.validationErrorsDetected}</Typography>
-									<ul style={{ margin: '8px 0', paddingLeft: '20px' }}>{Object.entries(validationErrors).map(([key, message]) => <li key={key}><Typography variant="body2">{getLabelForKey(fieldLabels, key)} : {message}</Typography></li>)}</ul>
+									<Typography
+										variant="subtitle2"
+										sx={{
+											fontWeight: 600,
+										}}
+									>
+										{t.users.validationErrorsDetected}
+									</Typography>
+									<ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+										{Object.entries(validationErrors).map(([key, message]) => (
+											<li key={key}>
+												<Typography variant="body2">
+													{getLabelForKey(fieldLabels, key)} : {message}
+												</Typography>
+											</li>
+										))}
+									</ul>
 								</Alert>
 							)}
 							{formik.errors.globalError && <span className={Styles.errorMessage}>{formik.errors.globalError}</span>}
-							{isLoading ? <ApiProgress backdropColor="#FFFFFF" circularColor="#0D070B" /> : (axiosError?.status as number) > 400 ? <ApiAlert errorDetails={axiosError?.data.details} /> : (
+							{isLoading ? (
+								<ApiProgress backdropColor="#FFFFFF" circularColor="#0D070B" />
+							) : (axiosError?.status as number) > 400 ? (
+								<ApiAlert errorDetails={axiosError?.data.details} />
+							) : (
 								<form onSubmit={formik.handleSubmit}>
 									<Stack spacing={3}>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}><StorefrontIcon color="primary" /><Typography variant="h6" fontWeight={700}>{t.magasin.inventoryDetails}</Typography></Stack>
+												<Stack
+													direction="row"
+													spacing={2}
+													sx={{
+														alignItems: 'center',
+														mb: 2,
+													}}
+												>
+													<StorefrontIcon color="primary" />
+													<Typography
+														variant="h6"
+														sx={{
+															fontWeight: 700,
+														}}
+													>
+														{t.magasin.inventoryDetails}
+													</Typography>
+												</Stack>
 												<Divider sx={{ mb: 3 }} />
-												<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2.5 }}>
-													<CustomTextInput id="code" type="text" label={`${t.magasin.inventoryCode} *`} value={formik.values.code} onChange={formik.handleChange('code')} onBlur={formik.handleBlur('code')} error={(formik.touched.code || hasAttemptedSubmit) && Boolean(formik.errors.code)} helperText={(formik.touched.code || hasAttemptedSubmit) ? formik.errors.code : ''} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
-													<CustomTextInput id="title" type="text" label={`${t.magasin.inventoryTitle} *`} value={formik.values.title} onChange={formik.handleChange('title')} onBlur={formik.handleBlur('title')} error={(formik.touched.title || hasAttemptedSubmit) && Boolean(formik.errors.title)} helperText={(formik.touched.title || hasAttemptedSubmit) ? formik.errors.title : ''} fullWidth size="small" theme={inputTheme} startIcon={<InventoryIcon fontSize="small" />} />
-													<MuiFormikDatePicker id="inventory_date" label={`${t.magasin.inventoryCountDate} *`} value={formik.values.inventory_date} onChange={(value) => void formik.setFieldValue('inventory_date', value)} onBlur={formik.handleBlur('inventory_date')} error={(formik.touched.inventory_date || hasAttemptedSubmit) && Boolean(formik.errors.inventory_date)} helperText={(formik.touched.inventory_date || hasAttemptedSubmit) ? formik.errors.inventory_date : ''} fullWidth size="small" startIcon={<DescriptionIcon fontSize="small" />} />
-													<ThemeProvider theme={dropdownTheme}><TextField select size="small" label={`${t.magasin.status} *`} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} onBlur={formik.handleBlur('status')} error={(formik.touched.status || hasAttemptedSubmit) && Boolean(formik.errors.status)} helperText={(formik.touched.status || hasAttemptedSubmit) ? formik.errors.status : ''} slotProps={{ input: { startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> } }} fullWidth>{stockWorkflowStatusOptions(t).map((option) => <MenuItem key={option.id} value={option.id}>{option.nom}</MenuItem>)}</TextField></ThemeProvider>
+												<Box
+													sx={{
+														display: 'grid',
+														gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+														gap: 2.5,
+													}}
+												>
+													<CustomTextInput
+														id="code"
+														type="text"
+														label={`${t.magasin.inventoryCode} *`}
+														value={formik.values.code}
+														onChange={formik.handleChange('code')}
+														onBlur={formik.handleBlur('code')}
+														error={(formik.touched.code || hasAttemptedSubmit) && Boolean(formik.errors.code)}
+														helperText={formik.touched.code || hasAttemptedSubmit ? formik.errors.code : ''}
+														fullWidth
+														size="small"
+														theme={inputTheme}
+														startIcon={<DescriptionIcon fontSize="small" />}
+													/>
+													<CustomTextInput
+														id="title"
+														type="text"
+														label={`${t.magasin.inventoryTitle} *`}
+														value={formik.values.title}
+														onChange={formik.handleChange('title')}
+														onBlur={formik.handleBlur('title')}
+														error={(formik.touched.title || hasAttemptedSubmit) && Boolean(formik.errors.title)}
+														helperText={formik.touched.title || hasAttemptedSubmit ? formik.errors.title : ''}
+														fullWidth
+														size="small"
+														theme={inputTheme}
+														startIcon={<InventoryIcon fontSize="small" />}
+													/>
+													<MuiFormikDatePicker
+														id="inventory_date"
+														label={`${t.magasin.inventoryCountDate} *`}
+														value={formik.values.inventory_date}
+														onChange={(value) => void formik.setFieldValue('inventory_date', value)}
+														onBlur={formik.handleBlur('inventory_date')}
+														error={
+															(formik.touched.inventory_date || hasAttemptedSubmit) &&
+															Boolean(formik.errors.inventory_date)
+														}
+														helperText={
+															formik.touched.inventory_date || hasAttemptedSubmit ? formik.errors.inventory_date : ''
+														}
+														fullWidth
+														size="small"
+														startIcon={<DescriptionIcon fontSize="small" />}
+													/>
+													<ThemeProvider theme={dropdownTheme}>
+														<TextField
+															select
+															size="small"
+															label={`${t.magasin.status} *`}
+															value={formik.values.status}
+															onChange={(event) => void formik.setFieldValue('status', event.target.value)}
+															onBlur={formik.handleBlur('status')}
+															error={(formik.touched.status || hasAttemptedSubmit) && Boolean(formik.errors.status)}
+															helperText={formik.touched.status || hasAttemptedSubmit ? formik.errors.status : ''}
+															slotProps={{
+																input: {
+																	startAdornment: (
+																		<InputAdornment position="start">
+																			<DescriptionIcon fontSize="small" />
+																		</InputAdornment>
+																	),
+																},
+															}}
+															fullWidth
+														>
+															{stockWorkflowStatusOptions(t).map((option) => (
+																<MenuItem key={option.id} value={option.id}>
+																	{option.nom}
+																</MenuItem>
+															))}
+														</TextField>
+													</ThemeProvider>
 												</Box>
-												<Box sx={{ mt: 2.5 }}><CustomTextInput id="note" type="text" label={t.magasin.note} value={formik.values.note} onChange={formik.handleChange('note')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} /></Box>
+												<Box sx={{ mt: 2.5 }}>
+													<CustomTextInput
+														id="note"
+														type="text"
+														label={t.magasin.note}
+														value={formik.values.note}
+														onChange={formik.handleChange('note')}
+														fullWidth
+														size="small"
+														theme={inputTheme}
+														startIcon={<DescriptionIcon fontSize="small" />}
+													/>
+												</Box>
 											</CardContent>
 										</Card>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}><Stack direction="row" spacing={2}><InventoryIcon color="primary" /><Typography variant="h6" fontWeight={700}>{t.magasin.inventoryLines}</Typography></Stack><Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={addLine}>{t.common.add}</Button></Stack>
+												<Stack
+													direction="row"
+													sx={{
+														justifyContent: 'space-between',
+														alignItems: 'center',
+														mb: 2,
+													}}
+												>
+													<Stack direction="row" spacing={2}>
+														<InventoryIcon color="primary" />
+														<Typography
+															variant="h6"
+															sx={{
+																fontWeight: 700,
+															}}
+														>
+															{t.magasin.inventoryLines}
+														</Typography>
+													</Stack>
+													<Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={addLine}>
+														{t.common.add}
+													</Button>
+												</Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Box sx={{ width: '100%' }}>
 													<DataGrid
@@ -398,7 +598,25 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 												</Box>
 											</CardContent>
 										</Card>
-										<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}><PrimaryLoadingButton type="submit" buttonText={isEditMode ? t.magasin.editInventory : t.magasin.newInventory} active={!addState.isLoading && !editState.isLoading} loading={addState.isLoading || editState.isLoading} startIcon={isEditMode ? <EditIcon /> : <AddIcon />} onClick={(event: React.MouseEvent<HTMLButtonElement>) => { setHasAttemptedSubmit(true); if (!formik.isValid) { event.preventDefault(); formik.handleSubmit(); onError(t.magasin.fixValidationErrors); window.scrollTo({ top: 0, behavior: 'smooth' }); } }} cssClass={`${Styles.maxWidth} ${Styles.mobileButton} ${Styles.submitButton}`} /></Box>
+										<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+											<PrimaryLoadingButton
+												type="submit"
+												buttonText={isEditMode ? t.magasin.editInventory : t.magasin.newInventory}
+												active={!addState.isLoading && !editState.isLoading}
+												loading={addState.isLoading || editState.isLoading}
+												startIcon={isEditMode ? <EditIcon /> : <AddIcon />}
+												onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+													setHasAttemptedSubmit(true);
+													if (!formik.isValid) {
+														event.preventDefault();
+														formik.handleSubmit();
+														onError(t.magasin.fixValidationErrors);
+														window.scrollTo({ top: 0, behavior: 'smooth' });
+													}
+												}}
+												cssClass={`${Styles.maxWidth} ${Styles.mobileButton} ${Styles.submitButton}`}
+											/>
+										</Box>
 									</Stack>
 								</form>
 							)}

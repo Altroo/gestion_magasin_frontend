@@ -96,7 +96,11 @@ const getNavigationMenu = (isStaff: boolean, t: TranslationDictionary) => {
 				icon: <DomainIcon />,
 				items: [
 					{ title: t.navigation.dashboard, label: t.navigation.dashboard, path: DASHBOARD },
-					{ title: t.navigation.storeStockOverview, label: t.navigation.storeStockOverview, path: DASHBOARD_STORE_STOCK },
+					{
+						title: t.navigation.storeStockOverview,
+						label: t.navigation.storeStockOverview,
+						path: DASHBOARD_STORE_STOCK,
+					},
 					{ title: t.navigation.stockTransfers, label: t.navigation.stockTransfers, path: DASHBOARD_STOCK_TRANSFERS },
 					{ title: t.navigation.purchases, label: t.navigation.purchases, path: DASHBOARD_PURCHASES },
 					{ title: t.navigation.promotions, label: t.navigation.promotions, path: DASHBOARD_PROMOTIONS },
@@ -140,7 +144,11 @@ const getNavigationMenu = (isStaff: boolean, t: TranslationDictionary) => {
 			items: [
 				{ title: t.navigation.myProfile, label: t.navigation.myProfile, path: DASHBOARD_EDIT_PROFILE },
 				{ title: t.navigation.changePassword, label: t.navigation.changePassword, path: DASHBOARD_PASSWORD },
-				{ title: t.magasin.notificationPreferences, label: t.magasin.notificationPreferences, path: DASHBOARD_NOTIFICATIONS },
+				{
+					title: t.magasin.notificationPreferences,
+					label: t.magasin.notificationPreferences,
+					path: DASHBOARD_NOTIFICATIONS,
+				},
 			],
 		},
 	};
@@ -354,8 +362,21 @@ const NavigationBar = (props: Props) => {
 			<Box sx={{ display: 'flex' }}>
 				<AppBar position="fixed" open={open}>
 					<Toolbar>
-						<Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
-							<Stack direction="row" alignItems="center" spacing={1}>
+						<Stack
+							direction="row"
+							sx={{
+								justifyContent: 'space-between',
+								alignItems: 'center',
+								width: '100%',
+							}}
+						>
+							<Stack
+								direction="row"
+								spacing={1}
+								sx={{
+									alignItems: 'center',
+								}}
+							>
 								{isMobile && (
 									<IconButton
 										color="inherit"
@@ -381,7 +402,14 @@ const NavigationBar = (props: Props) => {
 											</IconButton>
 											<LanguageSwitcher />
 											{is_staff && (
-												<Button variant="text" color="inherit" href={BACKEND_SITE_ADMIN} target="_blank" rel="noopener" endIcon={<DomainIcon />}>
+												<Button
+													variant="text"
+													color="inherit"
+													href={BACKEND_SITE_ADMIN}
+													target="_blank"
+													rel="noopener"
+													endIcon={<DomainIcon />}
+												>
 													{t.navigation.administration}
 												</Button>
 											)}
@@ -390,44 +418,71 @@ const NavigationBar = (props: Props) => {
 											</Button>
 										</Desktop>
 										<TabletAndMobile>
-										<IconButton
-											ref={moreVertRef}
-											color="inherit"
-											aria-label={t.accessibility.moreActions}
-											onClick={(e) => setMobileMenuAnchor(e.currentTarget)}
-										>
-											<MoreVertIcon />
-										</IconButton>
-										<Menu
-											anchorEl={mobileMenuAnchor}
-											open={Boolean(mobileMenuAnchor)}
-											onClose={() => setMobileMenuAnchor(null)}
-											anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-											transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-										>
-											<MenuItem onClick={() => { setMobileMenuAnchor(null); setNotifAnchor(moreVertRef.current); }}>
-												<MenuListItemIcon>
-													<Badge badgeContent={unreadCount} color="primary" max={99}>
-														<NotificationsIcon fontSize="small" />
-													</Badge>
-												</MenuListItemIcon>
-												<MenuListItemText>{t.navigation.notifications}</MenuListItemText>
-											</MenuItem>
-											<MenuItem onClick={() => { setLanguage(language === 'fr' ? 'en' : 'fr'); setMobileMenuAnchor(null); }}>
-												<MenuListItemIcon><LanguageFlag language={language === 'fr' ? 'en' : 'fr'} /></MenuListItemIcon>
-												<MenuListItemText>{language === 'fr' ? 'English' : 'Français'}</MenuListItemText>
-											</MenuItem>
-											{is_staff && (
-												<MenuItem component="a" href={BACKEND_SITE_ADMIN} target="_blank" rel="noopener" onClick={() => setMobileMenuAnchor(null)}>
-													<MenuListItemIcon><DomainIcon fontSize="small" /></MenuListItemIcon>
-													<MenuListItemText>{t.navigation.administration}</MenuListItemText>
+											<IconButton
+												ref={moreVertRef}
+												color="inherit"
+												aria-label={t.accessibility.moreActions}
+												onClick={(e) => setMobileMenuAnchor(e.currentTarget)}
+											>
+												<MoreVertIcon />
+											</IconButton>
+											<Menu
+												anchorEl={mobileMenuAnchor}
+												open={Boolean(mobileMenuAnchor)}
+												onClose={() => setMobileMenuAnchor(null)}
+												anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+												transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+											>
+												<MenuItem
+													onClick={() => {
+														setMobileMenuAnchor(null);
+														setNotifAnchor(moreVertRef.current);
+													}}
+												>
+													<MenuListItemIcon>
+														<Badge badgeContent={unreadCount} color="primary" max={99}>
+															<NotificationsIcon fontSize="small" />
+														</Badge>
+													</MenuListItemIcon>
+													<MenuListItemText>{t.navigation.notifications}</MenuListItemText>
 												</MenuItem>
-											)}
-											<MenuItem onClick={() => { setMobileMenuAnchor(null); void logOutHandler(); }}>
-												<MenuListItemIcon><LogoutIcon fontSize="small" /></MenuListItemIcon>
-												<MenuListItemText>{t.navigation.logout}</MenuListItemText>
-											</MenuItem>
-										</Menu>
+												<MenuItem
+													onClick={() => {
+														setLanguage(language === 'fr' ? 'en' : 'fr');
+														setMobileMenuAnchor(null);
+													}}
+												>
+													<MenuListItemIcon>
+														<LanguageFlag language={language === 'fr' ? 'en' : 'fr'} />
+													</MenuListItemIcon>
+													<MenuListItemText>{language === 'fr' ? 'English' : 'Français'}</MenuListItemText>
+												</MenuItem>
+												{is_staff && (
+													<MenuItem
+														component="a"
+														href={BACKEND_SITE_ADMIN}
+														target="_blank"
+														rel="noopener"
+														onClick={() => setMobileMenuAnchor(null)}
+													>
+														<MenuListItemIcon>
+															<DomainIcon fontSize="small" />
+														</MenuListItemIcon>
+														<MenuListItemText>{t.navigation.administration}</MenuListItemText>
+													</MenuItem>
+												)}
+												<MenuItem
+													onClick={() => {
+														setMobileMenuAnchor(null);
+														void logOutHandler();
+													}}
+												>
+													<MenuListItemIcon>
+														<LogoutIcon fontSize="small" />
+													</MenuListItemIcon>
+													<MenuListItemText>{t.navigation.logout}</MenuListItemText>
+												</MenuItem>
+											</Menu>
 										</TabletAndMobile>
 									</>
 								)}
@@ -476,7 +531,11 @@ const NavigationBar = (props: Props) => {
 						)}
 						<Box sx={{ display: 'flex', flexDirection: 'column' }}>
 							<Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-							{gender === 'Homme' ? t.navigation.welcomeMale : gender === 'Femme' ? t.navigation.welcomeFemale : t.navigation.welcomeNeutral}
+								{gender === 'Homme'
+									? t.navigation.welcomeMale
+									: gender === 'Femme'
+										? t.navigation.welcomeFemale
+										: t.navigation.welcomeNeutral}
 							</Typography>
 							<Typography variant="body2" sx={{ color: 'text.secondary' }}>
 								{first_name} {last_name}
@@ -566,7 +625,15 @@ const NavigationBar = (props: Props) => {
 				transformOrigin={{ vertical: 'top', horizontal: 'right' }}
 				slotProps={{ paper: { sx: { width: 360, maxHeight: 420 } } }}
 			>
-				<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ px: 2, py: 1.5 }}>
+				<Stack
+					direction="row"
+					sx={{
+						justifyContent: 'space-between',
+						alignItems: 'center',
+						px: 2,
+						py: 1.5,
+					}}
+				>
 					<Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
 						{t.navigation.notifications}
 					</Typography>

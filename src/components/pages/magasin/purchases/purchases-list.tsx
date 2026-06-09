@@ -3,7 +3,14 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Stack } from '@mui/material';
-import { Add as AddIcon, Close as CloseIcon, Delete as DeleteIcon, DownloadDone as ReceiveIcon, Edit as EditIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
+import {
+	Add as AddIcon,
+	Close as CloseIcon,
+	Delete as DeleteIcon,
+	DownloadDone as ReceiveIcon,
+	Edit as EditIcon,
+	Visibility as VisibilityIcon,
+} from '@mui/icons-material';
 import { GridLogicOperator, type GridColDef, type GridFilterModel, type GridRenderCellParams } from '@mui/x-data-grid';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
@@ -38,15 +45,15 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 	const [chipFilterParams, setChipFilterParams] = useState<Record<string, string>>({});
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 	const [receiveTarget, setReceiveTarget] = useState<number | null>(null);
-	const mergedFilterParams = useMemo(() => ({ ...chipFilterParams, ...customFilterParams }), [chipFilterParams, customFilterParams]);
+	const mergedFilterParams = useMemo(
+		() => ({ ...chipFilterParams, ...customFilterParams }),
+		[chipFilterParams, customFilterParams],
+	);
 	const { data, isLoading, refetch } = useGetPurchasesQuery(
 		{ search: searchTerm, page: paginationModel.page + 1, pageSize: paginationModel.pageSize, ...mergedFilterParams },
 		{ skip: !token },
 	);
-	const { data: filterPurchases } = useGetPurchasesQuery(
-		{ page: 1, pageSize: 200 },
-		{ skip: !token },
-	);
+	const { data: filterPurchases } = useGetPurchasesQuery({ page: 1, pageSize: 200 }, { skip: !token });
 	const [deletePurchase] = useDeletePurchaseMutation();
 	const [receivePurchase] = useReceivePurchaseMutation();
 
@@ -56,7 +63,9 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 			const supplier = purchase.supplier_name.trim();
 			if (supplier) suppliers.add(supplier);
 		});
-		return Array.from(suppliers).sort((a, b) => a.localeCompare(b)).map((supplier) => ({ id: supplier, nom: supplier }));
+		return Array.from(suppliers)
+			.sort((a, b) => a.localeCompare(b))
+			.map((supplier) => ({ id: supplier, nom: supplier }));
 	}, [filterPurchases?.results]);
 
 	const storeOptions = useMemo(
@@ -120,12 +129,62 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 	};
 
 	const columns: GridColDef[] = [
-		{ field: 'reference', headerName: t.magasin.reference, flex: 0.8, minWidth: 130, renderCell: (params: GridRenderCellParams<PurchaseType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
-		{ field: 'supplier_name', headerName: t.magasin.supplier, flex: 1.2, minWidth: 160, renderCell: (params: GridRenderCellParams<PurchaseType>) => <TooltipTextCell fontWeight={600}>{params.value || '-'}</TooltipTextCell> },
-		{ field: 'store_name', headerName: t.magasin.store, flex: 1, minWidth: 140, renderCell: (params: GridRenderCellParams<PurchaseType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
-		{ field: 'purchase_date', headerName: t.magasin.date, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<PurchaseType>) => <TooltipTextCell>{formatDate(params.value as string)}</TooltipTextCell> },
-		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 110, renderCell: (params: GridRenderCellParams<PurchaseType>) => <WorkflowStatusChip t={t} status={params.value as string} /> },
-		{ field: 'subtotal', headerName: t.magasin.subtotal, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<PurchaseType>) => <TooltipTextCell title={`${formatNumber(params.value as string)} Dhs`} fontWeight={600}>{formatNumber(params.value as string)} Dhs</TooltipTextCell> },
+		{
+			field: 'reference',
+			headerName: t.magasin.reference,
+			flex: 0.8,
+			minWidth: 130,
+			renderCell: (params: GridRenderCellParams<PurchaseType>) => (
+				<TooltipTextCell>{params.value ?? '-'}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'supplier_name',
+			headerName: t.magasin.supplier,
+			flex: 1.2,
+			minWidth: 160,
+			renderCell: (params: GridRenderCellParams<PurchaseType>) => (
+				<TooltipTextCell fontWeight={600}>{params.value || '-'}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'store_name',
+			headerName: t.magasin.store,
+			flex: 1,
+			minWidth: 140,
+			renderCell: (params: GridRenderCellParams<PurchaseType>) => (
+				<TooltipTextCell>{params.value ?? '-'}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'purchase_date',
+			headerName: t.magasin.date,
+			flex: 0.8,
+			minWidth: 120,
+			renderCell: (params: GridRenderCellParams<PurchaseType>) => (
+				<TooltipTextCell>{formatDate(params.value as string)}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'status',
+			headerName: t.magasin.status,
+			flex: 0.7,
+			minWidth: 110,
+			renderCell: (params: GridRenderCellParams<PurchaseType>) => (
+				<WorkflowStatusChip t={t} status={params.value as string} />
+			),
+		},
+		{
+			field: 'subtotal',
+			headerName: t.magasin.subtotal,
+			flex: 0.8,
+			minWidth: 120,
+			renderCell: (params: GridRenderCellParams<PurchaseType>) => (
+				<TooltipTextCell title={`${formatNumber(params.value as string)} Dhs`} fontWeight={600}>
+					{formatNumber(params.value as string)} Dhs
+				</TooltipTextCell>
+			),
+		},
 		{
 			field: 'actions',
 			headerName: t.common.actions,
@@ -135,10 +194,34 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 			renderCell: (params: GridRenderCellParams<PurchaseType>) => (
 				<MobileActionsMenu
 					actions={[
-						{ label: t.common.view, icon: <VisibilityIcon />, onClick: () => router.push(PURCHASES_VIEW(params.row.id)), color: 'info', show: permissions.can_view },
-						{ label: t.common.edit, icon: <EditIcon />, onClick: () => router.push(PURCHASES_EDIT(params.row.id)), color: 'primary', show: permissions.can_edit && params.row.status !== 'received' },
-						{ label: t.magasin.receivePurchase, icon: <ReceiveIcon />, onClick: () => setReceiveTarget(params.row.id), color: 'success', show: permissions.can_create && params.row.status === 'draft' },
-						{ label: t.common.delete, icon: <DeleteIcon />, onClick: () => setDeleteTarget(params.row.id), color: 'error', show: permissions.can_delete && params.row.status !== 'received' },
+						{
+							label: t.common.view,
+							icon: <VisibilityIcon />,
+							onClick: () => router.push(PURCHASES_VIEW(params.row.id)),
+							color: 'info',
+							show: permissions.can_view,
+						},
+						{
+							label: t.common.edit,
+							icon: <EditIcon />,
+							onClick: () => router.push(PURCHASES_EDIT(params.row.id)),
+							color: 'primary',
+							show: permissions.can_edit && params.row.status !== 'received',
+						},
+						{
+							label: t.magasin.receivePurchase,
+							icon: <ReceiveIcon />,
+							onClick: () => setReceiveTarget(params.row.id),
+							color: 'success',
+							show: permissions.can_create && params.row.status === 'draft',
+						},
+						{
+							label: t.common.delete,
+							icon: <DeleteIcon />,
+							onClick: () => setDeleteTarget(params.row.id),
+							color: 'error',
+							show: permissions.can_delete && params.row.status !== 'received',
+						},
 					]}
 				/>
 			),
@@ -150,8 +233,22 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 			<Protected>
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
-						<Stack direction="row" spacing={1} flexWrap="wrap">
-							{permissions.can_create && <Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => router.push(PURCHASES_ADD())}>{t.magasin.newPurchase}</Button>}
+						<Stack
+							direction="row"
+							spacing={1}
+							sx={{
+								flexWrap: 'wrap',
+							}}
+						>
+							{permissions.can_create && (
+								<Button
+									variant="contained"
+									startIcon={<AddIcon fontSize="small" />}
+									onClick={() => router.push(PURCHASES_ADD())}
+								>
+									{t.magasin.newPurchase}
+								</Button>
+							)}
 						</Stack>
 					</Box>
 					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} />
@@ -177,7 +274,13 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 					titleIcon={<DeleteIcon />}
 					titleIconColor="#D32F2F"
 					actions={[
-						{ text: t.common.cancel, active: false, onClick: () => setDeleteTarget(null), icon: <CloseIcon />, color: '#6B6B6B' },
+						{
+							text: t.common.cancel,
+							active: false,
+							onClick: () => setDeleteTarget(null),
+							icon: <CloseIcon />,
+							color: '#6B6B6B',
+						},
 						{ text: t.common.delete, active: true, onClick: handleDelete, icon: <DeleteIcon />, color: '#D32F2F' },
 					]}
 				/>
@@ -189,8 +292,20 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 					titleIcon={<ReceiveIcon />}
 					titleIconColor="#2E7D32"
 					actions={[
-						{ text: t.common.cancel, active: false, onClick: () => setReceiveTarget(null), icon: <CloseIcon />, color: '#6B6B6B' },
-						{ text: t.magasin.receivePurchase, active: true, onClick: handleReceive, icon: <ReceiveIcon />, color: '#2E7D32' },
+						{
+							text: t.common.cancel,
+							active: false,
+							onClick: () => setReceiveTarget(null),
+							icon: <CloseIcon />,
+							color: '#6B6B6B',
+						},
+						{
+							text: t.magasin.receivePurchase,
+							active: true,
+							onClick: handleReceive,
+							icon: <ReceiveIcon />,
+							color: '#2E7D32',
+						},
 					]}
 				/>
 			)}

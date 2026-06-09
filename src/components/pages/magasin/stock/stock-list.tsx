@@ -68,15 +68,14 @@ const StockClient = ({ session }: SessionProps) => {
 	const [selectedIds, setSelectedIds] = useState<number[]>([]);
 	const [requestPaginationModel, setRequestPaginationModel] = useState({ page: 0, pageSize: 5 });
 	const [requestSearchTerm, setRequestSearchTerm] = useState('');
-	const [requestFilterModel, setRequestFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
+	const [requestFilterModel, setRequestFilterModel] = useState<GridFilterModel>({
+		items: [],
+		logicOperator: GridLogicOperator.And,
+	});
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 	const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
-	const {
-		data,
-		isLoading,
-		refetch,
-	} = useGetStockBalancesQuery(
+	const { data, isLoading, refetch } = useGetStockBalancesQuery(
 		{
 			store: storeId,
 			search: searchTerm,
@@ -93,7 +92,11 @@ const StockClient = ({ session }: SessionProps) => {
 	const [rejectStockAddRequest] = useRejectStockAddRequestMutation();
 	const { data: categories } = useGetCategoriesQuery(undefined, { skip: !token });
 	const { data: productUnits } = useGetProductUnitsQuery(undefined, { skip: !token });
-	const { data: stockRequests, isLoading: areRequestsLoading, refetch: refetchRequests } = useGetStockAddRequestsQuery(
+	const {
+		data: stockRequests,
+		isLoading: areRequestsLoading,
+		refetch: refetchRequests,
+	} = useGetStockAddRequestsQuery(
 		{
 			store: storeId,
 			status: 'pending',
@@ -186,7 +189,15 @@ const StockClient = ({ session }: SessionProps) => {
 				],
 			},
 		],
-		[categories?.results, productUnits?.results, t.magasin.category, t.magasin.lowStockReached, t.magasin.lowStockStatus, t.magasin.stockSufficient, t.magasin.unit],
+		[
+			categories?.results,
+			productUnits?.results,
+			t.magasin.category,
+			t.magasin.lowStockReached,
+			t.magasin.lowStockStatus,
+			t.magasin.stockSufficient,
+			t.magasin.unit,
+		],
 	);
 
 	const columns: GridColDef[] = [
@@ -197,7 +208,9 @@ const StockClient = ({ session }: SessionProps) => {
 			minWidth: 130,
 			renderCell: (params: GridRenderCellParams<StockBalanceType>) => (
 				<DarkTooltip title={params.value ?? params.row.product_barcode ?? '-'}>
-					<Typography variant="body2" noWrap>{params.value ?? params.row.product_barcode ?? '-'}</Typography>
+					<Typography variant="body2" noWrap>
+						{params.value ?? params.row.product_barcode ?? '-'}
+					</Typography>
 				</DarkTooltip>
 			),
 		},
@@ -208,7 +221,15 @@ const StockClient = ({ session }: SessionProps) => {
 			minWidth: 190,
 			renderCell: (params: GridRenderCellParams<StockBalanceType>) => (
 				<DarkTooltip title={params.value}>
-					<Typography variant="body2" fontWeight={600} noWrap>{params.value}</Typography>
+					<Typography
+						variant="body2"
+						noWrap
+						sx={{
+							fontWeight: 600,
+						}}
+					>
+						{params.value}
+					</Typography>
 				</DarkTooltip>
 			),
 		},
@@ -235,9 +256,7 @@ const StockClient = ({ session }: SessionProps) => {
 			headerName: t.magasin.store,
 			flex: 1,
 			minWidth: 140,
-			renderCell: (params: GridRenderCellParams<StockBalanceType>) => (
-				<TooltipTextCell>{params.value}</TooltipTextCell>
-			),
+			renderCell: (params: GridRenderCellParams<StockBalanceType>) => <TooltipTextCell>{params.value}</TooltipTextCell>,
 		},
 		{
 			field: 'quantity',
@@ -296,7 +315,13 @@ const StockClient = ({ session }: SessionProps) => {
 					</DarkTooltip>
 				) : (
 					<DarkTooltip title={t.magasin.stockSufficient}>
-						<Chip icon={<CheckCircleIcon />} label={t.magasin.stockSufficient} color="success" size="small" variant="outlined" />
+						<Chip
+							icon={<CheckCircleIcon />}
+							label={t.magasin.stockSufficient}
+							color="success"
+							size="small"
+							variant="outlined"
+						/>
 					</DarkTooltip>
 				),
 		},
@@ -384,12 +409,24 @@ const StockClient = ({ session }: SessionProps) => {
 			renderCell: (params: GridRenderCellParams<StockAddRequestType>) => (
 				<Stack direction="row" spacing={1}>
 					<DarkTooltip title={t.magasin.approveStockRequest}>
-						<Button size="small" variant="outlined" color="success" startIcon={<ApproveIcon fontSize="small" />} onClick={() => void approveRequestHandler(params.row.id)}>
+						<Button
+							size="small"
+							variant="outlined"
+							color="success"
+							startIcon={<ApproveIcon fontSize="small" />}
+							onClick={() => void approveRequestHandler(params.row.id)}
+						>
 							{t.common.confirm}
 						</Button>
 					</DarkTooltip>
 					<DarkTooltip title={t.magasin.rejectStockRequest}>
-						<Button size="small" variant="outlined" color="error" startIcon={<RejectIcon fontSize="small" />} onClick={() => void rejectRequestHandler(params.row.id)}>
+						<Button
+							size="small"
+							variant="outlined"
+							color="error"
+							startIcon={<RejectIcon fontSize="small" />}
+							onClick={() => void rejectRequestHandler(params.row.id)}
+						>
 							{t.magasin.rejectStockRequest}
 						</Button>
 					</DarkTooltip>
@@ -412,14 +449,29 @@ const StockClient = ({ session }: SessionProps) => {
 						token={token}
 					/>
 					<Box sx={magasinPageContentSx}>
-						<Stack direction="row" spacing={1} flexWrap="wrap">
+						<Stack
+							direction="row"
+							spacing={1}
+							sx={{
+								flexWrap: 'wrap',
+							}}
+						>
 							{permissions.can_create && (canManageStore || selectedMembership) && (
-								<Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => router.push(STOCK_ADD(storeId))}>
+								<Button
+									variant="contained"
+									startIcon={<AddIcon fontSize="small" />}
+									onClick={() => router.push(STOCK_ADD(storeId))}
+								>
 									{canApproveRequests ? t.magasin.newStock : t.magasin.newStockRequest}
 								</Button>
 							)}
 							{selectedIds.length > 0 && permissions.can_delete && canManageStore && (
-								<Button variant="outlined" color="error" startIcon={<DeleteIcon fontSize="small" />} onClick={() => setShowBulkDeleteModal(true)}>
+								<Button
+									variant="outlined"
+									color="error"
+									startIcon={<DeleteIcon fontSize="small" />}
+									onClick={() => setShowBulkDeleteModal(true)}
+								>
 									{t.common.delete} ({selectedIds.length})
 								</Button>
 							)}
@@ -429,9 +481,25 @@ const StockClient = ({ session }: SessionProps) => {
 					{canApproveRequests && (
 						<Card elevation={2} sx={{ mt: 2, mb: 2, mx: { xs: 1, sm: 2, md: 3 }, borderRadius: 2, overflow: 'hidden' }}>
 							<CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
-								<Stack direction="row" spacing={2} alignItems="center" sx={{ px: { xs: 2, md: 3 }, pt: { xs: 2, md: 3 }, pb: 2 }}>
+								<Stack
+									direction="row"
+									spacing={2}
+									sx={{
+										alignItems: 'center',
+										px: { xs: 2, md: 3 },
+										pt: { xs: 2, md: 3 },
+										pb: 2,
+									}}
+								>
 									<WarningIcon color="primary" />
-									<Typography variant="h6" fontWeight={700}>{t.magasin.stockRequests}</Typography>
+									<Typography
+										variant="h6"
+										sx={{
+											fontWeight: 700,
+										}}
+									>
+										{t.magasin.stockRequests}
+									</Typography>
 								</Stack>
 								<Divider sx={{ mx: { xs: 2, md: 3 } }} />
 								<PaginatedDataGrid
@@ -473,7 +541,13 @@ const StockClient = ({ session }: SessionProps) => {
 						titleIcon={<DeleteIcon />}
 						titleIconColor="#D32F2F"
 						actions={[
-							{ text: t.common.cancel, active: false, onClick: () => setDeleteTarget(null), icon: <CloseIcon />, color: '#6B6B6B' },
+							{
+								text: t.common.cancel,
+								active: false,
+								onClick: () => setDeleteTarget(null),
+								icon: <CloseIcon />,
+								color: '#6B6B6B',
+							},
 							{ text: t.common.delete, active: true, onClick: deleteHandler, icon: <DeleteIcon />, color: '#D32F2F' },
 						]}
 					/>
@@ -485,8 +559,20 @@ const StockClient = ({ session }: SessionProps) => {
 						titleIcon={<DeleteIcon />}
 						titleIconColor="#D32F2F"
 						actions={[
-							{ text: t.common.cancel, active: false, onClick: () => setShowBulkDeleteModal(false), icon: <CloseIcon />, color: '#6B6B6B' },
-							{ text: t.common.delete, active: true, onClick: bulkDeleteHandler, icon: <DeleteIcon />, color: '#D32F2F' },
+							{
+								text: t.common.cancel,
+								active: false,
+								onClick: () => setShowBulkDeleteModal(false),
+								icon: <CloseIcon />,
+								color: '#6B6B6B',
+							},
+							{
+								text: t.common.delete,
+								active: true,
+								onClick: bulkDeleteHandler,
+								icon: <DeleteIcon />,
+								color: '#D32F2F',
+							},
 						]}
 					/>
 				)}

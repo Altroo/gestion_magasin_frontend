@@ -2,15 +2,7 @@
 
 import React, { ChangeEvent, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-	Box,
-	Button,
-	Chip,
-	CircularProgress,
-	IconButton,
-	Stack,
-	Typography,
-} from '@mui/material';
+import { Box, Button, Chip, CircularProgress, IconButton, Stack, Typography } from '@mui/material';
 import {
 	Add as AddIcon,
 	Cancel as CancelIcon,
@@ -75,11 +67,7 @@ const CatalogClient = ({ session }: SessionProps) => {
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 	const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
-	const {
-		data,
-		isLoading,
-		refetch,
-	} = useGetProductsQuery(
+	const { data, isLoading, refetch } = useGetProductsQuery(
 		{
 			store: storeId,
 			search: searchTerm,
@@ -194,7 +182,9 @@ const CatalogClient = ({ session }: SessionProps) => {
 			minWidth: 120,
 			renderCell: (params: GridRenderCellParams<ProductType>) => (
 				<DarkTooltip title={params.value ?? '-'}>
-					<Typography variant="body2" noWrap>{params.value ?? '-'}</Typography>
+					<Typography variant="body2" noWrap>
+						{params.value ?? '-'}
+					</Typography>
 				</DarkTooltip>
 			),
 		},
@@ -205,7 +195,9 @@ const CatalogClient = ({ session }: SessionProps) => {
 			minWidth: 130,
 			renderCell: (params: GridRenderCellParams<ProductType>) => (
 				<DarkTooltip title={params.value ?? '-'}>
-					<Typography variant="body2" noWrap>{params.value ?? '-'}</Typography>
+					<Typography variant="body2" noWrap>
+						{params.value ?? '-'}
+					</Typography>
 				</DarkTooltip>
 			),
 		},
@@ -216,7 +208,15 @@ const CatalogClient = ({ session }: SessionProps) => {
 			minWidth: 180,
 			renderCell: (params: GridRenderCellParams<ProductType>) => (
 				<DarkTooltip title={params.value}>
-					<Typography variant="body2" fontWeight={600} noWrap>{params.value}</Typography>
+					<Typography
+						variant="body2"
+						noWrap
+						sx={{
+							fontWeight: 600,
+						}}
+					>
+						{params.value}
+					</Typography>
 				</DarkTooltip>
 			),
 		},
@@ -344,7 +344,13 @@ const CatalogClient = ({ session }: SessionProps) => {
 						token={token}
 					/>
 					<Box sx={magasinPageContentSx}>
-						<Stack direction="row" spacing={1} flexWrap="wrap">
+						<Stack
+							direction="row"
+							spacing={1}
+							sx={{
+								flexWrap: 'wrap',
+							}}
+						>
 							{permissions.can_create && canManageStore && (
 								<Button
 									variant="contained"

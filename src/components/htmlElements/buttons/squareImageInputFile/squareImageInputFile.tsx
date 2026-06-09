@@ -19,7 +19,14 @@ const SquareImageInputFile: React.FC<Props> = ({ onImageUpload }) => {
 	return (
 		<ThemeProvider theme={defaultTheme}>
 			<Button className={Styles.squareImageWrapper} color="primary" onClick={onImageUpload}>
-				<Stack direction="column" justifyContent="center" alignItems="center" spacing={1}>
+				<Stack
+					direction="column"
+					spacing={1}
+					sx={{
+						justifyContent: 'center',
+						alignItems: 'center',
+					}}
+				>
 					<AddIcon className={Styles.addIcon} sx={{ fontSize: 31.5 }} color="primary" />
 					<span className={Styles.addImagesSpan}>{t.common.addImage}</span>
 				</Stack>

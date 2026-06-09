@@ -53,14 +53,19 @@ const ResetPasswordPageContent = () => {
 
 	return (
 		<Stack direction="column" className={Styles.contentWrapper} spacing={4}>
-			<Stack direction="column" spacing={1} alignItems="flex-start" width="100%">
+			<Stack
+				direction="column"
+				spacing={1}
+				sx={{
+					alignItems: 'flex-start',
+					width: '100%',
+				}}
+			>
 				<Stack direction="column">
 					<span className={Styles.content}>{t.auth.recovery}</span>
 					<span className={Styles.subContent}>{t.auth.ofPassword}</span>
 				</Stack>
-				<span className={Styles.paragraphe}>
-					{t.auth.enterEmailDescription}
-				</span>
+				<span className={Styles.paragraphe}>{t.auth.enterEmailDescription}</span>
 			</Stack>
 			<Divider orientation="horizontal" flexItem className={Styles.divider} />
 			<form style={{ width: '100%' }} onSubmit={formik.handleSubmit} method="post">

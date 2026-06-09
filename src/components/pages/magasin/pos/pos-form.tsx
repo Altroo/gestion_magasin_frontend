@@ -164,15 +164,15 @@ const PosClient = ({ session }: SessionProps) => {
 	);
 	const paymentModeOptions = useMemo(() => paymentModes?.results ?? [], [paymentModes?.results]);
 	const defaultPaymentMode = useMemo(
-		() => paymentModeOptions.find((mode) => mode.code === 'cash') ?? paymentModeOptions.find((mode) => !mode.is_credit) ?? paymentModeOptions[0],
+		() =>
+			paymentModeOptions.find((mode) => mode.code === 'cash') ??
+			paymentModeOptions.find((mode) => !mode.is_credit) ??
+			paymentModeOptions[0],
 		[paymentModeOptions],
 	);
 	const effectivePaymentModeId = selectedPaymentModeId || (defaultPaymentMode ? String(defaultPaymentMode.id) : '');
 
-	const total = useMemo(
-		() => cart.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0),
-		[cart],
-	);
+	const total = useMemo(() => cart.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0), [cart]);
 
 	const addProduct = (product: ProductType) => {
 		setCart((current) => {
@@ -199,7 +199,9 @@ const PosClient = ({ session }: SessionProps) => {
 			const existing = current.find((line) => line.type === 'promotion' && line.promotion.id === promotion.id);
 			if (existing) {
 				return current.map((line) =>
-					line.type === 'promotion' && line.promotion.id === promotion.id ? { ...line, quantity: line.quantity + 1 } : line,
+					line.type === 'promotion' && line.promotion.id === promotion.id
+						? { ...line, quantity: line.quantity + 1 }
+						: line,
 				);
 			}
 			return [
@@ -260,17 +262,18 @@ const PosClient = ({ session }: SessionProps) => {
 		[],
 	);
 
-	const updateQuantity = useCallback((targetKey: string, delta: number) => {
-		setCart((current) =>
-			current
-				.map((line) =>
-					lineKey(line) === targetKey
-						? { ...line, quantity: Math.max(0, line.quantity + delta) }
-						: line,
-				)
-				.filter((line) => line.quantity > 0),
-		);
-	}, [lineKey]);
+	const updateQuantity = useCallback(
+		(targetKey: string, delta: number) => {
+			setCart((current) =>
+				current
+					.map((line) =>
+						lineKey(line) === targetKey ? { ...line, quantity: Math.max(0, line.quantity + delta) } : line,
+					)
+					.filter((line) => line.quantity > 0),
+			);
+		},
+		[lineKey],
+	);
 
 	const cartRows = useMemo<CartGridRow[]>(
 		() =>
@@ -300,10 +303,22 @@ const PosClient = ({ session }: SessionProps) => {
 				minWidth: 180,
 				renderCell: (params: GridRenderCellParams<CartGridRow>) => (
 					<Box sx={{ minWidth: 0, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-						<Typography variant="body2" fontWeight={600} noWrap>
+						<Typography
+							variant="body2"
+							noWrap
+							sx={{
+								fontWeight: 600,
+							}}
+						>
 							{params.row.name}
 						</Typography>
-						<Typography variant="caption" color="text.secondary" noWrap>
+						<Typography
+							variant="caption"
+							noWrap
+							sx={{
+								color: 'text.secondary',
+							}}
+						>
 							{params.row.reference || params.row.typeLabel}
 						</Typography>
 					</Box>
@@ -337,17 +352,30 @@ const PosClient = ({ session }: SessionProps) => {
 					<Stack
 						direction="row"
 						spacing={0.5}
-						justifyContent="center"
-						alignItems="center"
-						sx={{ width: '100%', height: '100%' }}
+						sx={{
+							justifyContent: 'center',
+							alignItems: 'center',
+							width: '100%',
+							height: '100%',
+						}}
 					>
-						<IconButton type="button" size="small" onClick={() => updateQuantity(params.row.id, -1)} aria-label="Diminuer">
+						<IconButton
+							type="button"
+							size="small"
+							onClick={() => updateQuantity(params.row.id, -1)}
+							aria-label="Diminuer"
+						>
 							<RemoveIcon fontSize="small" />
 						</IconButton>
 						<Typography variant="body2" sx={{ width: 42, textAlign: 'center', fontWeight: 600 }}>
 							{params.row.quantity}
 						</Typography>
-						<IconButton type="button" size="small" onClick={() => updateQuantity(params.row.id, 1)} aria-label="Augmenter">
+						<IconButton
+							type="button"
+							size="small"
+							onClick={() => updateQuantity(params.row.id, 1)}
+							aria-label="Augmenter"
+						>
 							<AddIcon fontSize="small" />
 						</IconButton>
 					</Stack>
@@ -370,13 +398,26 @@ const PosClient = ({ session }: SessionProps) => {
 				disableColumnMenu: true,
 				align: 'left',
 				renderCell: (params: GridRenderCellParams<CartGridRow>) => (
-					<IconButton type="button" color="error" size="small" onClick={() => setCart((current) => current.filter((item) => lineKey(item) !== params.row.id))}>
+					<IconButton
+						type="button"
+						color="error"
+						size="small"
+						onClick={() => setCart((current) => current.filter((item) => lineKey(item) !== params.row.id))}
+					>
 						<DeleteIcon fontSize="small" />
 					</IconButton>
 				),
 			},
 		],
-		[lineKey, t.common.actions, t.magasin.product, t.magasin.quantity, t.magasin.total, t.magasin.unitPrice, updateQuantity],
+		[
+			lineKey,
+			t.common.actions,
+			t.magasin.product,
+			t.magasin.quantity,
+			t.magasin.total,
+			t.magasin.unitPrice,
+			updateQuantity,
+		],
 	);
 
 	const payload = (): SaleCreatePayload | null => {
@@ -442,7 +483,8 @@ const PosClient = ({ session }: SessionProps) => {
 		}
 	};
 
-	const shouldShowBarcodeError = Boolean(scanFormik.errors.barcode) && (hasAttemptedScan || Boolean(scanFormik.values.barcode));
+	const shouldShowBarcodeError =
+		Boolean(scanFormik.errors.barcode) && (hasAttemptedScan || Boolean(scanFormik.values.barcode));
 
 	const stopCamera = () => {
 		if (scanTimerRef.current) {
@@ -467,7 +509,13 @@ const PosClient = ({ session }: SessionProps) => {
 				await videoRef.current.play();
 			}
 			setCameraActive(true);
-			const Detector = (window as unknown as { BarcodeDetector: new (args: { formats: string[] }) => { detect: (source: HTMLVideoElement) => Promise<Array<{ rawValue: string }>> } }).BarcodeDetector;
+			const Detector = (
+				window as unknown as {
+					BarcodeDetector: new (args: { formats: string[] }) => {
+						detect: (source: HTMLVideoElement) => Promise<Array<{ rawValue: string }>>;
+					};
+				}
+			).BarcodeDetector;
 			const detector = new Detector({ formats: ['ean_13', 'ean_8', 'code_128', 'qr_code'] });
 			scanTimerRef.current = window.setInterval(async () => {
 				if (!videoRef.current) {
@@ -585,7 +633,12 @@ const PosClient = ({ session }: SessionProps) => {
 									</Box>
 									{cameraActive && (
 										<Box sx={{ mt: 2, overflow: 'hidden', borderRadius: 1, bgcolor: 'black' }}>
-											<video ref={videoRef} muted playsInline style={{ display: 'block', width: '100%', maxHeight: 320, objectFit: 'cover' }} />
+											<video
+												ref={videoRef}
+												muted
+												playsInline
+												style={{ display: 'block', width: '100%', maxHeight: 320, objectFit: 'cover' }}
+											/>
 										</Box>
 									)}
 									{scanFormik.errors.globalError && (
@@ -601,7 +654,14 @@ const PosClient = ({ session }: SessionProps) => {
 									icon={<LocalOfferIcon fontSize="small" />}
 									contentSx={{ p: 2, '&:last-child': { pb: 2 } }}
 								>
-									<Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+									<Stack
+										direction="row"
+										spacing={1}
+										useFlexGap
+										sx={{
+											flexWrap: 'wrap',
+										}}
+									>
 										{promotions?.results.map((promotion) => (
 											<Button
 												type="button"
@@ -624,7 +684,12 @@ const PosClient = ({ session }: SessionProps) => {
 									offlineQueue.length > 0 ? (
 										<Stack direction="row" spacing={1}>
 											<Chip label={`${t.magasin.offlineQueue}: ${offlineQueue.length}`} size="small" />
-											<IconButton type="button" onClick={() => void syncQueue()} disabled={syncState.isLoading} aria-label={t.magasin.syncOffline}>
+											<IconButton
+												type="button"
+												onClick={() => void syncQueue()}
+												disabled={syncState.isLoading}
+												aria-label={t.magasin.syncOffline}
+											>
 												<SyncIcon />
 											</IconButton>
 										</Stack>
@@ -675,7 +740,14 @@ const PosClient = ({ session }: SessionProps) => {
 									</Box>
 								)}
 								<Divider sx={{ my: 2 }} />
-								<Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'center' }}>
+								<Stack
+									direction={{ xs: 'column', sm: 'row' }}
+									spacing={2}
+									sx={{
+										justifyContent: 'space-between',
+										alignItems: { xs: 'stretch', sm: 'center' },
+									}}
+								>
 									<ThemeProvider theme={dropdownTheme}>
 										<TextField
 											select
@@ -685,7 +757,15 @@ const PosClient = ({ session }: SessionProps) => {
 											value={effectivePaymentModeId}
 											onChange={(event) => setSelectedPaymentModeId(event.target.value)}
 											disabled={arePaymentModesLoading || paymentModeOptions.length === 0}
-											slotProps={{ input: { startAdornment: <InputAdornment position="start"><CreditCardIcon fontSize="small" /></InputAdornment> } }}
+											slotProps={{
+												input: {
+													startAdornment: (
+														<InputAdornment position="start">
+															<CreditCardIcon fontSize="small" />
+														</InputAdornment>
+													),
+												},
+											}}
 											sx={{ minWidth: { xs: '100%', sm: 260 } }}
 										>
 											{paymentModeOptions.map((mode) => (
@@ -696,10 +776,20 @@ const PosClient = ({ session }: SessionProps) => {
 										</TextField>
 									</ThemeProvider>
 									<Stack spacing={0.25}>
-										<Typography variant="caption" color="text.secondary">
+										<Typography
+											variant="caption"
+											sx={{
+												color: 'text.secondary',
+											}}
+										>
 											{t.magasin.total}
 										</Typography>
-										<Typography variant="h6" fontWeight={700}>
+										<Typography
+											variant="h6"
+											sx={{
+												fontWeight: 700,
+											}}
+										>
 											{money(total)}
 										</Typography>
 									</Stack>

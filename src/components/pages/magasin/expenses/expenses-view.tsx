@@ -43,7 +43,10 @@ const ExpensesViewClient = ({ session, id }: Props) => {
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const { data: expense, isLoading, error } = useGetExpenseQuery({ id }, { skip: !token });
 	const [deleteExpense] = useDeleteExpenseMutation();
-	const axiosError = useMemo(() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined), [error]);
+	const axiosError = useMemo(
+		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
+		[error],
+	);
 
 	const handleDelete = async () => {
 		try {
@@ -63,26 +66,60 @@ const ExpensesViewClient = ({ session, id }: Props) => {
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={3}>
-							<Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={2}>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(EXPENSES_LIST)}>{t.magasin.backToExpenses}</Button>
+							<Stack
+								direction={{ xs: 'column', sm: 'row' }}
+								spacing={2}
+								sx={{
+									justifyContent: 'space-between',
+								}}
+							>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(EXPENSES_LIST)}>
+									{t.magasin.backToExpenses}
+								</Button>
 								{expense && (
 									<Stack direction="row" spacing={1}>
-										{permissions.can_create && <Button variant="outlined" color="primary" size="small" startIcon={<EditIcon />} onClick={() => router.push(EXPENSES_EDIT(expense.id, expense.store))}>{t.common.edit}</Button>}
-										{permissions.can_delete && <Button variant="outlined" color="error" size="small" startIcon={<DeleteIcon />} onClick={() => setShowDeleteModal(true)}>{t.common.delete}</Button>}
+										{permissions.can_create && (
+											<Button
+												variant="outlined"
+												color="primary"
+												size="small"
+												startIcon={<EditIcon />}
+												onClick={() => router.push(EXPENSES_EDIT(expense.id, expense.store))}
+											>
+												{t.common.edit}
+											</Button>
+										)}
+										{permissions.can_delete && (
+											<Button
+												variant="outlined"
+												color="error"
+												size="small"
+												startIcon={<DeleteIcon />}
+												onClick={() => setShowDeleteModal(true)}
+											>
+												{t.common.delete}
+											</Button>
+										)}
 									</Stack>
 								)}
 							</Stack>
-							{isLoading ? <ApiProgress backdropColor="#FFFFFF" circularColor="#0D070B" /> : (axiosError?.status as number) > 400 ? <ApiAlert errorDetails={axiosError?.data.details} /> : !expense ? <Alert severity="warning">{t.magasin.noRows}</Alert> : (
+							{isLoading ? (
+								<ApiProgress backdropColor="#FFFFFF" circularColor="#0D070B" />
+							) : (axiosError?.status as number) > 400 ? (
+								<ApiAlert errorDetails={axiosError?.data.details} />
+							) : !expense ? (
+								<Alert severity="warning">{t.magasin.noRows}</Alert>
+							) : (
 								<Stack spacing={3}>
 									<DetailHeaderCard
 										icon={<PaymentsIcon />}
 										title={expense.label}
-										chips={(
+										chips={
 											<>
 												<Chip label={`ID: ${expense.id}`} size="small" variant="outlined" />
 												<StatusChip t={t} status={expense.payment_status} />
 											</>
-										)}
+										}
 									/>
 									<DetailCard icon={<PaymentsIcon />} title={t.magasin.expenseDetails}>
 										<InfoRow icon={<StorefrontIcon />} label={t.magasin.store} value={expense.store_name} />
@@ -91,18 +128,36 @@ const ExpensesViewClient = ({ session, id }: Props) => {
 										<Divider />
 										<InfoRow icon={<CalendarIcon />} label={t.magasin.date} value={formatDate(expense.expense_date)} />
 										<Divider />
-										<InfoRow icon={<PaymentIcon />} label={t.magasin.paymentMode} value={expense.payment_mode_name ?? expensePaymentModeLabel(t, expense.payment_mode)} />
+										<InfoRow
+											icon={<PaymentIcon />}
+											label={t.magasin.paymentMode}
+											value={expense.payment_mode_name ?? expensePaymentModeLabel(t, expense.payment_mode)}
+										/>
 										<Divider />
-										<InfoRow icon={<NumbersIcon />} label={t.magasin.expenseAmount} value={`${formatNumber(expense.amount)} Dhs`} />
+										<InfoRow
+											icon={<NumbersIcon />}
+											label={t.magasin.expenseAmount}
+											value={`${formatNumber(expense.amount)} Dhs`}
+										/>
 										<Divider />
 										<InfoRow
 											icon={<AttachFileIcon />}
 											label={t.magasin.invoice}
-											value={expense.invoice_file_url ? (
-												<Button href={expense.invoice_file_url} target="_blank" rel="noopener noreferrer" size="small" startIcon={<AttachFileIcon />}>
-													{t.magasin.invoice}
-												</Button>
-											) : '-'}
+											value={
+												expense.invoice_file_url ? (
+													<Button
+														href={expense.invoice_file_url}
+														target="_blank"
+														rel="noopener noreferrer"
+														size="small"
+														startIcon={<AttachFileIcon />}
+													>
+														{t.magasin.invoice}
+													</Button>
+												) : (
+													'-'
+												)
+											}
 										/>
 										<Divider />
 										<InfoRow icon={<PersonIcon />} label={t.magasin.responsible} value={expense.created_by_email} />
@@ -115,7 +170,24 @@ const ExpensesViewClient = ({ session, id }: Props) => {
 					</Box>
 				</Box>
 			</Protected>
-			{showDeleteModal && <ActionModals title={t.magasin.deleteExpenseTitle} body={t.magasin.deleteExpenseBody} titleIcon={<DeleteIcon />} titleIconColor="#D32F2F" actions={[{ text: t.common.cancel, active: false, onClick: () => setShowDeleteModal(false), icon: <CloseIcon />, color: '#6B6B6B' }, { text: t.common.delete, active: true, onClick: handleDelete, icon: <DeleteIcon />, color: '#D32F2F' }]} />}
+			{showDeleteModal && (
+				<ActionModals
+					title={t.magasin.deleteExpenseTitle}
+					body={t.magasin.deleteExpenseBody}
+					titleIcon={<DeleteIcon />}
+					titleIconColor="#D32F2F"
+					actions={[
+						{
+							text: t.common.cancel,
+							active: false,
+							onClick: () => setShowDeleteModal(false),
+							icon: <CloseIcon />,
+							color: '#6B6B6B',
+						},
+						{ text: t.common.delete, active: true, onClick: handleDelete, icon: <DeleteIcon />, color: '#D32F2F' },
+					]}
+				/>
+			)}
 		</NavigationBar>
 	);
 };

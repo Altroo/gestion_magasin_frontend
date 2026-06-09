@@ -61,10 +61,15 @@ const SetPasswordPageContent: React.FC<SetPasswordPageContentProps> = ({ email, 
 
 	return (
 		<Stack direction="column" className={Styles.contentWrapper} spacing={6}>
-			<Stack direction="column" justifyContent="flex-start" alignItems="flex-start" width="100%">
-				<span className={Styles.content}>
-					{t.auth.setNewPassword}
-				</span>
+			<Stack
+				direction="column"
+				sx={{
+					justifyContent: 'flex-start',
+					alignItems: 'flex-start',
+					width: '100%',
+				}}
+			>
+				<span className={Styles.content}>{t.auth.setNewPassword}</span>
 			</Stack>
 			<form style={{ width: '100%' }} onSubmit={(e) => e.preventDefault()}>
 				<Stack direction="column" spacing={4}>

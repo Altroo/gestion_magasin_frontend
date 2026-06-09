@@ -2,8 +2,34 @@
 
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert, Autocomplete, Box, Button, Card, CardContent, Divider, IconButton, InputAdornment, MenuItem, Stack, TextField, ThemeProvider, Typography } from '@mui/material';
-import { Add as AddIcon, ArrowBack as ArrowBackIcon, AttachFile as AttachFileIcon, Delete as DeleteIcon, Description as DescriptionIcon, Edit as EditIcon, Inventory2 as InventoryIcon, Remove as RemoveIcon, Storefront as StorefrontIcon, Warning as WarningIcon } from '@mui/icons-material';
+import {
+	Alert,
+	Autocomplete,
+	Box,
+	Button,
+	Card,
+	CardContent,
+	Divider,
+	IconButton,
+	InputAdornment,
+	MenuItem,
+	Stack,
+	TextField,
+	ThemeProvider,
+	Typography,
+} from '@mui/material';
+import {
+	Add as AddIcon,
+	ArrowBack as ArrowBackIcon,
+	AttachFile as AttachFileIcon,
+	Delete as DeleteIcon,
+	Description as DescriptionIcon,
+	Edit as EditIcon,
+	Inventory2 as InventoryIcon,
+	Remove as RemoveIcon,
+	Storefront as StorefrontIcon,
+	Warning as WarningIcon,
+} from '@mui/icons-material';
 import { DataGrid, type GridColDef, type GridPaginationModel, type GridRenderCellParams } from '@mui/x-data-grid';
 import { frFR } from '@mui/x-data-grid/locales';
 import { getIn, useFormik } from 'formik';
@@ -20,7 +46,12 @@ import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages
 import { purchaseStatusOptions } from '@/components/pages/magasin/shared/status-labels';
 import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
-import { useAddPurchaseMutation, useEditPurchaseMutation, useGetProductsQuery, useGetPurchaseQuery } from '@/store/services/magasin';
+import {
+	useAddPurchaseMutation,
+	useEditPurchaseMutation,
+	useGetProductsQuery,
+	useGetPurchaseQuery,
+} from '@/store/services/magasin';
 import { purchaseSchema } from '@/utils/formValidationSchemas';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
 import { splitAutocompleteRenderParams } from '@/utils/muiAutocompleteSlots';
@@ -63,18 +94,24 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 	const { defaultStore, globalStore, memberships } = useSelectedStore(token);
 	const storeOptions = useMemo(() => {
 		const options = [globalStore, ...memberships.map((membership) => membership.store)].filter(Boolean);
-		return options.filter((store, index, stores) => stores.findIndex((candidate) => candidate?.id === store?.id) === index);
+		return options.filter(
+			(store, index, stores) => stores.findIndex((candidate) => candidate?.id === store?.id) === index,
+		);
 	}, [globalStore, memberships]);
 	const defaultPurchaseStore = globalStore ?? defaultStore;
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [linePaginationModel, setLinePaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 5 });
 	const [addPurchase, addState] = useAddPurchaseMutation();
 	const [editPurchase, editState] = useEditPurchaseMutation();
-	const { data: purchase, isLoading: isPurchaseLoading, error: purchaseError } = useGetPurchaseQuery(
-		{ id: id! },
-		{ skip: !token || !isEditMode },
+	const {
+		data: purchase,
+		isLoading: isPurchaseLoading,
+		error: purchaseError,
+	} = useGetPurchaseQuery({ id: id! }, { skip: !token || !isEditMode });
+	const axiosError = useMemo(
+		() => (purchaseError ? (purchaseError as ResponseDataInterface<ApiErrorResponseType>) : undefined),
+		[purchaseError],
 	);
-	const axiosError = useMemo(() => (purchaseError ? (purchaseError as ResponseDataInterface<ApiErrorResponseType>) : undefined), [purchaseError]);
 
 	const toPayload = (values: PurchaseFormValues): PurchasePayload => ({
 		store: Number(values.store),
@@ -84,7 +121,11 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 		status: values.status || 'draft',
 		invoice_file: values.invoice_file,
 		note: values.note.trim(),
-		lines: values.lines.map((line) => ({ product: Number(line.product), quantity: line.quantity, unit_cost: line.unit_cost })),
+		lines: values.lines.map((line) => ({
+			product: Number(line.product),
+			quantity: line.quantity,
+			unit_cost: line.unit_cost,
+		})),
 	});
 
 	const formik = useFormik<PurchaseFormValues>({
@@ -96,7 +137,13 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 			status: purchase?.status ?? 'draft',
 			invoice_file: null,
 			note: purchase?.note ?? '',
-			lines: purchase?.lines.length ? purchase.lines.map((line) => ({ product: String(line.product), quantity: line.quantity, unit_cost: line.unit_cost })) : [{ ...emptyLine }],
+			lines: purchase?.lines.length
+				? purchase.lines.map((line) => ({
+						product: String(line.product),
+						quantity: line.quantity,
+						unit_cost: line.unit_cost,
+					}))
+				: [{ ...emptyLine }],
 			globalError: '',
 		},
 		enableReinitialize: true,
@@ -126,17 +173,20 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 		{ skip: !token || !activeProductStoreId },
 	);
 
-	const fieldLabels = useMemo<Record<string, string>>(() => ({
-		supplier_name: t.magasin.supplier,
-		store: t.magasin.store,
-		reference: t.magasin.reference,
-		purchase_date: t.magasin.date,
-		status: t.magasin.status,
-		invoice_file: t.magasin.invoice,
-		note: t.magasin.note,
-		lines: t.magasin.purchaseLines,
-		globalError: t.errors.globalError,
-	}), [t]);
+	const fieldLabels = useMemo<Record<string, string>>(
+		() => ({
+			supplier_name: t.magasin.supplier,
+			store: t.magasin.store,
+			reference: t.magasin.reference,
+			purchase_date: t.magasin.date,
+			status: t.magasin.status,
+			invoice_file: t.magasin.invoice,
+			note: t.magasin.note,
+			lines: t.magasin.purchaseLines,
+			globalError: t.errors.globalError,
+		}),
+		[t],
+	);
 
 	const validationErrors = useMemo(() => {
 		const errors: Record<string, string> = {};
@@ -207,7 +257,9 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 						size="small"
 						options={productOptions}
 						value={productOptions.find((product) => String(product.id) === params.row.product) ?? null}
-						onChange={(_, nextProduct) => void formik.setFieldValue(`lines.${params.row.index}.product`, nextProduct ? String(nextProduct.id) : '')}
+						onChange={(_, nextProduct) =>
+							void formik.setFieldValue(`lines.${params.row.index}.product`, nextProduct ? String(nextProduct.id) : '')
+						}
 						onBlur={() => void formik.setFieldTouched(`lines.${params.row.index}.product`, true)}
 						getOptionLabel={productLabel}
 						isOptionEqualToValue={(option, value) => option.id === value.id}
@@ -264,11 +316,28 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 			sortable: false,
 			filterable: false,
 			renderCell: (params: GridRenderCellParams<PurchaseLineGridRow>) => (
-				<Stack direction="row" spacing={0.5} justifyContent="center" alignItems="center" sx={{ width: '100%', height: '100%' }}>
+				<Stack
+					direction="row"
+					spacing={0.5}
+					sx={{
+						justifyContent: 'center',
+						alignItems: 'center',
+						width: '100%',
+						height: '100%',
+					}}
+				>
 					<IconButton size="small" onClick={() => updateLineQuantity(params.row.index, -1)} aria-label="Diminuer">
 						<RemoveIcon fontSize="small" />
 					</IconButton>
-					<Typography variant="body2" sx={{ width: 42, textAlign: 'center', fontWeight: 600, color: lineError(params.row.index, 'quantity') ? 'error.main' : 'text.primary' }}>
+					<Typography
+						variant="body2"
+						sx={{
+							width: 42,
+							textAlign: 'center',
+							fontWeight: 600,
+							color: lineError(params.row.index, 'quantity') ? 'error.main' : 'text.primary',
+						}}
+					>
 						{params.row.quantity || '0'}
 					</Typography>
 					<IconButton size="small" onClick={() => updateLineQuantity(params.row.index, 1)} aria-label="Augmenter">
@@ -328,22 +397,71 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={3}>
-							<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(PURCHASES_LIST)} sx={{ width: 'fit-content' }}>{t.magasin.backToPurchases}</Button>
+							<Button
+								variant="outlined"
+								startIcon={<ArrowBackIcon />}
+								onClick={() => router.push(PURCHASES_LIST)}
+								sx={{ width: 'fit-content' }}
+							>
+								{t.magasin.backToPurchases}
+							</Button>
 							{Object.keys(validationErrors).length > 0 && (
 								<Alert severity="error" icon={<WarningIcon />}>
-									<Typography variant="subtitle2" fontWeight={600}>{t.users.validationErrorsDetected}</Typography>
-									<ul style={{ margin: '8px 0', paddingLeft: '20px' }}>{Object.entries(validationErrors).map(([key, message]) => <li key={key}><Typography variant="body2">{getLabelForKey(fieldLabels, key)} : {message}</Typography></li>)}</ul>
+									<Typography
+										variant="subtitle2"
+										sx={{
+											fontWeight: 600,
+										}}
+									>
+										{t.users.validationErrorsDetected}
+									</Typography>
+									<ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+										{Object.entries(validationErrors).map(([key, message]) => (
+											<li key={key}>
+												<Typography variant="body2">
+													{getLabelForKey(fieldLabels, key)} : {message}
+												</Typography>
+											</li>
+										))}
+									</ul>
 								</Alert>
 							)}
 							{formik.errors.globalError && <span className={Styles.errorMessage}>{formik.errors.globalError}</span>}
-							{isLoading ? <ApiProgress backdropColor="#FFFFFF" circularColor="#0D070B" /> : (axiosError?.status as number) > 400 ? <ApiAlert errorDetails={axiosError?.data.details} /> : (
+							{isLoading ? (
+								<ApiProgress backdropColor="#FFFFFF" circularColor="#0D070B" />
+							) : (axiosError?.status as number) > 400 ? (
+								<ApiAlert errorDetails={axiosError?.data.details} />
+							) : (
 								<form onSubmit={formik.handleSubmit}>
 									<Stack spacing={3}>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}><StorefrontIcon color="primary" /><Typography variant="h6" fontWeight={700}>{t.magasin.purchaseDetails}</Typography></Stack>
+												<Stack
+													direction="row"
+													spacing={2}
+													sx={{
+														alignItems: 'center',
+														mb: 2,
+													}}
+												>
+													<StorefrontIcon color="primary" />
+													<Typography
+														variant="h6"
+														sx={{
+															fontWeight: 700,
+														}}
+													>
+														{t.magasin.purchaseDetails}
+													</Typography>
+												</Stack>
 												<Divider sx={{ mb: 3 }} />
-												<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2.5 }}>
+												<Box
+													sx={{
+														display: 'grid',
+														gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+														gap: 2.5,
+													}}
+												>
 													<RoundedAutocomplete
 														size="small"
 														options={storeOptions}
@@ -362,9 +480,46 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 														startIcon={<StorefrontIcon fontSize="small" />}
 														fullWidth
 													/>
-													<CustomTextInput id="supplier_name" type="text" label={t.magasin.supplier} value={formik.values.supplier_name} onChange={formik.handleChange('supplier_name')} onBlur={formik.handleBlur('supplier_name')} error={Boolean(fieldError('supplier_name'))} helperText={fieldError('supplier_name')} fullWidth size="small" theme={inputTheme} startIcon={<StorefrontIcon fontSize="small" />} />
-													<CustomTextInput id="reference" type="text" label={t.magasin.reference} value={formik.values.reference} onChange={formik.handleChange('reference')} onBlur={formik.handleBlur('reference')} error={Boolean(fieldError('reference'))} helperText={fieldError('reference')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
-													<MuiFormikDatePicker id="purchase_date" label={`${t.magasin.date} *`} value={formik.values.purchase_date} onChange={(value) => void formik.setFieldValue('purchase_date', value)} onBlur={formik.handleBlur('purchase_date')} error={Boolean(fieldError('purchase_date'))} helperText={fieldError('purchase_date')} fullWidth size="small" startIcon={<DescriptionIcon fontSize="small" />} />
+													<CustomTextInput
+														id="supplier_name"
+														type="text"
+														label={t.magasin.supplier}
+														value={formik.values.supplier_name}
+														onChange={formik.handleChange('supplier_name')}
+														onBlur={formik.handleBlur('supplier_name')}
+														error={Boolean(fieldError('supplier_name'))}
+														helperText={fieldError('supplier_name')}
+														fullWidth
+														size="small"
+														theme={inputTheme}
+														startIcon={<StorefrontIcon fontSize="small" />}
+													/>
+													<CustomTextInput
+														id="reference"
+														type="text"
+														label={t.magasin.reference}
+														value={formik.values.reference}
+														onChange={formik.handleChange('reference')}
+														onBlur={formik.handleBlur('reference')}
+														error={Boolean(fieldError('reference'))}
+														helperText={fieldError('reference')}
+														fullWidth
+														size="small"
+														theme={inputTheme}
+														startIcon={<DescriptionIcon fontSize="small" />}
+													/>
+													<MuiFormikDatePicker
+														id="purchase_date"
+														label={`${t.magasin.date} *`}
+														value={formik.values.purchase_date}
+														onChange={(value) => void formik.setFieldValue('purchase_date', value)}
+														onBlur={formik.handleBlur('purchase_date')}
+														error={Boolean(fieldError('purchase_date'))}
+														helperText={fieldError('purchase_date')}
+														fullWidth
+														size="small"
+														startIcon={<DescriptionIcon fontSize="small" />}
+													/>
 													<Button
 														component="label"
 														variant="outlined"
@@ -376,12 +531,37 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 															type="file"
 															hidden
 															accept=".pdf,.png,.jpg,.jpeg,.webp"
-															onChange={(event) => void formik.setFieldValue('invoice_file', event.currentTarget.files?.[0] ?? null)}
+															onChange={(event) =>
+																void formik.setFieldValue('invoice_file', event.currentTarget.files?.[0] ?? null)
+															}
 														/>
 													</Button>
 													<ThemeProvider theme={dropdownTheme}>
-														<TextField select size="small" label={`${t.magasin.status} *`} value={formik.values.status} onChange={(event) => void formik.setFieldValue('status', event.target.value)} onBlur={formik.handleBlur('status')} error={Boolean(fieldError('status'))} helperText={fieldError('status')} slotProps={{ input: { startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> } }} fullWidth>
-															{purchaseStatusOptions(t).map((option) => <MenuItem key={option.id} value={option.id}>{option.nom}</MenuItem>)}
+														<TextField
+															select
+															size="small"
+															label={`${t.magasin.status} *`}
+															value={formik.values.status}
+															onChange={(event) => void formik.setFieldValue('status', event.target.value)}
+															onBlur={formik.handleBlur('status')}
+															error={Boolean(fieldError('status'))}
+															helperText={fieldError('status')}
+															slotProps={{
+																input: {
+																	startAdornment: (
+																		<InputAdornment position="start">
+																			<DescriptionIcon fontSize="small" />
+																		</InputAdornment>
+																	),
+																},
+															}}
+															fullWidth
+														>
+															{purchaseStatusOptions(t).map((option) => (
+																<MenuItem key={option.id} value={option.id}>
+																	{option.nom}
+																</MenuItem>
+															))}
 														</TextField>
 													</ThemeProvider>
 												</Box>
@@ -389,7 +569,29 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 										</Card>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}><Stack direction="row" spacing={2}><InventoryIcon color="primary" /><Typography variant="h6" fontWeight={700}>{t.magasin.purchaseLines}</Typography></Stack><Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={addLine}>{t.common.add}</Button></Stack>
+												<Stack
+													direction="row"
+													sx={{
+														justifyContent: 'space-between',
+														alignItems: 'center',
+														mb: 2,
+													}}
+												>
+													<Stack direction="row" spacing={2}>
+														<InventoryIcon color="primary" />
+														<Typography
+															variant="h6"
+															sx={{
+																fontWeight: 700,
+															}}
+														>
+															{t.magasin.purchaseLines}
+														</Typography>
+													</Stack>
+													<Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={addLine}>
+														{t.common.add}
+													</Button>
+												</Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Box sx={{ width: '100%' }}>
 													<DataGrid
@@ -432,12 +634,60 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 										</Card>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}><DescriptionIcon color="primary" /><Typography variant="h6" fontWeight={700}>{t.magasin.note}</Typography></Stack>
+												<Stack
+													direction="row"
+													spacing={2}
+													sx={{
+														alignItems: 'center',
+														mb: 2,
+													}}
+												>
+													<DescriptionIcon color="primary" />
+													<Typography
+														variant="h6"
+														sx={{
+															fontWeight: 700,
+														}}
+													>
+														{t.magasin.note}
+													</Typography>
+												</Stack>
 												<Divider sx={{ mb: 3 }} />
-												<CustomTextInput id="note" type="text" label={t.magasin.note} value={formik.values.note} onChange={formik.handleChange('note')} onBlur={formik.handleBlur('note')} error={Boolean(fieldError('note'))} helperText={fieldError('note')} fullWidth size="small" theme={inputTheme} startIcon={<DescriptionIcon fontSize="small" />} />
+												<CustomTextInput
+													id="note"
+													type="text"
+													label={t.magasin.note}
+													value={formik.values.note}
+													onChange={formik.handleChange('note')}
+													onBlur={formik.handleBlur('note')}
+													error={Boolean(fieldError('note'))}
+													helperText={fieldError('note')}
+													fullWidth
+													size="small"
+													theme={inputTheme}
+													startIcon={<DescriptionIcon fontSize="small" />}
+												/>
 											</CardContent>
 										</Card>
-										<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}><PrimaryLoadingButton type="submit" buttonText={isEditMode ? t.magasin.editPurchase : t.magasin.newPurchase} active={!addState.isLoading && !editState.isLoading} loading={addState.isLoading || editState.isLoading} startIcon={isEditMode ? <EditIcon /> : <AddIcon />} onClick={(event: React.MouseEvent<HTMLButtonElement>) => { setHasAttemptedSubmit(true); if (!formik.isValid) { event.preventDefault(); formik.handleSubmit(); onError(t.magasin.fixValidationErrors); window.scrollTo({ top: 0, behavior: 'smooth' }); } }} cssClass={`${Styles.maxWidth} ${Styles.mobileButton} ${Styles.submitButton}`} /></Box>
+										<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+											<PrimaryLoadingButton
+												type="submit"
+												buttonText={isEditMode ? t.magasin.editPurchase : t.magasin.newPurchase}
+												active={!addState.isLoading && !editState.isLoading}
+												loading={addState.isLoading || editState.isLoading}
+												startIcon={isEditMode ? <EditIcon /> : <AddIcon />}
+												onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+													setHasAttemptedSubmit(true);
+													if (!formik.isValid) {
+														event.preventDefault();
+														formik.handleSubmit();
+														onError(t.magasin.fixValidationErrors);
+														window.scrollTo({ top: 0, behavior: 'smooth' });
+													}
+												}}
+												cssClass={`${Styles.maxWidth} ${Styles.mobileButton} ${Styles.submitButton}`}
+											/>
+										</Box>
 									</Stack>
 								</form>
 							)}

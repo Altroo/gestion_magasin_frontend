@@ -57,10 +57,10 @@ const FormikContent: React.FC<formikContentType> = (props: formikContentType) =>
 				const response = await editProfil({ data: payload }).unwrap();
 				if (response) {
 					dispatch(accountEditProfilAction(response));
-						onSuccess(t.settings.updateSuccess);
-					}
-				} catch (e) {
-					onError(t.settings.updateError);
+					onSuccess(t.settings.updateSuccess);
+				}
+			} catch (e) {
+				onError(t.settings.updateError);
 				setFormikAutoErrors({ e, setFieldError });
 			} finally {
 				setIsPending(false);
@@ -69,13 +69,28 @@ const FormikContent: React.FC<formikContentType> = (props: formikContentType) =>
 	});
 
 	return (
-		<Stack direction="column" alignItems="center" spacing={2} className={`${Styles.flexRootStack}`} mt="32px">
+		<Stack
+			direction="column"
+			spacing={2}
+			className={`${Styles.flexRootStack}`}
+			sx={{
+				alignItems: 'center',
+				mt: '32px',
+			}}
+		>
 			{(isEditLoading || isPending || isProfilLoading) && (
 				<ApiProgress backdropColor="#FFFFFF" circularColor="#0D070B" />
 			)}
 			<h2 className={Styles.pageTitle}>{t.settings.profile}</h2>
 			<form className={Styles.form} onSubmit={(e) => e.preventDefault()}>
-				<Stack direction="column" spacing={2} justifyContent="center" alignItems="center">
+				<Stack
+					direction="column"
+					spacing={2}
+					sx={{
+						justifyContent: 'center',
+						alignItems: 'center',
+					}}
+				>
 					<CustomSquareImageUploading
 						cssClasse={Styles.centerAvatar}
 						image={formik.values.avatar}
@@ -93,8 +108,8 @@ const FormikContent: React.FC<formikContentType> = (props: formikContentType) =>
 						error={formik.touched.first_name && Boolean(formik.errors.first_name)}
 						fullWidth={true}
 						size="small"
-					label={t.users.lastName}
-					placeholder={t.users.lastName}
+						label={t.users.lastName}
+						placeholder={t.users.lastName}
 						theme={inputTheme}
 						startIcon={<PersonIcon fontSize="small" />}
 						cssClass={Styles.maxInputWidth}
@@ -109,8 +124,8 @@ const FormikContent: React.FC<formikContentType> = (props: formikContentType) =>
 						error={formik.touched.last_name && Boolean(formik.errors.last_name)}
 						fullWidth={true}
 						size="small"
-					label={t.users.firstName}
-					placeholder={t.users.firstName}
+						label={t.users.firstName}
+						placeholder={t.users.firstName}
 						theme={inputTheme}
 						startIcon={<PersonIcon fontSize="small" />}
 						cssClass={Styles.maxInputWidth}
@@ -118,8 +133,8 @@ const FormikContent: React.FC<formikContentType> = (props: formikContentType) =>
 					<CustomDropDownSelect
 						size="small"
 						id="gender"
-					label={t.users.gender}
-					items={genderItemsList(t)}
+						label={t.users.gender}
+						items={genderItemsList(t)}
 						theme={customDropdownTheme()}
 						onChange={(e) => formik.setFieldValue('gender', e.target.value)}
 						value={formik.values.gender}
@@ -127,7 +142,7 @@ const FormikContent: React.FC<formikContentType> = (props: formikContentType) =>
 						cssClass={Styles.maxInputWidth}
 					/>
 					<PrimaryLoadingButton
-					buttonText={t.common.update}
+						buttonText={t.common.update}
 						active={!isPending}
 						onClick={formik.handleSubmit}
 						cssClass={`${Styles.maxWidth} ${Styles.mobileButton} ${Styles.submitButton}`}

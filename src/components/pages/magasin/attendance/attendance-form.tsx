@@ -240,8 +240,8 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 	]);
 
 	return (
-		<NavigationBar title={isEditMode ? t.magasin.editAttendance : t.magasin.newAttendance}>
-			<Protected permission={isEditMode ? 'can_edit' : 'can_create'}>
+        <NavigationBar title={isEditMode ? t.magasin.editAttendance : t.magasin.newAttendance}>
+            <Protected permission={isEditMode ? 'can_edit' : 'can_create'}>
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={3}>
@@ -255,7 +255,9 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 							</Button>
 							{Object.keys(validationErrors).length > 0 && (
 								<Alert severity="error" icon={<WarningIcon />}>
-									<Typography variant="subtitle2" fontWeight={600}>
+									<Typography variant="subtitle2" sx={{
+                                        fontWeight: 600
+                                    }}>
 										{t.users.validationErrorsDetected}
 									</Typography>
 									<ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
@@ -278,9 +280,17 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 									<Stack spacing={3}>
 										<Card elevation={2}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+												<Stack
+													direction="row"
+													spacing={2}
+													sx={{
+															alignItems: "center",
+															mb: 2
+													}}>
 													<BadgeIcon color="primary" />
-													<Typography variant="h6" fontWeight={700}>
+													<Typography variant="h6" sx={{
+                                                        fontWeight: 700
+                                                    }}>
 														{t.magasin.attendanceInformation}
 													</Typography>
 												</Stack>
@@ -439,9 +449,17 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 										</Card>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+												<Stack
+                                                    direction="row"
+                                                    spacing={2}
+                                                    sx={{
+                                                        alignItems: "center",
+                                                        mb: 2
+                                                    }}>
 													<RemarkIcon color="primary" />
-													<Typography variant="h6" fontWeight={700}>
+													<Typography variant="h6" sx={{
+                                                        fontWeight: 700
+                                                    }}>
 														{t.magasin.movementNote}
 													</Typography>
 												</Stack>
@@ -488,8 +506,8 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 					</Box>
 				</Box>
 			</Protected>
-		</NavigationBar>
-	);
+        </NavigationBar>
+    );
 };
 
 export default AttendanceFormClient;

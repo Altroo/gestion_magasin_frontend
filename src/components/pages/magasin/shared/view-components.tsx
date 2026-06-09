@@ -86,10 +86,11 @@ const STATUS_VISUALS: Record<string, StatusVisual> = {
 	payable: { color: 'warning', icon: (props) => <PendingActionsIcon {...props} /> },
 };
 
-const getStatusVisual = (status?: string | null): StatusVisual => STATUS_VISUALS[status ?? ''] ?? {
-	color: 'default',
-	icon: (props) => <EmptyStatusIcon {...props} />,
-};
+const getStatusVisual = (status?: string | null): StatusVisual =>
+	STATUS_VISUALS[status ?? ''] ?? {
+		color: 'default',
+		icon: (props) => <EmptyStatusIcon {...props} />,
+	};
 
 export const InfoRow = ({ icon, label, value }: InfoRowProps) => {
 	const theme = useTheme();
@@ -97,14 +98,41 @@ export const InfoRow = ({ icon, label, value }: InfoRowProps) => {
 	const displayValue = isValidElement(value) ? value : value || '-';
 
 	return (
-		<Stack direction="row" spacing={2} alignItems="flex-start" sx={{ py: 1.5, flexWrap: 'wrap' }}>
+		<Stack
+			direction="row"
+			spacing={2}
+			sx={{
+				alignItems: 'flex-start',
+				py: 1.5,
+				flexWrap: 'wrap',
+			}}
+		>
 			<Box sx={{ color: 'primary.main', display: 'flex', alignItems: 'center', minWidth: 40 }}>{icon}</Box>
-			<Stack direction="row" spacing={isMobile ? 0 : 2} alignItems="center" sx={{ flex: 1, flexWrap: 'wrap' }}>
-				<Typography fontWeight={600} color="text.secondary" sx={{ minWidth: { xs: '100%', sm: 220 }, wordBreak: 'break-word' }}>
+			<Stack
+				direction="row"
+				spacing={isMobile ? 0 : 2}
+				sx={{
+					alignItems: 'center',
+					flex: 1,
+					flexWrap: 'wrap',
+				}}
+			>
+				<Typography
+					sx={{
+						fontWeight: 600,
+						color: 'text.secondary',
+						minWidth: { xs: '100%', sm: 220 },
+						wordBreak: 'break-word',
+					}}
+				>
 					{label}
 				</Typography>
 				<Box sx={{ flex: 1 }}>
-					{isValidElement(displayValue) ? displayValue : <Typography sx={{ color: 'text.primary' }}>{displayValue}</Typography>}
+					{isValidElement(displayValue) ? (
+						displayValue
+					) : (
+						<Typography sx={{ color: 'text.primary' }}>{displayValue}</Typography>
+					)}
 				</Box>
 			</Stack>
 		</Stack>
@@ -114,9 +142,23 @@ export const InfoRow = ({ icon, label, value }: InfoRowProps) => {
 export const DetailCard = ({ icon, title, children }: DetailCardProps) => (
 	<Card elevation={2} sx={{ borderRadius: 2 }}>
 		<CardContent sx={{ p: 3 }}>
-			<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+			<Stack
+				direction="row"
+				spacing={2}
+				sx={{
+					alignItems: 'center',
+					mb: 2,
+				}}
+			>
 				<Box sx={{ color: 'primary.main', display: 'flex' }}>{icon}</Box>
-				<Typography variant="h6" fontWeight={700}>{title}</Typography>
+				<Typography
+					variant="h6"
+					sx={{
+						fontWeight: 700,
+					}}
+				>
+					{title}
+				</Typography>
 			</Stack>
 			<Divider sx={{ mb: 2 }} />
 			<Stack spacing={0}>{children}</Stack>
@@ -127,12 +169,33 @@ export const DetailCard = ({ icon, title, children }: DetailCardProps) => (
 export const DetailHeaderCard = ({ icon, title, chips }: DetailHeaderCardProps) => (
 	<Card elevation={2} sx={{ borderRadius: 2 }}>
 		<CardContent sx={{ p: 3 }}>
-			<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2, flexWrap: 'wrap' }}>
+			<Stack
+				direction="row"
+				spacing={2}
+				sx={{
+					alignItems: 'center',
+					mb: 2,
+					flexWrap: 'wrap',
+				}}
+			>
 				<Box sx={{ color: 'primary.main', display: 'flex' }}>{icon}</Box>
-				<Typography variant="h6" fontWeight={700}>{title}</Typography>
+				<Typography
+					variant="h6"
+					sx={{
+						fontWeight: 700,
+					}}
+				>
+					{title}
+				</Typography>
 			</Stack>
 			{chips && (
-				<Stack direction="row" spacing={1} flexWrap="wrap">
+				<Stack
+					direction="row"
+					spacing={1}
+					sx={{
+						flexWrap: 'wrap',
+					}}
+				>
 					{chips}
 				</Stack>
 			)}
@@ -169,16 +232,32 @@ export const StatusIcon = ({ t, status }: { t: TranslationDictionary; status?: s
 export const LineItemsCard = <T,>({ icon, title, columns, rows, getRowKey, emptyLabel }: LineItemsCardProps<T>) => (
 	<Card elevation={2} sx={{ borderRadius: 2 }}>
 		<CardContent sx={{ p: 3 }}>
-			<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+			<Stack
+				direction="row"
+				spacing={2}
+				sx={{
+					alignItems: 'center',
+					mb: 2,
+				}}
+			>
 				<Box sx={{ color: 'primary.main', display: 'flex' }}>{icon}</Box>
-				<Typography variant="h6" fontWeight={700}>{title}</Typography>
+				<Typography
+					variant="h6"
+					sx={{
+						fontWeight: 700,
+					}}
+				>
+					{title}
+				</Typography>
 			</Stack>
 			<Divider sx={{ mb: 2 }} />
 			<Table size="small">
 				<TableHead>
 					<TableRow>
 						{columns.map((column) => (
-							<TableCell key={column.key} align={column.align}>{column.label}</TableCell>
+							<TableCell key={column.key} align={column.align}>
+								{column.label}
+							</TableCell>
 						))}
 					</TableRow>
 				</TableHead>
@@ -186,16 +265,27 @@ export const LineItemsCard = <T,>({ icon, title, columns, rows, getRowKey, empty
 					{rows.length === 0 ? (
 						<TableRow>
 							<TableCell colSpan={columns.length}>
-								<Typography variant="body2" color="text.secondary">{emptyLabel}</Typography>
+								<Typography
+									variant="body2"
+									sx={{
+										color: 'text.secondary',
+									}}
+								>
+									{emptyLabel}
+								</Typography>
 							</TableCell>
 						</TableRow>
-					) : rows.map((row) => (
-						<TableRow key={getRowKey(row)}>
-							{columns.map((column) => (
-								<TableCell key={column.key} align={column.align}>{column.render(row)}</TableCell>
-							))}
-						</TableRow>
-					))}
+					) : (
+						rows.map((row) => (
+							<TableRow key={getRowKey(row)}>
+								{columns.map((column) => (
+									<TableCell key={column.key} align={column.align}>
+										{column.render(row)}
+									</TableCell>
+								))}
+							</TableRow>
+						))
+					)}
 				</TableBody>
 			</Table>
 		</CardContent>

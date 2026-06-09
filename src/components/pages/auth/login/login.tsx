@@ -77,7 +77,14 @@ const LoginPageContent = () => {
 
 	return (
 		<Stack direction="column" spacing={4} className={Styles.contentWrapper}>
-			<Stack direction="column" justifyContent="flex-start" alignItems="flex-start" width="100%">
+			<Stack
+				direction="column"
+				sx={{
+					justifyContent: 'flex-start',
+					alignItems: 'flex-start',
+					width: '100%',
+				}}
+			>
 				<h1 className={Styles.content}>{t.auth.login}</h1>
 			</Stack>
 			<Stack direction="column" spacing={2} className={Styles.mobileWidth}>
@@ -180,7 +187,13 @@ const LoginClient: React.FC = () => {
 			<TabletAndMobile>
 				<div style={{ display: 'flex', width: '100%', height: '100%' }}>
 					<main className={Styles.main}>
-						<Stack direction="row" alignItems="center" justifyContent="center">
+						<Stack
+							direction="row"
+							sx={{
+								alignItems: 'center',
+								justifyContent: 'center',
+							}}
+						>
 							<Image src={Logo} alt={t.common.appLogo} width="0" height="0" sizes="100vw" className={Styles.logo} />
 						</Stack>
 						<LoginPageContent />

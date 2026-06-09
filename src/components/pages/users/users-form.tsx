@@ -31,7 +31,7 @@ import {
 	ArrowBack as ArrowBackIcon,
 	Email as EmailIcon,
 	Groups as GroupsIcon,
-	PersonOutline as PersonOutlineIcon,
+	PersonOutlined as PersonOutlinedIcon,
 	AdminPanelSettings as AdminPanelSettingsIcon,
 	CheckCircle as CheckCircleIcon,
 	AccountCircle as AccountCircleIcon,
@@ -58,7 +58,12 @@ import { USERS_LIST, USERS_VIEW } from '@/utils/routes';
 import { useRouter } from 'next/navigation';
 import CustomSquareImageUploading from '@/components/formikElements/customSquareImageUploading/customSquareImageUploading';
 import { useToast, useLanguage } from '@/utils/hooks';
-import { useAddUserMutation, useCheckEmailMutation, useEditUserMutation, useGetUserQuery } from '@/store/services/account';
+import {
+	useAddUserMutation,
+	useCheckEmailMutation,
+	useEditUserMutation,
+	useGetUserQuery,
+} from '@/store/services/account';
 import { useGetStoreRolesQuery, useGetStoresQuery } from '@/store/services/magasin';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { Protected } from '@/components/layouts/protected/protected';
@@ -91,14 +96,12 @@ type FormikContentProps = {
 	id?: number;
 };
 
-const permissionFields: Array<keyof Pick<UserFormValues, 'can_view' | 'can_print' | 'can_create' | 'can_edit' | 'can_delete' | 'can_create_promotion'>> = [
-	'can_view',
-	'can_print',
-	'can_create',
-	'can_edit',
-	'can_delete',
-	'can_create_promotion',
-];
+const permissionFields: Array<
+	keyof Pick<
+		UserFormValues,
+		'can_view' | 'can_print' | 'can_create' | 'can_edit' | 'can_delete' | 'can_create_promotion'
+	>
+> = ['can_view', 'can_print', 'can_create', 'can_edit', 'can_delete', 'can_create_promotion'];
 
 const baseAdminPermissionFields: Array<Exclude<(typeof permissionFields)[number], 'can_create_promotion'>> = [
 	'can_view',
@@ -126,10 +129,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 	const [addUser, { isLoading: isAddLoading, error: addError }] = useAddUserMutation();
 	const [checkEmail, { isLoading: isCheckEmailLoading, error: checkEmailError }] = useCheckEmailMutation();
 	const [editUser, { isLoading: isEditLoading, error: editError }] = useEditUserMutation();
-	const { data: storesRawData, isLoading: isStoresLoading } = useGetStoresQuery(
-		{ pageSize: 100 },
-		{ skip: !token },
-	);
+	const { data: storesRawData, isLoading: isStoresLoading } = useGetStoresQuery({ pageSize: 100 }, { skip: !token });
 	const { data: rolesRawData, isLoading: isRolesLoading } = useGetStoreRolesQuery(undefined, { skip: !token });
 
 	const error = checkEmailError || (isEditMode ? dataError || editError : addError);
@@ -228,10 +228,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 	const storesData = useMemo(() => storesRawData?.results ?? [], [storesRawData?.results]);
 	const rolesData = useMemo(() => rolesRawData?.results ?? [], [rolesRawData?.results]);
 	const storeAssignments = useMemo(() => formik.values.stores ?? [], [formik.values.stores]);
-	const assignedStoreIds = useMemo(
-		() => storeAssignments.map((store) => store.store_id),
-		[storeAssignments],
-	);
+	const assignedStoreIds = useMemo(() => storeAssignments.map((store) => store.store_id), [storeAssignments]);
 	const availableStores = useMemo(
 		() =>
 			storesData
@@ -274,24 +271,29 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 		}
 	};
 
-	const handlePermissionChange = (field: (typeof permissionFields)[number]) => (event: React.ChangeEvent<HTMLInputElement>) => {
-		if (field === 'can_create_promotion' && !formik.values.is_staff) {
-			void formik.setFieldValue('can_create_promotion', false, true);
-			return;
-		}
-		const checked = event.target.checked;
-		void formik.setFieldValue(field, checked, true);
-		const nextValues = {
-			can_view: formik.values.can_view,
-			can_print: formik.values.can_print,
-			can_create: formik.values.can_create,
-			can_edit: formik.values.can_edit,
-			can_delete: formik.values.can_delete,
-			can_create_promotion: formik.values.can_create_promotion,
-			[field]: checked,
+	const handlePermissionChange =
+		(field: (typeof permissionFields)[number]) => (event: React.ChangeEvent<HTMLInputElement>) => {
+			if (field === 'can_create_promotion' && !formik.values.is_staff) {
+				void formik.setFieldValue('can_create_promotion', false, true);
+				return;
+			}
+			const checked = event.target.checked;
+			void formik.setFieldValue(field, checked, true);
+			const nextValues = {
+				can_view: formik.values.can_view,
+				can_print: formik.values.can_print,
+				can_create: formik.values.can_create,
+				can_edit: formik.values.can_edit,
+				can_delete: formik.values.can_delete,
+				can_create_promotion: formik.values.can_create_promotion,
+				[field]: checked,
+			};
+			void formik.setFieldValue(
+				'is_staff',
+				baseAdminPermissionFields.every((permissionField) => nextValues[permissionField]),
+				true,
+			);
 		};
-		void formik.setFieldValue('is_staff', baseAdminPermissionFields.every((permissionField) => nextValues[permissionField]), true);
-	};
 
 	const setStoreAssignments = (next: UserStoreAssignmentType[]) => {
 		void formik.setFieldValue('stores', next, true);
@@ -351,7 +353,13 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 
 	return (
 		<Stack spacing={3} sx={{ p: { xs: 2, md: 3 } }}>
-			<Stack direction={isMobile ? 'column' : 'row'} justifyContent="space-between" spacing={2}>
+			<Stack
+				direction={isMobile ? 'column' : 'row'}
+				spacing={2}
+				sx={{
+					justifyContent: 'space-between',
+				}}
+			>
 				<Button
 					variant="outlined"
 					startIcon={<ArrowBackIcon />}
@@ -368,7 +376,12 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 			</Stack>
 			{hasValidationErrors && (
 				<Alert severity="error" icon={<WarningIcon />} sx={{ mb: 2 }}>
-					<Typography variant="subtitle2" fontWeight={600}>
+					<Typography
+						variant="subtitle2"
+						sx={{
+							fontWeight: 600,
+						}}
+					>
 						{t.users.validationErrorsDetected}
 					</Typography>
 					<ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
@@ -393,10 +406,22 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 						{/* Profile Picture Card */}
 						<Card elevation={2} sx={{ borderRadius: 2 }}>
 							<CardContent sx={{ p: 3 }}>
-								<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+								<Stack
+									direction="row"
+									spacing={2}
+									sx={{
+										alignItems: 'center',
+										mb: 2,
+									}}
+								>
 									<AccountCircleIcon color="primary" />
-									<Typography variant="h6" fontWeight={700}>
-									{t.users.profilePhoto}
+									<Typography
+										variant="h6"
+										sx={{
+											fontWeight: 700,
+										}}
+									>
+										{t.users.profilePhoto}
 									</Typography>
 								</Stack>
 								<Divider sx={{ mb: 3 }} />
@@ -414,10 +439,22 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 						{/* Personal Information Card */}
 						<Card elevation={2} sx={{ borderRadius: 2 }}>
 							<CardContent sx={{ p: 3 }}>
-								<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-									<PersonOutlineIcon color="primary" />
-									<Typography variant="h6" fontWeight={700}>
-									{t.users.personalInfo}
+								<Stack
+									direction="row"
+									spacing={2}
+									sx={{
+										alignItems: 'center',
+										mb: 2,
+									}}
+								>
+									<PersonOutlinedIcon color="primary" />
+									<Typography
+										variant="h6"
+										sx={{
+											fontWeight: 700,
+										}}
+									>
+										{t.users.personalInfo}
 									</Typography>
 								</Stack>
 								<Divider sx={{ mb: 3 }} />
@@ -449,7 +486,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 										fullWidth={false}
 										size="small"
 										theme={inputTheme}
-										startIcon={<PersonOutlineIcon fontSize="small" />}
+										startIcon={<PersonOutlinedIcon fontSize="small" />}
 									/>
 									<CustomTextInput
 										id="last_name"
@@ -463,7 +500,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 										fullWidth={false}
 										size="small"
 										theme={inputTheme}
-										startIcon={<PersonOutlineIcon fontSize="small" />}
+										startIcon={<PersonOutlinedIcon fontSize="small" />}
 									/>
 									<CustomDropDownSelect
 										size="small"
@@ -485,10 +522,22 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 						{/* Account Settings Card */}
 						<Card elevation={2} sx={{ borderRadius: 2 }}>
 							<CardContent sx={{ p: 3 }}>
-								<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+								<Stack
+									direction="row"
+									spacing={2}
+									sx={{
+										alignItems: 'center',
+										mb: 2,
+									}}
+								>
 									<AdminPanelSettingsIcon color="primary" />
-									<Typography variant="h6" fontWeight={700}>
-									{t.users.accountSettings}
+									<Typography
+										variant="h6"
+										sx={{
+											fontWeight: 700,
+										}}
+									>
+										{t.users.accountSettings}
 									</Typography>
 								</Stack>
 								<Divider sx={{ mb: 3 }} />
@@ -503,7 +552,13 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 											/>
 										}
 										label={
-											<Stack direction="row" spacing={1} alignItems="center">
+											<Stack
+												direction="row"
+												spacing={1}
+												sx={{
+													alignItems: 'center',
+												}}
+											>
 												<CheckCircleIcon fontSize="small" color={formik.values.is_active ? 'success' : 'disabled'} />
 												<Typography>{t.users.activeAccount}</Typography>
 											</Stack>
@@ -519,7 +574,13 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 											/>
 										}
 										label={
-											<Stack direction="row" spacing={1} alignItems="center">
+											<Stack
+												direction="row"
+												spacing={1}
+												sx={{
+													alignItems: 'center',
+												}}
+											>
 												<AdminPanelSettingsIcon
 													fontSize="small"
 													color={formik.values.is_staff ? 'primary' : 'disabled'}
@@ -535,9 +596,21 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 						{/* Store Access Card */}
 						<Card elevation={2} sx={{ borderRadius: 2 }}>
 							<CardContent sx={{ p: 3 }}>
-								<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+								<Stack
+									direction="row"
+									spacing={2}
+									sx={{
+										alignItems: 'center',
+										mb: 2,
+									}}
+								>
 									<StorefrontIcon color="primary" />
-									<Typography variant="h6" fontWeight={700}>
+									<Typography
+										variant="h6"
+										sx={{
+											fontWeight: 700,
+										}}
+									>
 										{t.users.storeAccess} {storeAssignments.length > 0 && `(${storeAssignments.length})`}
 									</Typography>
 								</Stack>
@@ -547,7 +620,13 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 										<TableHead sx={{ backgroundColor: 'grey.50' }}>
 											<TableRow>
 												<TableCell sx={{ fontWeight: 700 }}>
-													<Stack direction="row" spacing={1} alignItems="center">
+													<Stack
+														direction="row"
+														spacing={1}
+														sx={{
+															alignItems: 'center',
+														}}
+													>
 														<StorefrontIcon color="primary" fontSize="small" />
 														<span>{t.users.storeHeader}</span>
 													</Stack>
@@ -562,9 +641,19 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 											{storeAssignments.length === 0 ? (
 												<TableRow>
 													<TableCell colSpan={3} align="center" sx={{ py: 4 }}>
-														<Stack spacing={1} alignItems="center">
+														<Stack
+															spacing={1}
+															sx={{
+																alignItems: 'center',
+															}}
+														>
 															<StorefrontIcon sx={{ fontSize: 48, color: 'grey.400' }} />
-															<Typography variant="body2" color="text.secondary">
+															<Typography
+																variant="body2"
+																sx={{
+																	color: 'text.secondary',
+																}}
+															>
 																{t.users.noStore}
 															</Typography>
 														</Stack>
@@ -572,9 +661,18 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 												</TableRow>
 											) : (
 												storeAssignments.map((item, index) => (
-													<TableRow key={`${item.store_id}-${index}`} sx={{ '&:hover': { backgroundColor: 'grey.50' } }}>
+													<TableRow
+														key={`${item.store_id}-${index}`}
+														sx={{ '&:hover': { backgroundColor: 'grey.50' } }}
+													>
 														<TableCell>
-															<Typography fontWeight={600}>{item.store_name}</Typography>
+															<Typography
+																sx={{
+																	fontWeight: 600,
+																}}
+															>
+																{item.store_name}
+															</Typography>
 														</TableCell>
 														<TableCell>
 															<Box sx={{ maxWidth: 220 }}>
@@ -612,7 +710,9 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 																aria-label={t.common.delete}
 																color="error"
 																size="small"
-																onClick={() => setStoreAssignments(storeAssignments.filter((_, storeIndex) => storeIndex !== index))}
+																onClick={() =>
+																	setStoreAssignments(storeAssignments.filter((_, storeIndex) => storeIndex !== index))
+																}
 															>
 																<DeleteIcon />
 															</IconButton>
@@ -624,9 +724,14 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 									</Table>
 								</TableContainer>
 								<Box sx={{ mt: 3 }}>
-									<Typography variant="subtitle1" fontWeight={600}>
+									<Typography
+										variant="subtitle1"
+										sx={{
+											fontWeight: 600,
+										}}
+									>
 										{t.users.addStore}
-										</Typography>
+									</Typography>
 									<Stack direction={isMobile ? 'column' : 'row'} spacing={2} sx={{ mt: 2 }}>
 										<Box sx={{ flex: 1 }}>
 											<RoundedAutocomplete
@@ -670,37 +775,86 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 						{/* Permissions Card */}
 						<Card elevation={2} sx={{ borderRadius: 2 }}>
 							<CardContent sx={{ p: 3 }}>
-								<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+								<Stack
+									direction="row"
+									spacing={2}
+									sx={{
+										alignItems: 'center',
+										mb: 2,
+									}}
+								>
 									<SecurityIcon color="primary" />
-									<Typography variant="h6" fontWeight={700}>
-									{t.users.permissions}
+									<Typography
+										variant="h6"
+										sx={{
+											fontWeight: 700,
+										}}
+									>
+										{t.users.permissions}
 									</Typography>
 								</Stack>
 								<Divider sx={{ mb: 3 }} />
 								<Stack spacing={1}>
 									<FormControlLabel
-										control={<Switch checked={formik.values.can_view} onChange={handlePermissionChange('can_view')} name="can_view" />}
-								label={t.users.canView}
+										control={
+											<Switch
+												checked={formik.values.can_view}
+												onChange={handlePermissionChange('can_view')}
+												name="can_view"
+											/>
+										}
+										label={t.users.canView}
 									/>
 									<FormControlLabel
-										control={<Switch checked={formik.values.can_print} onChange={handlePermissionChange('can_print')} name="can_print" />}
-								label={t.users.canPrint}
+										control={
+											<Switch
+												checked={formik.values.can_print}
+												onChange={handlePermissionChange('can_print')}
+												name="can_print"
+											/>
+										}
+										label={t.users.canPrint}
 									/>
 									<FormControlLabel
-										control={<Switch checked={formik.values.can_create} onChange={handlePermissionChange('can_create')} name="can_create" />}
-								label={t.users.canCreate}
+										control={
+											<Switch
+												checked={formik.values.can_create}
+												onChange={handlePermissionChange('can_create')}
+												name="can_create"
+											/>
+										}
+										label={t.users.canCreate}
 									/>
 									<FormControlLabel
-										control={<Switch checked={formik.values.can_edit} onChange={handlePermissionChange('can_edit')} name="can_edit" />}
-								label={t.users.canEdit}
+										control={
+											<Switch
+												checked={formik.values.can_edit}
+												onChange={handlePermissionChange('can_edit')}
+												name="can_edit"
+											/>
+										}
+										label={t.users.canEdit}
 									/>
 									<FormControlLabel
-										control={<Switch checked={formik.values.can_delete} onChange={handlePermissionChange('can_delete')} name="can_delete" />}
-								label={t.users.canDelete}
+										control={
+											<Switch
+												checked={formik.values.can_delete}
+												onChange={handlePermissionChange('can_delete')}
+												name="can_delete"
+											/>
+										}
+										label={t.users.canDelete}
 									/>
 									<FormControlLabel
-										control={<Switch checked={formik.values.is_staff && formik.values.can_create_promotion} onChange={handlePermissionChange('can_create_promotion')} name="can_create_promotion" disabled={!formik.values.is_staff} />}
-								label={t.users.canCreatePromotion}
+										control={
+											<Switch
+												checked={formik.values.is_staff && formik.values.can_create_promotion}
+												onChange={handlePermissionChange('can_create_promotion')}
+												name="can_create_promotion"
+												disabled={!formik.values.is_staff}
+											/>
+										}
+										label={t.users.canCreatePromotion}
 									/>
 								</Stack>
 							</CardContent>

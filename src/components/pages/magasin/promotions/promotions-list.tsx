@@ -23,7 +23,12 @@ import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import { useInitAccessToken } from '@/contexts/InitContext';
-import { useBulkDeletePromotionsMutation, useDeletePromotionMutation, useGetPromotionsQuery, useGetStoresQuery } from '@/store/services/magasin';
+import {
+	useBulkDeletePromotionsMutation,
+	useDeletePromotionMutation,
+	useGetPromotionsQuery,
+	useGetStoresQuery,
+} from '@/store/services/magasin';
 import type { SessionProps } from '@/types/_initTypes';
 import type { PromotionType } from '@/types/gestionMagasinTypes';
 import { extractApiErrorMessage, formatDate, formatNumber } from '@/utils/helpers';
@@ -44,7 +49,10 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 	const [selectedIds, setSelectedIds] = useState<number[]>([]);
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 	const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
-	const mergedFilterParams = useMemo(() => ({ ...chipFilterParams, ...customFilterParams }), [chipFilterParams, customFilterParams]);
+	const mergedFilterParams = useMemo(
+		() => ({ ...chipFilterParams, ...customFilterParams }),
+		[chipFilterParams, customFilterParams],
+	);
 	const { data, isLoading, refetch } = useGetPromotionsQuery(
 		{ search: searchTerm, page: paginationModel.page + 1, pageSize: paginationModel.pageSize, ...mergedFilterParams },
 		{ skip: !token },
@@ -111,18 +119,86 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 
 	const renderStatusChip = (status?: string | null) => {
 		if (status === 'active') {
-			return <DarkTooltip title={t.magasin.activePromotion}><Chip size="small" color="success" variant="outlined" icon={<CheckCircleIcon fontSize="small" />} label={t.magasin.activePromotion} sx={{ fontWeight: 600 }} /></DarkTooltip>;
+			return (
+				<DarkTooltip title={t.magasin.activePromotion}>
+					<Chip
+						size="small"
+						color="success"
+						variant="outlined"
+						icon={<CheckCircleIcon fontSize="small" />}
+						label={t.magasin.activePromotion}
+						sx={{ fontWeight: 600 }}
+					/>
+				</DarkTooltip>
+			);
 		}
-		return <DarkTooltip title={t.magasin.expiredPromotion}><Chip size="small" color="error" variant="outlined" icon={<CancelIcon fontSize="small" />} label={t.magasin.expiredPromotion} sx={{ fontWeight: 600 }} /></DarkTooltip>;
+		return (
+			<DarkTooltip title={t.magasin.expiredPromotion}>
+				<Chip
+					size="small"
+					color="error"
+					variant="outlined"
+					icon={<CancelIcon fontSize="small" />}
+					label={t.magasin.expiredPromotion}
+					sx={{ fontWeight: 600 }}
+				/>
+			</DarkTooltip>
+		);
 	};
 
 	const columns: GridColDef[] = [
-		{ field: 'name', headerName: t.magasin.promotionName, flex: 1.4, minWidth: 180, renderCell: (params: GridRenderCellParams<PromotionType>) => <TooltipTextCell fontWeight={600}>{params.value}</TooltipTextCell> },
-		{ field: 'store_name', headerName: t.magasin.store, flex: 1, minWidth: 170, renderCell: (params: GridRenderCellParams<PromotionType>) => <TooltipTextCell>{params.value}</TooltipTextCell> },
-		{ field: 'selling_price', headerName: t.magasin.sellingPrice, flex: 0.8, minWidth: 130, renderCell: (params: GridRenderCellParams<PromotionType>) => <TooltipTextCell title={`${formatNumber(params.value as string)} Dhs`} color="primary" fontWeight={600}>{formatNumber(params.value as string)} Dhs</TooltipTextCell> },
-		{ field: 'status', headerName: t.magasin.status, flex: 0.7, minWidth: 130, renderCell: (params: GridRenderCellParams<PromotionType>) => renderStatusChip(params.value as string) },
-		{ field: 'start_date', headerName: t.magasin.startDate, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<PromotionType>) => <TooltipTextCell>{params.value ? formatDate(params.value as string) : '-'}</TooltipTextCell> },
-		{ field: 'end_date', headerName: t.magasin.endDate, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<PromotionType>) => <TooltipTextCell>{params.value ? formatDate(params.value as string) : '-'}</TooltipTextCell> },
+		{
+			field: 'name',
+			headerName: t.magasin.promotionName,
+			flex: 1.4,
+			minWidth: 180,
+			renderCell: (params: GridRenderCellParams<PromotionType>) => (
+				<TooltipTextCell fontWeight={600}>{params.value}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'store_name',
+			headerName: t.magasin.store,
+			flex: 1,
+			minWidth: 170,
+			renderCell: (params: GridRenderCellParams<PromotionType>) => <TooltipTextCell>{params.value}</TooltipTextCell>,
+		},
+		{
+			field: 'selling_price',
+			headerName: t.magasin.sellingPrice,
+			flex: 0.8,
+			minWidth: 130,
+			renderCell: (params: GridRenderCellParams<PromotionType>) => (
+				<TooltipTextCell title={`${formatNumber(params.value as string)} Dhs`} color="primary" fontWeight={600}>
+					{formatNumber(params.value as string)} Dhs
+				</TooltipTextCell>
+			),
+		},
+		{
+			field: 'status',
+			headerName: t.magasin.status,
+			flex: 0.7,
+			minWidth: 130,
+			renderCell: (params: GridRenderCellParams<PromotionType>) => renderStatusChip(params.value as string),
+		},
+		{
+			field: 'start_date',
+			headerName: t.magasin.startDate,
+			flex: 0.8,
+			minWidth: 120,
+			renderCell: (params: GridRenderCellParams<PromotionType>) => (
+				<TooltipTextCell>{params.value ? formatDate(params.value as string) : '-'}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'end_date',
+			headerName: t.magasin.endDate,
+			flex: 0.8,
+			minWidth: 120,
+			renderCell: (params: GridRenderCellParams<PromotionType>) => (
+				<TooltipTextCell>{params.value ? formatDate(params.value as string) : '-'}</TooltipTextCell>
+			),
+		},
 		{
 			field: 'actions',
 			headerName: t.common.actions,
@@ -132,9 +208,27 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 			renderCell: (params: GridRenderCellParams<PromotionType>) => (
 				<MobileActionsMenu
 					actions={[
-						{ label: t.common.view, icon: <VisibilityIcon />, onClick: () => router.push(PROMOTIONS_VIEW(params.row.id)), color: 'info', show: permissions.can_view },
-						{ label: t.common.edit, icon: <EditIcon />, onClick: () => router.push(PROMOTIONS_EDIT(params.row.id)), color: 'primary', show: permissions.can_create_promotion },
-						{ label: t.common.delete, icon: <DeleteIcon />, onClick: () => setDeleteTarget(params.row.id), color: 'error', show: permissions.can_create_promotion },
+						{
+							label: t.common.view,
+							icon: <VisibilityIcon />,
+							onClick: () => router.push(PROMOTIONS_VIEW(params.row.id)),
+							color: 'info',
+							show: permissions.can_view,
+						},
+						{
+							label: t.common.edit,
+							icon: <EditIcon />,
+							onClick: () => router.push(PROMOTIONS_EDIT(params.row.id)),
+							color: 'primary',
+							show: permissions.can_create_promotion,
+						},
+						{
+							label: t.common.delete,
+							icon: <DeleteIcon />,
+							onClick: () => setDeleteTarget(params.row.id),
+							color: 'error',
+							show: permissions.can_create_promotion,
+						},
 					]}
 				/>
 			),
@@ -146,9 +240,32 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 			<Protected permission="is_staff">
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
-						<Stack direction="row" spacing={1} flexWrap="wrap">
-							{permissions.can_create_promotion && <Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => router.push(PROMOTIONS_ADD())}>{t.magasin.newPromotion}</Button>}
-							{permissions.can_create_promotion && selectedIds.length > 0 && <Button variant="outlined" color="error" startIcon={<DeleteIcon fontSize="small" />} onClick={() => setShowBulkDeleteModal(true)}>{t.common.delete} ({selectedIds.length})</Button>}
+						<Stack
+							direction="row"
+							spacing={1}
+							sx={{
+								flexWrap: 'wrap',
+							}}
+						>
+							{permissions.can_create_promotion && (
+								<Button
+									variant="contained"
+									startIcon={<AddIcon fontSize="small" />}
+									onClick={() => router.push(PROMOTIONS_ADD())}
+								>
+									{t.magasin.newPromotion}
+								</Button>
+							)}
+							{permissions.can_create_promotion && selectedIds.length > 0 && (
+								<Button
+									variant="outlined"
+									color="error"
+									startIcon={<DeleteIcon fontSize="small" />}
+									onClick={() => setShowBulkDeleteModal(true)}
+								>
+									{t.common.delete} ({selectedIds.length})
+								</Button>
+							)}
 						</Stack>
 					</Box>
 					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} columns={2} />
@@ -177,7 +294,13 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 					titleIcon={<DeleteIcon />}
 					titleIconColor="#D32F2F"
 					actions={[
-						{ text: t.common.cancel, active: false, onClick: () => setDeleteTarget(null), icon: <CloseIcon />, color: '#6B6B6B' },
+						{
+							text: t.common.cancel,
+							active: false,
+							onClick: () => setDeleteTarget(null),
+							icon: <CloseIcon />,
+							color: '#6B6B6B',
+						},
 						{ text: t.common.delete, active: true, onClick: handleDelete, icon: <DeleteIcon />, color: '#D32F2F' },
 					]}
 				/>
@@ -189,7 +312,13 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 					titleIcon={<DeleteIcon />}
 					titleIconColor="#D32F2F"
 					actions={[
-						{ text: t.common.cancel, active: false, onClick: () => setShowBulkDeleteModal(false), icon: <CloseIcon />, color: '#6B6B6B' },
+						{
+							text: t.common.cancel,
+							active: false,
+							onClick: () => setShowBulkDeleteModal(false),
+							icon: <CloseIcon />,
+							color: '#6B6B6B',
+						},
 						{ text: t.common.delete, active: true, onClick: handleBulkDelete, icon: <DeleteIcon />, color: '#D32F2F' },
 					]}
 				/>

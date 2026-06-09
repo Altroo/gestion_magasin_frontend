@@ -115,7 +115,13 @@ const StoresListClient = ({ session }: SessionProps) => {
 			minWidth: 180,
 			renderCell: (params: GridRenderCellParams<StoreType>) => (
 				<DarkTooltip title={params.value}>
-					<Typography variant="body2" fontWeight={600} noWrap>
+					<Typography
+						variant="body2"
+						noWrap
+						sx={{
+							fontWeight: 600,
+						}}
+					>
 						{params.value}
 					</Typography>
 				</DarkTooltip>
@@ -126,9 +132,7 @@ const StoresListClient = ({ session }: SessionProps) => {
 			headerName: t.magasin.storeCode,
 			flex: 0.8,
 			minWidth: 120,
-			renderCell: (params: GridRenderCellParams<StoreType>) => (
-				<TooltipTextCell>{params.value}</TooltipTextCell>
-			),
+			renderCell: (params: GridRenderCellParams<StoreType>) => <TooltipTextCell>{params.value}</TooltipTextCell>,
 		},
 		{
 			field: 'address',
@@ -137,7 +141,9 @@ const StoresListClient = ({ session }: SessionProps) => {
 			minWidth: 180,
 			renderCell: (params: GridRenderCellParams<StoreType>) => (
 				<DarkTooltip title={params.value || '-'}>
-					<Typography variant="body2" noWrap>{params.value || '-'}</Typography>
+					<Typography variant="body2" noWrap>
+						{params.value || '-'}
+					</Typography>
 				</DarkTooltip>
 			),
 		},
@@ -146,18 +152,14 @@ const StoresListClient = ({ session }: SessionProps) => {
 			headerName: t.magasin.storePhone,
 			flex: 0.9,
 			minWidth: 130,
-			renderCell: (params: GridRenderCellParams<StoreType>) => (
-				<TooltipTextCell>{params.value || '-'}</TooltipTextCell>
-			),
+			renderCell: (params: GridRenderCellParams<StoreType>) => <TooltipTextCell>{params.value || '-'}</TooltipTextCell>,
 		},
 		{
 			field: 'members_count',
 			headerName: t.magasin.membersCount,
 			flex: 0.7,
 			minWidth: 110,
-			renderCell: (params: GridRenderCellParams<StoreType>) => (
-				<TooltipTextCell>{params.value ?? 0}</TooltipTextCell>
-			),
+			renderCell: (params: GridRenderCellParams<StoreType>) => <TooltipTextCell>{params.value ?? 0}</TooltipTextCell>,
 		},
 		{
 			field: 'is_active',
@@ -214,8 +216,18 @@ const StoresListClient = ({ session }: SessionProps) => {
 			<Protected>
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
-						<Stack direction="row" spacing={1} flexWrap="wrap">
-							<Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => router.push(STORES_ADD)}>
+						<Stack
+							direction="row"
+							spacing={1}
+							sx={{
+								flexWrap: 'wrap',
+							}}
+						>
+							<Button
+								variant="contained"
+								startIcon={<AddIcon fontSize="small" />}
+								onClick={() => router.push(STORES_ADD)}
+							>
 								{t.magasin.newStore}
 							</Button>
 							{selectedIds.length > 0 && (
@@ -255,7 +267,13 @@ const StoresListClient = ({ session }: SessionProps) => {
 						titleIcon={<DeleteIcon />}
 						titleIconColor="#D32F2F"
 						actions={[
-							{ text: t.common.cancel, active: false, onClick: () => setDeleteTarget(null), icon: <CloseIcon />, color: '#6B6B6B' },
+							{
+								text: t.common.cancel,
+								active: false,
+								onClick: () => setDeleteTarget(null),
+								icon: <CloseIcon />,
+								color: '#6B6B6B',
+							},
 							{ text: t.common.delete, active: true, onClick: deleteHandler, icon: <DeleteIcon />, color: '#D32F2F' },
 						]}
 					/>
@@ -267,8 +285,20 @@ const StoresListClient = ({ session }: SessionProps) => {
 						titleIcon={<DeleteIcon />}
 						titleIconColor="#D32F2F"
 						actions={[
-							{ text: t.common.cancel, active: false, onClick: () => setShowBulkDeleteModal(false), icon: <CloseIcon />, color: '#6B6B6B' },
-							{ text: t.common.delete, active: true, onClick: bulkDeleteHandler, icon: <DeleteIcon />, color: '#D32F2F' },
+							{
+								text: t.common.cancel,
+								active: false,
+								onClick: () => setShowBulkDeleteModal(false),
+								icon: <CloseIcon />,
+								color: '#6B6B6B',
+							},
+							{
+								text: t.common.delete,
+								active: true,
+								onClick: bulkDeleteHandler,
+								icon: <DeleteIcon />,
+								color: '#D32F2F',
+							},
 						]}
 					/>
 				)}

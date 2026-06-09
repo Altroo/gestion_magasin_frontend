@@ -60,7 +60,10 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 	const [selectedIds, setSelectedIds] = useState<number[]>([]);
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 	const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
-	const mergedFilterParams = useMemo(() => ({ ...chipFilterParams, ...customFilterParams }), [chipFilterParams, customFilterParams]);
+	const mergedFilterParams = useMemo(
+		() => ({ ...chipFilterParams, ...customFilterParams }),
+		[chipFilterParams, customFilterParams],
+	);
 	const storeFilterActive = Boolean(chipFilterParams.store_ids);
 	const { data, isLoading, refetch } = useGetExpensesQuery(
 		{
@@ -74,7 +77,10 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 	);
 	const [deleteExpense] = useDeleteExpenseMutation();
 	const [bulkDeleteExpenses] = useBulkDeleteExpensesMutation();
-	const { data: paymentModes } = useGetPaymentModesQuery({ page: 1, pageSize: 100, is_active: 'true' }, { skip: !token });
+	const { data: paymentModes } = useGetPaymentModesQuery(
+		{ page: 1, pageSize: 100, is_active: 'true' },
+		{ skip: !token },
+	);
 	const { data: expenseCategories } = useGetExpenseCategoriesQuery({ page: 1, pageSize: 100 }, { skip: !token });
 
 	const chipFilters = useMemo(
@@ -89,24 +95,66 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 				key: 'category',
 				label: t.magasin.expenseCategory,
 				paramName: 'category_ids',
-				options: (expenseCategories?.results ?? []).map((category) => ({ id: String(category.id), nom: category.name })),
+				options: (expenseCategories?.results ?? []).map((category) => ({
+					id: String(category.id),
+					nom: category.name,
+				})),
 			},
-			{ key: 'payment_status', label: t.magasin.paymentStatus, paramName: 'payment_status', options: expensePaymentStatusOptions(t) },
-			{ key: 'payment_mode', label: t.magasin.paymentMode, paramName: 'payment_mode', options: expensePaymentModeOptions(t, paymentModes?.results) },
+			{
+				key: 'payment_status',
+				label: t.magasin.paymentStatus,
+				paramName: 'payment_status',
+				options: expensePaymentStatusOptions(t),
+			},
+			{
+				key: 'payment_mode',
+				label: t.magasin.paymentMode,
+				paramName: 'payment_mode',
+				options: expensePaymentModeOptions(t, paymentModes?.results),
+			},
 		],
 		[expenseCategories?.results, memberships, paymentModes?.results, t],
 	);
-	const handleChipFilterChange = useCallback((params: Record<string, string>) => { setChipFilterParams(params); setPaginationModel((current) => ({ ...current, page: 0 })); }, []);
+	const handleChipFilterChange = useCallback((params: Record<string, string>) => {
+		setChipFilterParams(params);
+		setPaginationModel((current) => ({ ...current, page: 0 }));
+	}, []);
 
 	const renderPaymentStatusChip = (status?: string | null) => {
 		const label = magasinStatusLabel(t, status);
 		if (status === 'paid') {
-			return <DarkTooltip title={label}><Chip size="small" color="success" variant="outlined" icon={<CheckCircleIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
+			return (
+				<DarkTooltip title={label}>
+					<Chip
+						size="small"
+						color="success"
+						variant="outlined"
+						icon={<CheckCircleIcon fontSize="small" />}
+						label={label}
+						sx={{ fontWeight: 600 }}
+					/>
+				</DarkTooltip>
+			);
 		}
 		if (status === 'payable') {
-			return <DarkTooltip title={label}><Chip size="small" color="warning" variant="outlined" icon={<PendingActionsIcon fontSize="small" />} label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
+			return (
+				<DarkTooltip title={label}>
+					<Chip
+						size="small"
+						color="warning"
+						variant="outlined"
+						icon={<PendingActionsIcon fontSize="small" />}
+						label={label}
+						sx={{ fontWeight: 600 }}
+					/>
+				</DarkTooltip>
+			);
 		}
-		return <DarkTooltip title={label}><Chip size="small" color="default" variant="outlined" label={label} sx={{ fontWeight: 600 }} /></DarkTooltip>;
+		return (
+			<DarkTooltip title={label}>
+				<Chip size="small" color="default" variant="outlined" label={label} sx={{ fontWeight: 600 }} />
+			</DarkTooltip>
+		);
 	};
 
 	const handleDelete = async () => {
@@ -137,13 +185,71 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 	};
 
 	const columns: GridColDef[] = [
-		{ field: 'label', headerName: t.magasin.expenseLabel, flex: 1.4, minWidth: 180, renderCell: (params: GridRenderCellParams<ExpenseType>) => <TooltipTextCell fontWeight={600}>{params.value}</TooltipTextCell> },
-		{ field: 'store_name', headerName: t.magasin.store, flex: 1, minWidth: 140, renderCell: (params: GridRenderCellParams<ExpenseType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
-		{ field: 'category_name', headerName: t.magasin.expenseCategory, flex: 1, minWidth: 140, renderCell: (params: GridRenderCellParams<ExpenseType>) => <TooltipTextCell>{params.value ?? '-'}</TooltipTextCell> },
-		{ field: 'expense_date', headerName: t.magasin.date, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<ExpenseType>) => <TooltipTextCell>{formatDate(params.value as string)}</TooltipTextCell> },
-		{ field: 'payment_mode', headerName: t.magasin.paymentMode, flex: 0.9, minWidth: 130, renderCell: (params: GridRenderCellParams<ExpenseType>) => <TooltipTextCell>{params.row.payment_mode_name ?? expensePaymentModeLabel(t, params.value as string, paymentModes?.results)}</TooltipTextCell> },
-		{ field: 'payment_status', headerName: t.magasin.paymentStatus, flex: 0.8, minWidth: 140, renderCell: (params: GridRenderCellParams<ExpenseType>) => renderPaymentStatusChip(params.value as string) },
-		{ field: 'amount', headerName: t.magasin.expenseAmount, flex: 0.8, minWidth: 120, renderCell: (params: GridRenderCellParams<ExpenseType>) => <TooltipTextCell title={`${formatNumber(params.value as string)} Dhs`} fontWeight={600}>{formatNumber(params.value as string)} Dhs</TooltipTextCell> },
+		{
+			field: 'label',
+			headerName: t.magasin.expenseLabel,
+			flex: 1.4,
+			minWidth: 180,
+			renderCell: (params: GridRenderCellParams<ExpenseType>) => (
+				<TooltipTextCell fontWeight={600}>{params.value}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'store_name',
+			headerName: t.magasin.store,
+			flex: 1,
+			minWidth: 140,
+			renderCell: (params: GridRenderCellParams<ExpenseType>) => (
+				<TooltipTextCell>{params.value ?? '-'}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'category_name',
+			headerName: t.magasin.expenseCategory,
+			flex: 1,
+			minWidth: 140,
+			renderCell: (params: GridRenderCellParams<ExpenseType>) => (
+				<TooltipTextCell>{params.value ?? '-'}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'expense_date',
+			headerName: t.magasin.date,
+			flex: 0.8,
+			minWidth: 120,
+			renderCell: (params: GridRenderCellParams<ExpenseType>) => (
+				<TooltipTextCell>{formatDate(params.value as string)}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'payment_mode',
+			headerName: t.magasin.paymentMode,
+			flex: 0.9,
+			minWidth: 130,
+			renderCell: (params: GridRenderCellParams<ExpenseType>) => (
+				<TooltipTextCell>
+					{params.row.payment_mode_name ?? expensePaymentModeLabel(t, params.value as string, paymentModes?.results)}
+				</TooltipTextCell>
+			),
+		},
+		{
+			field: 'payment_status',
+			headerName: t.magasin.paymentStatus,
+			flex: 0.8,
+			minWidth: 140,
+			renderCell: (params: GridRenderCellParams<ExpenseType>) => renderPaymentStatusChip(params.value as string),
+		},
+		{
+			field: 'amount',
+			headerName: t.magasin.expenseAmount,
+			flex: 0.8,
+			minWidth: 120,
+			renderCell: (params: GridRenderCellParams<ExpenseType>) => (
+				<TooltipTextCell title={`${formatNumber(params.value as string)} Dhs`} fontWeight={600}>
+					{formatNumber(params.value as string)} Dhs
+				</TooltipTextCell>
+			),
+		},
 		{
 			field: 'actions',
 			headerName: t.common.actions,
@@ -153,9 +259,27 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 			renderCell: (params: GridRenderCellParams<ExpenseType>) => (
 				<MobileActionsMenu
 					actions={[
-						{ label: t.common.view, icon: <VisibilityIcon />, onClick: () => router.push(EXPENSES_VIEW(params.row.id, storeId)), color: 'info', show: permissions.can_view },
-						{ label: t.common.edit, icon: <EditIcon />, onClick: () => router.push(EXPENSES_EDIT(params.row.id, storeId)), color: 'primary', show: permissions.can_create },
-						{ label: t.common.delete, icon: <DeleteIcon />, onClick: () => setDeleteTarget(params.row.id), color: 'error', show: permissions.can_delete },
+						{
+							label: t.common.view,
+							icon: <VisibilityIcon />,
+							onClick: () => router.push(EXPENSES_VIEW(params.row.id, storeId)),
+							color: 'info',
+							show: permissions.can_view,
+						},
+						{
+							label: t.common.edit,
+							icon: <EditIcon />,
+							onClick: () => router.push(EXPENSES_EDIT(params.row.id, storeId)),
+							color: 'primary',
+							show: permissions.can_create,
+						},
+						{
+							label: t.common.delete,
+							icon: <DeleteIcon />,
+							onClick: () => setDeleteTarget(params.row.id),
+							color: 'error',
+							show: permissions.can_delete,
+						},
 					]}
 				/>
 			),
@@ -168,9 +292,32 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 				<Box sx={magasinPageContainerSx}>
 					<StoreTabs selectedStoreId={storeId} onChange={setSelectedStoreId} token={token} />
 					<Box sx={magasinPageContentSx}>
-						<Stack direction="row" spacing={1} flexWrap="wrap">
-							{permissions.can_create && <Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => router.push(EXPENSES_ADD(storeId))}>{t.magasin.newExpense}</Button>}
-							{permissions.can_delete && selectedIds.length > 0 && <Button variant="outlined" color="error" startIcon={<DeleteIcon fontSize="small" />} onClick={() => setShowBulkDeleteModal(true)}>{t.common.delete} ({selectedIds.length})</Button>}
+						<Stack
+							direction="row"
+							spacing={1}
+							sx={{
+								flexWrap: 'wrap',
+							}}
+						>
+							{permissions.can_create && (
+								<Button
+									variant="contained"
+									startIcon={<AddIcon fontSize="small" />}
+									onClick={() => router.push(EXPENSES_ADD(storeId))}
+								>
+									{t.magasin.newExpense}
+								</Button>
+							)}
+							{permissions.can_delete && selectedIds.length > 0 && (
+								<Button
+									variant="outlined"
+									color="error"
+									startIcon={<DeleteIcon fontSize="small" />}
+									onClick={() => setShowBulkDeleteModal(true)}
+								>
+									{t.common.delete} ({selectedIds.length})
+								</Button>
+							)}
 						</Stack>
 					</Box>
 					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} columns={2} />
@@ -192,8 +339,42 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 					/>
 				</Box>
 			</Protected>
-			{deleteTarget && <ActionModals title={t.magasin.deleteExpenseTitle} body={t.magasin.deleteExpenseBody} titleIcon={<DeleteIcon />} titleIconColor="#D32F2F" actions={[{ text: t.common.cancel, active: false, onClick: () => setDeleteTarget(null), icon: <CloseIcon />, color: '#6B6B6B' }, { text: t.common.delete, active: true, onClick: handleDelete, icon: <DeleteIcon />, color: '#D32F2F' }]} />}
-			{showBulkDeleteModal && <ActionModals title={t.magasin.deleteExpenseTitle} body={t.magasin.deleteExpenseBody} titleIcon={<DeleteIcon />} titleIconColor="#D32F2F" actions={[{ text: t.common.cancel, active: false, onClick: () => setShowBulkDeleteModal(false), icon: <CloseIcon />, color: '#6B6B6B' }, { text: t.common.delete, active: true, onClick: handleBulkDelete, icon: <DeleteIcon />, color: '#D32F2F' }]} />}
+			{deleteTarget && (
+				<ActionModals
+					title={t.magasin.deleteExpenseTitle}
+					body={t.magasin.deleteExpenseBody}
+					titleIcon={<DeleteIcon />}
+					titleIconColor="#D32F2F"
+					actions={[
+						{
+							text: t.common.cancel,
+							active: false,
+							onClick: () => setDeleteTarget(null),
+							icon: <CloseIcon />,
+							color: '#6B6B6B',
+						},
+						{ text: t.common.delete, active: true, onClick: handleDelete, icon: <DeleteIcon />, color: '#D32F2F' },
+					]}
+				/>
+			)}
+			{showBulkDeleteModal && (
+				<ActionModals
+					title={t.magasin.deleteExpenseTitle}
+					body={t.magasin.deleteExpenseBody}
+					titleIcon={<DeleteIcon />}
+					titleIconColor="#D32F2F"
+					actions={[
+						{
+							text: t.common.cancel,
+							active: false,
+							onClick: () => setShowBulkDeleteModal(false),
+							icon: <CloseIcon />,
+							color: '#6B6B6B',
+						},
+						{ text: t.common.delete, active: true, onClick: handleBulkDelete, icon: <DeleteIcon />, color: '#D32F2F' },
+					]}
+				/>
+			)}
 		</NavigationBar>
 	);
 };

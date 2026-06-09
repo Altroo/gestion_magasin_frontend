@@ -49,7 +49,14 @@ import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
-import { useAddPromotionMutation, useEditPromotionMutation, useGetProductsQuery, useGetPromotionEligibleStoresQuery, useGetPromotionQuery, useGetStoresQuery } from '@/store/services/magasin';
+import {
+	useAddPromotionMutation,
+	useEditPromotionMutation,
+	useGetProductsQuery,
+	useGetPromotionEligibleStoresQuery,
+	useGetPromotionQuery,
+	useGetStoresQuery,
+} from '@/store/services/magasin';
 import { promotionSchema } from '@/utils/formValidationSchemas';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
 import { splitAutocompleteRenderParams } from '@/utils/muiAutocompleteSlots';
@@ -100,10 +107,11 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 	const [isPending, setIsPending] = useState(false);
 	const [linePaginationModel, setLinePaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 5 });
 
-	const { data: promotion, isLoading: isPromotionLoading, error: promotionError } = useGetPromotionQuery(
-		{ id: id! },
-		{ skip: !token || !isEditMode },
-	);
+	const {
+		data: promotion,
+		isLoading: isPromotionLoading,
+		error: promotionError,
+	} = useGetPromotionQuery({ id: id! }, { skip: !token || !isEditMode });
 	const { data: products, isLoading: areProductsLoading } = useGetProductsQuery(
 		{ store: globalStore?.id, page: 1, pageSize: 200 },
 		{ skip: !token || !globalStore?.id },
@@ -119,7 +127,7 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 	);
 
 	const toPayload = (values: PromotionFormValues): PromotionPayload => ({
-		store: isEditMode ? promotion?.store ?? initialStoreId : undefined,
+		store: isEditMode ? (promotion?.store ?? initialStoreId) : undefined,
 		stores: isEditMode ? undefined : values.stores.map(Number),
 		name: values.name.trim(),
 		selling_price: values.selling_price,
@@ -161,11 +169,15 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 				} else {
 					const response = await addPromotion(toPayload(values)).unwrap();
 					const createdPromotion = 'created' in response ? response.created[0] : response;
-					onSuccess('created' in response ? t.magasin.promotionCreatedForStores(response.count) : t.magasin.promotionCreated);
+					onSuccess(
+						'created' in response ? t.magasin.promotionCreatedForStores(response.count) : t.magasin.promotionCreated,
+					);
 					router.push(createdPromotion ? PROMOTIONS_VIEW(createdPromotion.id) : PROMOTIONS_LIST);
 				}
 			} catch (e) {
-				onError(extractApiErrorMessage(e, isEditMode ? t.magasin.promotionUpdateError : t.magasin.promotionCreateError));
+				onError(
+					extractApiErrorMessage(e, isEditMode ? t.magasin.promotionUpdateError : t.magasin.promotionCreateError),
+				);
 				setFormikAutoErrors({ e, setFieldError });
 			} finally {
 				setIsPending(false);
@@ -254,10 +266,7 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 		() => new Set(targetStoreOptions.filter((store) => store.is_eligible).map((store) => String(store.id))),
 		[targetStoreOptions],
 	);
-	const eligibleStoreIdsKey = useMemo(
-		() => Array.from(eligibleStoreIds).sort().join(','),
-		[eligibleStoreIds],
-	);
+	const eligibleStoreIdsKey = useMemo(() => Array.from(eligibleStoreIds).sort().join(','), [eligibleStoreIds]);
 	const selectedStoresKey = formik.values.stores.join(',');
 	const storesError = fieldError('stores');
 	useEffect(() => {
@@ -320,7 +329,16 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 		},
 	};
 	const renderQuantityStepper = (params: GridRenderCellParams<PromotionLineGridRow>) => (
-		<Stack direction="row" spacing={0.5} justifyContent="center" alignItems="center" sx={{ width: '100%', height: '100%' }}>
+		<Stack
+			direction="row"
+			spacing={0.5}
+			sx={{
+				justifyContent: 'center',
+				alignItems: 'center',
+				width: '100%',
+				height: '100%',
+			}}
+		>
 			<IconButton size="small" onClick={() => updateLineQuantity(params.row.index, -1)} aria-label="Diminuer">
 				<RemoveIcon fontSize="small" />
 			</IconButton>
@@ -348,12 +366,23 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 							size="small"
 							options={productOptions}
 							value={productOptions.find((product) => String(product.id) === params.row.product) ?? null}
-							onChange={(_, nextProduct) => void formik.setFieldValue(`lines.${params.row.index}.product`, nextProduct ? String(nextProduct.id) : '')}
+							onChange={(_, nextProduct) =>
+								void formik.setFieldValue(
+									`lines.${params.row.index}.product`,
+									nextProduct ? String(nextProduct.id) : '',
+								)
+							}
 							onBlur={() => void formik.setFieldTouched(`lines.${params.row.index}.product`, true)}
 							getOptionLabel={productLabel}
 							isOptionEqualToValue={(option, value) => option.id === value.id}
 							noOptionsText={t.common.noOptions}
-							sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', '& .MuiFormControl-root': { width: '100%' } }}
+							sx={{
+								width: '100%',
+								height: '100%',
+								display: 'flex',
+								alignItems: 'center',
+								'& .MuiFormControl-root': { width: '100%' },
+							}}
 							renderInput={(inputParams) => {
 								const { textFieldParams, inputSlot, htmlInputSlot } = splitAutocompleteRenderParams(inputParams);
 								return (
@@ -401,7 +430,8 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 		},
 	];
 
-	const isLoading = isPending || addState.isLoading || editState.isLoading || areProductsLoading || (isEditMode && isPromotionLoading);
+	const isLoading =
+		isPending || addState.isLoading || editState.isLoading || areProductsLoading || (isEditMode && isPromotionLoading);
 	const shouldShowError = (axiosError?.status ?? 0) > 400 && !isLoading;
 
 	return (
@@ -410,14 +440,25 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={3}>
-							<Stack direction={isMobile ? 'column' : 'row'} justifyContent="space-between" spacing={2}>
+							<Stack
+								direction={isMobile ? 'column' : 'row'}
+								spacing={2}
+								sx={{
+									justifyContent: 'space-between',
+								}}
+							>
 								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(PROMOTIONS_LIST)}>
 									{t.magasin.backToPromotions}
 								</Button>
 							</Stack>
 							{Object.keys(validationErrors).length > 0 && (
 								<Alert severity="error" icon={<WarningIcon />} sx={{ mb: 2 }}>
-									<Typography variant="subtitle2" fontWeight={600}>
+									<Typography
+										variant="subtitle2"
+										sx={{
+											fontWeight: 600,
+										}}
+									>
 										{t.users.validationErrorsDetected}
 									</Typography>
 									<ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
@@ -441,12 +482,32 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 									<Stack spacing={3}>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+												<Stack
+													direction="row"
+													spacing={2}
+													sx={{
+														alignItems: 'center',
+														mb: 2,
+													}}
+												>
 													<LocalOfferIcon color="primary" />
-													<Typography variant="h6" fontWeight={700}>{t.magasin.promotionDetails}</Typography>
+													<Typography
+														variant="h6"
+														sx={{
+															fontWeight: 700,
+														}}
+													>
+														{t.magasin.promotionDetails}
+													</Typography>
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
-												<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2.5 }}>
+												<Box
+													sx={{
+														display: 'grid',
+														gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+														gap: 2.5,
+													}}
+												>
 													<CustomTextInput
 														id="name"
 														type="text"
@@ -486,7 +547,15 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 															onBlur={formik.handleBlur('status')}
 															error={Boolean(fieldError('status'))}
 															helperText={fieldError('status')}
-															slotProps={{ input: { startAdornment: <InputAdornment position="start"><LocalOfferIcon fontSize="small" /></InputAdornment> } }}
+															slotProps={{
+																input: {
+																	startAdornment: (
+																		<InputAdornment position="start">
+																			<LocalOfferIcon fontSize="small" />
+																		</InputAdornment>
+																	),
+																},
+															}}
 															fullWidth
 														>
 															<MenuItem value="active">{t.magasin.activePromotion}</MenuItem>
@@ -522,16 +591,43 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 										</Card>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-													<Stack direction="row" spacing={2} alignItems="center">
+												<Stack
+													direction="row"
+													spacing={2}
+													sx={{
+														justifyContent: 'space-between',
+														alignItems: 'center',
+														mb: 2,
+													}}
+												>
+													<Stack
+														direction="row"
+														spacing={2}
+														sx={{
+															alignItems: 'center',
+														}}
+													>
 														<InventoryIcon color="primary" />
-														<Typography variant="h6" fontWeight={700}>{t.magasin.promotionLines}</Typography>
+														<Typography
+															variant="h6"
+															sx={{
+																fontWeight: 700,
+															}}
+														>
+															{t.magasin.promotionLines}
+														</Typography>
 													</Stack>
 													<Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={addLine}>
 														{t.common.add}
 													</Button>
 												</Stack>
-												<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+												<Typography
+													variant="body2"
+													sx={{
+														color: 'text.secondary',
+														mb: 2,
+													}}
+												>
 													{t.magasin.mbrStockArticles}
 												</Typography>
 												<Divider sx={{ mb: 3 }} />
@@ -576,9 +672,23 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 										</Card>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+												<Stack
+													direction="row"
+													spacing={2}
+													sx={{
+														alignItems: 'center',
+														mb: 2,
+													}}
+												>
 													<StorefrontIcon color="primary" />
-													<Typography variant="h6" fontWeight={700}>{t.magasin.targetStores}</Typography>
+													<Typography
+														variant="h6"
+														sx={{
+															fontWeight: 700,
+														}}
+													>
+														{t.magasin.targetStores}
+													</Typography>
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Box
@@ -598,26 +708,55 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 															gap: 1.5,
 															px: 2,
 															py: 1.25,
-															borderBottom: targetStoreOptions.length > 0 || !eligibleStoreQueryParams || areEligibleStoresLoading ? '1px solid' : 'none',
+															borderBottom:
+																targetStoreOptions.length > 0 || !eligibleStoreQueryParams || areEligibleStoresLoading
+																	? '1px solid'
+																	: 'none',
 															borderColor: 'divider',
 															color: storesError ? 'error.main' : 'text.secondary',
 														}}
 													>
 														<StorefrontIcon fontSize="small" />
-														<Typography variant="body2" fontWeight={600}>
+														<Typography
+															variant="body2"
+															sx={{
+																fontWeight: 600,
+															}}
+														>
 															{t.magasin.selectTargetStores} *
 														</Typography>
 													</Box>
 													{!eligibleStoreQueryParams ? (
-														<Typography variant="body2" color="text.secondary" sx={{ px: 2, py: 2 }}>
+														<Typography
+															variant="body2"
+															sx={{
+																color: 'text.secondary',
+																px: 2,
+																py: 2,
+															}}
+														>
 															{t.magasin.selectProduct}
 														</Typography>
 													) : areEligibleStoresLoading ? (
-														<Typography variant="body2" color="text.secondary" sx={{ px: 2, py: 2 }}>
+														<Typography
+															variant="body2"
+															sx={{
+																color: 'text.secondary',
+																px: 2,
+																py: 2,
+															}}
+														>
 															{t.common.loading}
 														</Typography>
 													) : targetStoreOptions.length === 0 ? (
-														<Typography variant="body2" color="text.secondary" sx={{ px: 2, py: 2 }}>
+														<Typography
+															variant="body2"
+															sx={{
+																color: 'text.secondary',
+																px: 2,
+																py: 2,
+															}}
+														>
 															{t.magasin.noEligibleStores}
 														</Typography>
 													) : (
@@ -640,7 +779,10 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 																		bgcolor: selected ? 'rgba(127, 178, 226, 0.12)' : 'background.paper',
 																		transition: 'background-color 0.2s ease',
 																		'&:hover': {
-																			bgcolor: store.is_eligible && !isEditMode ? 'rgba(127, 178, 226, 0.08)' : 'background.paper',
+																			bgcolor:
+																				store.is_eligible && !isEditMode
+																					? 'rgba(127, 178, 226, 0.08)'
+																					: 'background.paper',
 																		},
 																	}}
 																>
@@ -652,14 +794,37 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 																		sx={{ p: 0.5 }}
 																	/>
 																	<Box sx={{ minWidth: 0, flex: 1 }}>
-																		<Typography variant="body2" fontWeight={700} noWrap>{store.name}</Typography>
+																		<Typography
+																			variant="body2"
+																			noWrap
+																			sx={{
+																				fontWeight: 700,
+																			}}
+																		>
+																			{store.name}
+																		</Typography>
 																		{store.missing_products.length > 0 && (
 																			<Box sx={{ mt: 0.5 }}>
-																				<Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>
+																				<Typography
+																					variant="caption"
+																					sx={{
+																						color: 'text.secondary',
+																						display: 'block',
+																						fontWeight: 600,
+																					}}
+																				>
 																					{t.magasin.ineligibleStoreMissingProducts} :
 																				</Typography>
 																				{store.missing_products.map((item) => (
-																					<Typography key={item.product} variant="caption" color="text.secondary" sx={{ display: 'block', pl: 1 }}>
+																					<Typography
+																						key={item.product}
+																						variant="caption"
+																						sx={{
+																							color: 'text.secondary',
+																							display: 'block',
+																							pl: 1,
+																						}}
+																					>
 																						- {item.product_name}
 																					</Typography>
 																				))}
@@ -680,9 +845,23 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 										</Card>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
-												<Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+												<Stack
+													direction="row"
+													spacing={2}
+													sx={{
+														alignItems: 'center',
+														mb: 2,
+													}}
+												>
 													<RemarkIcon color="primary" />
-													<Typography variant="h6" fontWeight={700}>{t.magasin.movementNote}</Typography>
+													<Typography
+														variant="h6"
+														sx={{
+															fontWeight: 700,
+														}}
+													>
+														{t.magasin.movementNote}
+													</Typography>
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
 												<CustomTextInput

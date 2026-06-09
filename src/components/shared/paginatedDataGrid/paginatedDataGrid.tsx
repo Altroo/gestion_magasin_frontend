@@ -257,11 +257,7 @@ const PaginatedDataGrid = <T,>({
 		);
 		return {
 			type: 'include',
-			ids: new Set(
-				selectedIds
-					.filter((id) => pageIdSet.has(id as GridRowId))
-					.map((id) => id as GridRowId),
-			),
+			ids: new Set(selectedIds.filter((id) => pageIdSet.has(id as GridRowId)).map((id) => id as GridRowId)),
 		};
 	}, [checkboxSelection, selectedIds, rows]);
 
@@ -296,9 +292,7 @@ const PaginatedDataGrid = <T,>({
 		}
 		// Merge: preserve selections from other pages, apply the new page selection
 		const pageIdSet = new Set(
-			(rows as Array<{ id?: unknown }>)
-				.map((r) => r.id)
-				.filter((id): id is number => typeof id === 'number'),
+			(rows as Array<{ id?: unknown }>).map((r) => r.id).filter((id): id is number => typeof id === 'number'),
 		);
 		const prevOutsidePage = (selectedIds ?? []).filter((id) => !pageIdSet.has(id));
 		onSelectionChange([...prevOutsidePage, ...pageSelectedIds.map((id) => Number(id))]);
@@ -360,7 +354,15 @@ const PaginatedDataGrid = <T,>({
 
 	return (
 		<ThemeProvider theme={getDefaultTheme()}>
-			<Stack direction="column" spacing={2} mt="32px" sx={{ overflowX: 'auto', overflowY: 'hidden' }}>
+			<Stack
+				direction="column"
+				spacing={2}
+				sx={{
+					mt: '32px',
+					overflowX: 'auto',
+					overflowY: 'hidden',
+				}}
+			>
 				<Box sx={{ width: '100%', position: 'relative' }}>
 					{isLoading && <ApiProgress backdropColor="#FFFFFF" circularColor="#0D070B" />}
 					<Box
@@ -400,9 +402,7 @@ const PaginatedDataGrid = <T,>({
 								>
 									{isAllMatchingSelected ? (
 										<>
-											<Typography variant="body2">
-												{t.common.allMatchingSelected(totalMatchingCount ?? 0)}
-											</Typography>
+											<Typography variant="body2">{t.common.allMatchingSelected(totalMatchingCount ?? 0)}</Typography>
 											<Button
 												size="small"
 												onClick={onClearAllMatchingSelected}
@@ -413,9 +413,7 @@ const PaginatedDataGrid = <T,>({
 										</>
 									) : (
 										<>
-											<Typography variant="body2">
-												{t.common.pageElementsSelected(rows.length)}
-											</Typography>
+											<Typography variant="body2">{t.common.pageElementsSelected(rows.length)}</Typography>
 											<Button
 												size="small"
 												onClick={onSelectAllMatchingClick}
@@ -437,11 +435,7 @@ const PaginatedDataGrid = <T,>({
 							)}
 							{showCustomFilterPanel && (
 								<Box sx={{ mb: 2 }}>
-									<CustomFilterPanel
-										columns={columns}
-										filterModel={customFilters}
-										onChange={setCustomFilters}
-									/>
+									<CustomFilterPanel columns={columns} filterModel={customFilters} onChange={setCustomFilters} />
 								</Box>
 							)}
 
@@ -460,7 +454,9 @@ const PaginatedDataGrid = <T,>({
 								onRowClick={onRowClick}
 								checkboxSelection={checkboxSelection && rows.length > 0}
 								rowSelectionModel={computedRowSelectionModel}
-								onRowSelectionModelChange={checkboxSelection && rows.length > 0 ? handleRowSelectionModelChange : undefined}
+								onRowSelectionModelChange={
+									checkboxSelection && rows.length > 0 ? handleRowSelectionModelChange : undefined
+								}
 								showToolbar
 								slotProps={{
 									toolbar: {

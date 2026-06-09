@@ -48,7 +48,7 @@ const getMutationErrorMessage = (error: unknown, fallback: string): string => {
 	return fallback;
 };
 
-const AddEntityModal = <T extends { id?: number },>({
+const AddEntityModal = <T extends { id?: number }>({
 	open,
 	setOpen,
 	label,
@@ -118,7 +118,14 @@ const AddEntityModal = <T extends { id?: number },>({
 					theme={inputTheme}
 					startIcon={icon}
 				/>
-				<Stack direction="row" justifyContent="flex-end" spacing={1} sx={{ mt: 2 }}>
+				<Stack
+					direction="row"
+					spacing={1}
+					sx={{
+						justifyContent: 'flex-end',
+						mt: 2,
+					}}
+				>
 					<Button onClick={close}>{t.common.cancel}</Button>
 					<Button variant="contained" onClick={() => void submit()}>
 						{t.common.add}

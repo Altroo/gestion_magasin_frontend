@@ -1,12 +1,6 @@
 'use client';
 
-import {
-	Alert,
-	Box,
-	FormControlLabel,
-	Stack,
-	Switch,
-} from '@mui/material';
+import { Alert, Box, FormControlLabel, Stack, Switch } from '@mui/material';
 import { Notifications as NotificationsIcon, Save as SaveIcon } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
@@ -68,10 +62,25 @@ const NotificationsClient = ({ session }: SessionProps) => {
 			<Protected permission="can_edit">
 				<main className={`${Styles.main} ${Styles.fixMobile}`}>
 					<Box sx={{ width: '100%', display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' } }}>
-						<Stack direction="column" alignItems="center" spacing={2} className={Styles.flexRootStack} mt="32px">
+						<Stack
+							direction="column"
+							spacing={2}
+							className={Styles.flexRootStack}
+							sx={{
+								alignItems: 'center',
+								mt: '32px',
+							}}
+						>
 							<h2 className={Styles.pageTitle}>{t.magasin.notificationPreferences}</h2>
 							<form className={Styles.form} onSubmit={(event) => event.preventDefault()}>
-								<Stack direction="column" justifyContent="center" alignItems="center" spacing={2}>
+								<Stack
+									direction="column"
+									spacing={2}
+									sx={{
+										justifyContent: 'center',
+										alignItems: 'center',
+									}}
+								>
 									<Box
 										sx={{
 											width: '100%',
@@ -96,7 +105,9 @@ const NotificationsClient = ({ session }: SessionProps) => {
 											control={
 												<Switch
 													checked={preferencesFormik.values.notify_stock_add_requests}
-													onChange={(_, checked) => void preferencesFormik.setFieldValue('notify_stock_add_requests', checked)}
+													onChange={(_, checked) =>
+														void preferencesFormik.setFieldValue('notify_stock_add_requests', checked)
+													}
 													name="notify_stock_add_requests"
 													disabled={updateState.isLoading}
 												/>
@@ -107,7 +118,9 @@ const NotificationsClient = ({ session }: SessionProps) => {
 											control={
 												<Switch
 													checked={preferencesFormik.values.browser_notifications}
-													onChange={(_, checked) => void preferencesFormik.setFieldValue('browser_notifications', checked)}
+													onChange={(_, checked) =>
+														void preferencesFormik.setFieldValue('browser_notifications', checked)
+													}
 													name="browser_notifications"
 													disabled={updateState.isLoading}
 												/>
@@ -115,36 +128,43 @@ const NotificationsClient = ({ session }: SessionProps) => {
 											label={t.magasin.browserNotifications}
 										/>
 									</Box>
-								<CustomTextInput
-									id="low_stock_repeat_hours"
-									name="low_stock_repeat_hours"
-									type="number"
-									theme={inputTheme}
-									label={t.magasin.repeatHours}
-									value={preferencesFormik.values.low_stock_repeat_hours}
-									onChange={preferencesFormik.handleChange}
-									onBlur={preferencesFormik.handleBlur}
-									error={preferencesFormik.touched.low_stock_repeat_hours && Boolean(preferencesFormik.errors.low_stock_repeat_hours)}
-									helperText={preferencesFormik.touched.low_stock_repeat_hours ? preferencesFormik.errors.low_stock_repeat_hours : ''}
-									fullWidth
-									size="small"
-									startIcon={<NotificationsIcon fontSize="small" />}
-									cssClass={Styles.maxInputWidth}
-								/>
-								{preferencesFormik.errors.globalError && (
-									<Alert severity="error" sx={{ width: '100%', maxWidth: 365 }}>
-										{preferencesFormik.errors.globalError}
-									</Alert>
-								)}
-								<PrimaryLoadingButton
-									type="submit"
-									startIcon={<SaveIcon />}
-									buttonText={t.magasin.savePreferences}
-									loading={updateState.isLoading}
-									active={!updateState.isLoading}
-									onClick={() => preferencesFormik.handleSubmit()}
-									cssClass={`${Styles.maxWidth} ${Styles.mobileButton} ${Styles.submitButton}`}
-								/>
+									<CustomTextInput
+										id="low_stock_repeat_hours"
+										name="low_stock_repeat_hours"
+										type="number"
+										theme={inputTheme}
+										label={t.magasin.repeatHours}
+										value={preferencesFormik.values.low_stock_repeat_hours}
+										onChange={preferencesFormik.handleChange}
+										onBlur={preferencesFormik.handleBlur}
+										error={
+											preferencesFormik.touched.low_stock_repeat_hours &&
+											Boolean(preferencesFormik.errors.low_stock_repeat_hours)
+										}
+										helperText={
+											preferencesFormik.touched.low_stock_repeat_hours
+												? preferencesFormik.errors.low_stock_repeat_hours
+												: ''
+										}
+										fullWidth
+										size="small"
+										startIcon={<NotificationsIcon fontSize="small" />}
+										cssClass={Styles.maxInputWidth}
+									/>
+									{preferencesFormik.errors.globalError && (
+										<Alert severity="error" sx={{ width: '100%', maxWidth: 365 }}>
+											{preferencesFormik.errors.globalError}
+										</Alert>
+									)}
+									<PrimaryLoadingButton
+										type="submit"
+										startIcon={<SaveIcon />}
+										buttonText={t.magasin.savePreferences}
+										loading={updateState.isLoading}
+										active={!updateState.isLoading}
+										onClick={() => preferencesFormik.handleSubmit()}
+										cssClass={`${Styles.maxWidth} ${Styles.mobileButton} ${Styles.submitButton}`}
+									/>
 								</Stack>
 							</form>
 						</Stack>
