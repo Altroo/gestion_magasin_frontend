@@ -110,6 +110,11 @@ jest.mock('@/components/formikElements/customDropDownSelect/customDropDownSelect
 	),
 }));
 
+jest.mock('@/components/formikElements/roundedAutocomplete/roundedAutocomplete', () => ({
+	__esModule: true,
+	default: ({ label }: { label: string }) => <div data-testid="rounded-autocomplete">{label}</div>,
+}));
+
 jest.mock('@/components/formikElements/customSquareImageUploading/customSquareImageUploading', () => ({
 	__esModule: true,
 	default: ({ label }: { label?: string }) => <div data-testid="image-upload">{label}</div>,
