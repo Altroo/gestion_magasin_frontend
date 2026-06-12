@@ -1,7 +1,7 @@
 import type { AutocompleteRenderInputParams } from '@mui/material/Autocomplete';
 
-const inputSlotKey = `Input${'Props'}`;
-const htmlInputSlotKey = `input${'Props'}`;
+const inputSlotKey = "InputProps";
+const htmlInputSlotKey = "inputProps";
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
@@ -18,7 +18,10 @@ export const splitAutocompleteRenderParams = (params: AutocompleteRenderInputPar
 		: isRecord(slotProps.htmlInput)
 			? slotProps.htmlInput
 			: {};
-	const { [inputSlotKey]: _inputSlot, [htmlInputSlotKey]: _htmlInputSlot, ...textFieldParams } = source;
+
+	const textFieldParams = { ...source };
+	delete textFieldParams[inputSlotKey];
+	delete textFieldParams[htmlInputSlotKey];
 
 	return {
 		textFieldParams,

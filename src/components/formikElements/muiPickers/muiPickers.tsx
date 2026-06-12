@@ -1,7 +1,5 @@
-'use client';
-
 import React from 'react';
-import { InputAdornment, TextFieldProps } from '@mui/material';
+import { InputAdornment } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { DesktopTimePicker } from '@mui/x-date-pickers/DesktopTimePicker';
