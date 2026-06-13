@@ -42,6 +42,12 @@ bun run lint
 bun run build
 ```
 
-## Screenshot
+## Screenshots
+
+Sanitized product workspace:
+
+![Gestion Magasin product workspace](docs/screenshots/gestion-magasin-showcase.png)
+
+Authentication screen:
 
 ![Gestion Magasin login](docs/screenshots/gestion-magasin-login.png)
