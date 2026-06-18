@@ -353,7 +353,9 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 					onBlur={() => void formik.setFieldTouched(`lines.${params.row.index}.note`, true)}
 					fullWidth
 					variant="standard"
-					slotProps={{ input: { disableUnderline: true } }}
+					multiline
+					minRows={2}
+					slotProps={{ input: { disableUnderline: true }, htmlInput: { maxLength: 2000 } }}
 					sx={gridPlainInputSx}
 				/>
 			),
@@ -521,7 +523,7 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 												<Box sx={{ mt: 2.5 }}>
 													<CustomTextInput
 														id="note"
-														type="text"
+														type="textarea"
 														label={t.magasin.note}
 														value={formik.values.note}
 														onChange={formik.handleChange('note')}

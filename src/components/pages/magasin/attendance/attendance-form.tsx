@@ -466,7 +466,7 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 												<Divider sx={{ mb: 3 }} />
 												<CustomTextInput
 													id="observations"
-													type="text"
+													type="textarea"
 													label={t.magasin.movementNote}
 													value={formik.values.observations}
 													onChange={formik.handleChange('observations')}
@@ -475,6 +475,8 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 													helperText={fieldError('observations')}
 													fullWidth
 													size="small"
+													multiline
+													rows={3}
 													theme={inputTheme}
 													startIcon={<RemarkIcon fontSize="small" />}
 												/>

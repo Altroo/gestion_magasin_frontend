@@ -213,7 +213,7 @@ export const saleSchema = z.object({
 	payment_mode: requiredNumberTextField(),
 	paid_amount: requiredNumberTextField(),
 	discount_amount: requiredNumberTextField(),
-	note: optionalTextField(1, 500),
+	note: optionalTextField(1, 2000),
 	stores: z.array(requiredNumberTextField()).min(1, { error: INPUT_REQUIRED }),
 	lines: z
 		.array(
@@ -244,7 +244,7 @@ export const expenseSchema = z.object({
 	payment_mode: requiredChoiceTextField(),
 	expense_date: requiredChoiceTextField(),
 	invoice_file: z.any().optional(),
-	note: optionalTextField(1, 500),
+	note: optionalTextField(1, 2000),
 	globalError: optionalTextField(1, 500),
 });
 
@@ -255,7 +255,7 @@ export const purchaseSchema = z.object({
 	purchase_date: requiredChoiceTextField(),
 	status: requiredChoiceTextField(),
 	invoice_file: z.any().optional(),
-	note: optionalTextField(1, 500),
+	note: optionalTextField(1, 2000),
 	lines: z
 		.array(
 			z.object({
@@ -273,14 +273,14 @@ export const inventorySchema = z.object({
 	title: requiredTextField(2, 160),
 	inventory_date: requiredChoiceTextField(),
 	status: requiredChoiceTextField(),
-	note: optionalTextField(1, 500),
+	note: optionalTextField(1, 2000),
 	lines: z
 		.array(
 			z.object({
 				product: requiredNumberTextField(),
 				expected_quantity: requiredNumberTextField(),
 				counted_quantity: requiredNumberTextField(),
-				note: optionalTextField(1, 255),
+				note: optionalTextField(1, 2000),
 			}),
 		)
 		.min(1, { error: INPUT_REQUIRED }),
@@ -292,7 +292,7 @@ export const stockTransferSchema = z.object({
 	reference: optionalTextField(1, 80),
 	transfer_date: requiredChoiceTextField(),
 	status: requiredChoiceTextField(),
-	note: optionalTextField(1, 500),
+	note: optionalTextField(1, 2000),
 	lines: z
 		.array(
 			z.object({
@@ -310,7 +310,7 @@ export const promotionSchema = z.object({
 	status: requiredChoiceTextField(),
 	start_date: optionalTextField(1, 20),
 	end_date: optionalTextField(1, 20),
-	note: optionalTextField(1, 500),
+	note: optionalTextField(1, 2000),
 	lines: z
 		.array(
 			z.object({
@@ -327,7 +327,7 @@ export const stockAdjustmentSchema = z.object({
 	quantity: requiredNumberTextField(),
 	unit_cost: optionalNumberTextField(),
 	min_stock: optionalNumberTextField(),
-	note: optionalTextField(1, 500),
+	note: optionalTextField(1, 2000),
 	globalError: optionalTextField(1, 500),
 });
 
@@ -335,7 +335,7 @@ export const stockThresholdSchema = z.object({
 	product: requiredNumberTextField(),
 	quantity: optionalNumberTextField(),
 	min_stock: requiredNumberTextField(),
-	note: optionalTextField(1, 500),
+	note: optionalTextField(1, 2000),
 	globalError: optionalTextField(1, 500),
 });
 
@@ -351,7 +351,7 @@ export const attendanceSchema = z.object({
 	delay_minutes: optionalTextField(1, 20),
 	status: requiredChoiceTextField(),
 	responsible: optionalTextField(1, 160),
-	observations: optionalTextField(1, 500),
+	observations: optionalTextField(1, 2000),
 	globalError: optionalTextField(1, 500),
 });
 

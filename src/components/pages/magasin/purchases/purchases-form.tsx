@@ -655,7 +655,7 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 												<Divider sx={{ mb: 3 }} />
 												<CustomTextInput
 													id="note"
-													type="text"
+													type="textarea"
 													label={t.magasin.note}
 													value={formik.values.note}
 													onChange={formik.handleChange('note')}
@@ -664,6 +664,8 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 													helperText={fieldError('note')}
 													fullWidth
 													size="small"
+													multiline
+													rows={3}
 													theme={inputTheme}
 													startIcon={<DescriptionIcon fontSize="small" />}
 												/>
