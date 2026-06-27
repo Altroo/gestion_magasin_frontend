@@ -100,19 +100,21 @@ const MobileActionsMenu: React.FC<MobileActionsMenuProps> = ({ actions }) => {
 		<Box sx={{ display: 'flex', gap: 1 }}>
 			{visibleActions.map((action, index) => (
 				<DarkTooltip key={index} title={action.label}>
-					<IconButton
-						size="small"
-						color={action.color}
-						disabled={action.disabled}
-						onClick={(e) => {
-							e.stopPropagation();
-							if (action.disabled) return;
-							action.onClick(e);
-						}}
-						aria-label={action.label}
-					>
-						{action.icon}
-					</IconButton>
+					<span style={{ display: 'inline-flex' }}>
+						<IconButton
+							size="small"
+							color={action.color}
+							disabled={action.disabled}
+							onClick={(e) => {
+								e.stopPropagation();
+								if (action.disabled) return;
+								action.onClick(e);
+							}}
+							aria-label={action.label}
+						>
+							{action.icon}
+						</IconButton>
+					</span>
 				</DarkTooltip>
 			))}
 		</Box>
