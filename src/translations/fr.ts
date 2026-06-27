@@ -206,7 +206,7 @@ export const fr: TranslationDictionary = {
     shift: 'Horaire',
     morningShift: 'Matin',
     afternoonShift: 'Apres midi',
-    eveningShift: 'Soir',
+    eveningShift: 'soir',
     delayMinutes: 'Retard (minutes)',
     responsible: 'Responsable',
     observations: 'Observations',

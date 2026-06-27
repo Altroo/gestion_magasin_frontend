@@ -384,7 +384,7 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 																	<MenuItem value="morning">{t.magasin.morningShift}</MenuItem>
 																	<MenuItem value="afternoon">{t.magasin.afternoonShift}</MenuItem>
 																	<MenuItem value="evening">{t.magasin.eveningShift}</MenuItem>
-																	<MenuItem value="off">{t.magasin.off}</MenuItem>
+																	<MenuItem value="off">repos</MenuItem>
 																</TextField>
 														</ThemeProvider>
 														{(['clock_in', 'break_start', 'break_end', 'clock_out'] as const).map((field) => (

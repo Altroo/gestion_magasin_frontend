@@ -90,7 +90,7 @@ const AttendanceClient = ({ session }: SessionProps) => {
 
 	const statusOptions = [
 		{ value: 'present', label: t.magasin.present },
-		{ value: 'off', label: t.magasin.off },
+		{ value: 'off', label: 'repos' },
 		{ value: 'absent', label: t.magasin.absent },
 	];
 	const shiftOptions = [
