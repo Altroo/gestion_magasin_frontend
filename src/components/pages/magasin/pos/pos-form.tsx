@@ -14,6 +14,8 @@ import {
 	TextField,
 	ThemeProvider,
 	Typography,
+	ToggleButton,
+	ToggleButtonGroup,
 } from '@mui/material';
 import { DataGrid, type GridColDef, type GridPaginationModel, type GridRenderCellParams } from '@mui/x-data-grid';
 import { frFR } from '@mui/x-data-grid/locales';
@@ -24,6 +26,7 @@ import {
 	Inventory2 as InventoryIcon,
 	LocalOffer as LocalOfferIcon,
 	PointOfSale as PointOfSaleIcon,
+	Print as PrintIcon,
 	QrCodeScanner as QrCodeScannerIcon,
 	ReceiptLong as ReceiptLongIcon,
 	Remove as RemoveIcon,
@@ -48,7 +51,8 @@ import {
 	useLazyScanProductQuery,
 	useSyncOfflineSalesMutation,
 } from '@/store/services/magasin';
-import { useLanguage, useToast } from '@/utils/hooks';
+import { fetchFileBlob } from '@/utils/apiHelpers';
+import { useLanguage, usePermission, useToast } from '@/utils/hooks';
 import { setFormikAutoErrors } from '@/utils/helpers';
 import { posScanSchema } from '@/utils/formValidationSchemas';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
@@ -70,6 +74,7 @@ type PromotionCartLine = {
 };
 
 type CartLine = ProductCartLine | PromotionCartLine;
+type SaleMode = 'normal' | 'wholesale';
 
 type CartGridRow = {
 	id: string;
@@ -108,6 +113,8 @@ const actionButtonSx = {
 };
 
 const money = (value: number | string) => `${Number(value || 0).toFixed(2)} Dhs`;
+const productSalePrice = (product: ProductType, saleType: SaleMode) =>
+	Number((saleType === 'wholesale' ? product.wholesale_price : product.counter_price) || 0);
 
 const readOfflineQueue = (): SaleCreatePayload[] => {
 	if (typeof window === 'undefined') {
@@ -137,6 +144,7 @@ const getScanErrorPayload = (error: unknown) => {
 const PosClient = ({ session }: SessionProps) => {
 	const token = useInitAccessToken(session);
 	const { t } = useLanguage();
+	const permissions = usePermission();
 	const { onSuccess, onError } = useToast();
 	const { defaultStore } = useSelectedStore(token);
 	const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>(undefined);
@@ -147,6 +155,8 @@ const PosClient = ({ session }: SessionProps) => {
 	const [cameraActive, setCameraActive] = useState(false);
 	const [hasAttemptedScan, setHasAttemptedScan] = useState(false);
 	const [selectedPaymentModeId, setSelectedPaymentModeId] = useState('');
+	const [saleType, setSaleType] = useState<SaleMode>('normal');
+	const [lastWholesaleSaleId, setLastWholesaleSaleId] = useState<number | null>(null);
 	const videoRef = useRef<HTMLVideoElement | null>(null);
 	const scanTimerRef = useRef<number | null>(null);
 	const streamRef = useRef<MediaStream | null>(null);
@@ -171,6 +181,8 @@ const PosClient = ({ session }: SessionProps) => {
 		[paymentModeOptions],
 	);
 	const effectivePaymentModeId = selectedPaymentModeId || (defaultPaymentMode ? String(defaultPaymentMode.id) : '');
+	const canWholesaleSale = permissions.can_wholesale_sale;
+	const effectiveSaleType = canWholesaleSale ? saleType : 'normal';
 
 	const total = useMemo(() => cart.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0), [cart]);
 
@@ -188,11 +200,21 @@ const PosClient = ({ session }: SessionProps) => {
 					type: 'product',
 					product,
 					quantity: 1,
-					unitPrice: Number(product.counter_price || 0),
+					unitPrice: productSalePrice(product, effectiveSaleType),
 				},
 			];
 		});
 	};
+
+	const handleSaleTypeChange = useCallback((nextType: SaleMode) => {
+		setSaleType(nextType);
+		setLastWholesaleSaleId(null);
+		setCart((current) =>
+			current.map((line) =>
+				line.type === 'product' ? { ...line, unitPrice: productSalePrice(line.product, nextType) } : line,
+			),
+		);
+	}, []);
 
 	const addPromotion = (promotion: PromotionType) => {
 		setCart((current) => {
@@ -442,6 +464,7 @@ const PosClient = ({ session }: SessionProps) => {
 				})),
 			payment_mode: Number(effectivePaymentModeId),
 			paid_amount: String(total),
+			sale_type: effectiveSaleType,
 			idempotency_key: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`,
 		};
 	};
@@ -459,12 +482,28 @@ const PosClient = ({ session }: SessionProps) => {
 			return;
 		}
 		try {
-			await createSale(salePayload).unwrap();
+			const sale = await createSale(salePayload).unwrap();
+			setLastWholesaleSaleId(sale.sale_type === 'wholesale' ? sale.id : null);
 			setCart([]);
 			onSuccess(t.magasin.saleConfirmed);
 		} catch {
+			setLastWholesaleSaleId(null);
 			queueOfflineSale(salePayload);
 			setCart([]);
+		}
+	};
+
+	const handlePrintFacture = async () => {
+		if (!token || !lastWholesaleSaleId) {
+			return;
+		}
+		try {
+			const blob = await fetchFileBlob(`${process.env.NEXT_PUBLIC_SALES_ROOT}${lastWholesaleSaleId}/facture/`, token);
+			const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+			const blobUrl = window.URL.createObjectURL(pdfBlob);
+			window.open(blobUrl, '_blank');
+		} catch {
+			onError(t.magasin.saleFacturePrintError);
 		}
 	};
 
@@ -748,6 +787,37 @@ const PosClient = ({ session }: SessionProps) => {
 										alignItems: { xs: 'stretch', sm: 'center' },
 									}}
 								>
+									{canWholesaleSale && (
+										<Stack spacing={0.75} sx={{ minWidth: { xs: '100%', sm: 280 } }}>
+											<Typography variant="caption" sx={{ color: 'text.secondary' }}>
+												{t.magasin.saleType}
+											</Typography>
+											<ToggleButtonGroup
+												exclusive
+												size="small"
+												value={saleType}
+												onChange={(_, value: SaleMode | null) => {
+													if (value) {
+														handleSaleTypeChange(value);
+													}
+												}}
+												sx={{
+													height: 40,
+													'& .MuiToggleButton-root': {
+														flex: 1,
+														px: 2,
+														textTransform: 'none',
+														fontWeight: 600,
+														whiteSpace: 'nowrap',
+													},
+												}}
+												fullWidth
+											>
+												<ToggleButton value="normal">{t.magasin.normalSale}</ToggleButton>
+												<ToggleButton value="wholesale">{t.magasin.wholesaleSale}</ToggleButton>
+											</ToggleButtonGroup>
+										</Stack>
+									)}
 									<ThemeProvider theme={dropdownTheme}>
 										<TextField
 											select
@@ -804,6 +874,18 @@ const PosClient = ({ session }: SessionProps) => {
 									>
 										{t.magasin.confirmSale}
 									</Button>
+									{lastWholesaleSaleId && permissions.can_print && (
+										<Button
+											type="button"
+											variant="outlined"
+											size="large"
+											startIcon={<PrintIcon />}
+											onClick={() => void handlePrintFacture()}
+											sx={actionButtonSx}
+										>
+											{t.magasin.printFacture}
+										</Button>
+									)}
 								</Stack>
 							</MagasinSectionCard>
 						</Stack>

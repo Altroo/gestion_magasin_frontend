@@ -532,6 +532,14 @@ export const magasinApi = createApi({
 			}),
 			invalidatesTags: ['StockAddRequests', 'Stock', 'Reports'],
 		}),
+		bulkApproveStockAddRequests: builder.mutation<{ approved: number }, { ids: number[] }>({
+			query: ({ ids }) => ({
+				url: `${process.env.NEXT_PUBLIC_STOCK_ADD_REQUESTS}bulk-approve/`,
+				method: 'POST',
+				data: { ids },
+			}),
+			invalidatesTags: ['StockAddRequests', 'Stock', 'Reports'],
+		}),
 		rejectStockAddRequest: builder.mutation<StockAddRequestType, { id: number; rejection_reason?: string }>({
 			query: ({ id, rejection_reason }) => ({
 				url: `${process.env.NEXT_PUBLIC_STOCK_ADD_REQUESTS}${id}/reject/`,
@@ -847,6 +855,7 @@ export const {
 	useAddStockTransferMutation,
 	useAdjustStockMutation,
 	useApproveStockAddRequestMutation,
+	useBulkApproveStockAddRequestsMutation,
 	useBulkDeleteExpensesMutation,
 	useBulkDeleteAttendanceRecordsMutation,
 	useBulkDeleteInventorySessionsMutation,

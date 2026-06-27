@@ -53,7 +53,10 @@ export const magasinStatusLabel = (t: TranslationDictionary, value?: string | nu
 		off: t.magasin.off,
 		absent: t.magasin.absent,
 		morning: t.magasin.morningShift,
+		afternoon: t.magasin.afternoonShift,
 		evening: t.magasin.eveningShift,
+		normal: t.magasin.normalSale,
+		wholesale: t.magasin.wholesaleSale,
 	};
 	return labels[value] ?? value;
 };

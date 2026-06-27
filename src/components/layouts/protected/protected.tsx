@@ -11,7 +11,8 @@ type PermissionKey =
 	| 'can_create'
 	| 'can_edit'
 	| 'can_delete'
-	| 'can_create_promotion';
+	| 'can_create_promotion'
+	| 'can_wholesale_sale';
 
 interface ProtectedProps {
 	children: ReactNode;

@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Button, Stack } from '@mui/material';
+import { Box, Button, Card, CardContent, Divider, Stack, Typography } from '@mui/material';
 import {
 	Add as AddIcon,
 	CheckCircle as ValidateIcon,
@@ -25,13 +25,16 @@ import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActio
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import {
+	useApproveStockAddRequestMutation,
+	useBulkApproveStockAddRequestsMutation,
 	useDeleteStockTransferMutation,
+	useGetStockAddRequestsQuery,
 	useGetStockTransfersQuery,
 	useValidateStockTransferMutation,
 } from '@/store/services/magasin';
 import type { SessionProps } from '@/types/_initTypes';
-import type { StockTransferType } from '@/types/gestionMagasinTypes';
-import { extractApiErrorMessage, formatDate } from '@/utils/helpers';
+import type { StockAddRequestType, StockTransferType } from '@/types/gestionMagasinTypes';
+import { extractApiErrorMessage, formatDate, formatNumber } from '@/utils/helpers';
 import { STOCK_TRANSFERS_ADD, STOCK_TRANSFERS_EDIT, STOCK_TRANSFERS_VIEW } from '@/utils/routes';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
 
@@ -42,11 +45,20 @@ const StockTransfersListClient = ({ session }: SessionProps) => {
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
 	const { memberships } = useSelectedStore(token);
+	const canApproveRequests =
+		permissions.is_staff || memberships.some((membership) => membership.role.code === 'direction');
 	const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});
 	const [chipFilterParams, setChipFilterParams] = useState<Record<string, string>>({});
+	const [requestPaginationModel, setRequestPaginationModel] = useState({ page: 0, pageSize: 5 });
+	const [requestSearchTerm, setRequestSearchTerm] = useState('');
+	const [requestFilterModel, setRequestFilterModel] = useState<GridFilterModel>({
+		items: [],
+		logicOperator: GridLogicOperator.And,
+	});
+	const [selectedRequestIds, setSelectedRequestIds] = useState<number[]>([]);
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 	const [validateTarget, setValidateTarget] = useState<number | null>(null);
 	const mergedFilterParams = useMemo(
@@ -59,6 +71,21 @@ const StockTransfersListClient = ({ session }: SessionProps) => {
 	);
 	const [deleteTransfer] = useDeleteStockTransferMutation();
 	const [validateTransfer] = useValidateStockTransferMutation();
+	const [approveStockAddRequest] = useApproveStockAddRequestMutation();
+	const [bulkApproveStockAddRequests] = useBulkApproveStockAddRequestsMutation();
+	const {
+		data: stockRequests,
+		isLoading: areRequestsLoading,
+		refetch: refetchRequests,
+	} = useGetStockAddRequestsQuery(
+		{
+			status: 'pending',
+			search: requestSearchTerm,
+			page: requestPaginationModel.page + 1,
+			pageSize: requestPaginationModel.pageSize,
+		},
+		{ skip: !token || !canApproveRequests },
+	);
 
 	const targetStoreOptions = useMemo(
 		() =>
@@ -110,6 +137,95 @@ const StockTransfersListClient = ({ session }: SessionProps) => {
 			setValidateTarget(null);
 		}
 	};
+
+	const approveRequestHandler = async (requestId: number) => {
+		try {
+			await approveStockAddRequest({ id: requestId }).unwrap();
+			onSuccess(t.magasin.stockRequestApproved);
+			setSelectedRequestIds((current) => current.filter((id) => id !== requestId));
+			refetchRequests();
+		} catch (error) {
+			onError(extractApiErrorMessage(error, t.magasin.stockRequestApproveError));
+		}
+	};
+
+	const bulkApproveRequestHandler = async () => {
+		try {
+			await bulkApproveStockAddRequests({ ids: selectedRequestIds }).unwrap();
+			onSuccess(t.magasin.stockRequestsApproved(selectedRequestIds.length));
+			setSelectedRequestIds([]);
+			refetchRequests();
+		} catch (error) {
+			onError(extractApiErrorMessage(error, t.magasin.stockRequestApproveError));
+		}
+	};
+
+	const requestColumns: GridColDef[] = [
+		{
+			field: 'product_name',
+			headerName: t.magasin.product,
+			flex: 1.3,
+			minWidth: 180,
+			renderCell: (params: GridRenderCellParams<StockAddRequestType>) => (
+				<TooltipTextCell fontWeight={600}>{params.value}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'store_name',
+			headerName: t.magasin.store,
+			flex: 1,
+			minWidth: 150,
+			renderCell: (params: GridRenderCellParams<StockAddRequestType>) => (
+				<TooltipTextCell>{params.value ?? '-'}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'quantity',
+			headerName: t.magasin.quantity,
+			flex: 0.6,
+			minWidth: 110,
+			renderCell: (params: GridRenderCellParams<StockAddRequestType>) => (
+				<TooltipTextCell fontWeight={600}>{formatNumber(params.value as string)}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'unit_cost',
+			headerName: t.magasin.purchasePrice,
+			flex: 0.8,
+			minWidth: 130,
+			renderCell: (params: GridRenderCellParams<StockAddRequestType>) => (
+				<TooltipTextCell>{formatNumber(params.value as string)} Dhs</TooltipTextCell>
+			),
+		},
+		{
+			field: 'requested_by_email',
+			headerName: t.users.email,
+			flex: 1.1,
+			minWidth: 170,
+			renderCell: (params: GridRenderCellParams<StockAddRequestType>) => (
+				<TooltipTextCell>{params.value ?? '-'}</TooltipTextCell>
+			),
+		},
+		{
+			field: 'actions',
+			headerName: t.common.actions,
+			minWidth: 120,
+			sortable: false,
+			filterable: false,
+			renderCell: (params: GridRenderCellParams<StockAddRequestType>) => (
+				<MobileActionsMenu
+					actions={[
+						{
+							label: t.magasin.approveStockRequest,
+							icon: <ValidateIcon />,
+							onClick: () => void approveRequestHandler(params.row.id),
+							color: 'success',
+						},
+					]}
+				/>
+			),
+		},
+	];
 
 	const columns: GridColDef[] = [
 		{
@@ -215,6 +331,53 @@ const StockTransfersListClient = ({ session }: SessionProps) => {
 						</Stack>
 					</Box>
 					<ChipSelectFilterBar filters={chipFilters} onFilterChange={handleChipFilterChange} />
+					{canApproveRequests && (
+						<Card elevation={2} sx={{ mt: 2, mb: 2, mx: { xs: 1, sm: 2, md: 3 }, borderRadius: 2, overflow: 'hidden' }}>
+							<CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
+								<Stack
+									direction={{ xs: 'column', sm: 'row' }}
+									spacing={2}
+									sx={{
+										alignItems: { xs: 'stretch', sm: 'center' },
+										justifyContent: 'space-between',
+										px: { xs: 2, md: 3 },
+										pt: { xs: 2, md: 3 },
+										pb: 2,
+									}}
+								>
+									<Typography variant="h6" sx={{ fontWeight: 700 }}>
+										{t.magasin.stockRequests}
+									</Typography>
+									{selectedRequestIds.length > 0 && (
+										<Button
+											variant="outlined"
+											color="success"
+											startIcon={<ValidateIcon fontSize="small" />}
+											onClick={() => void bulkApproveRequestHandler()}
+										>
+											{t.magasin.approveStockRequests} ({selectedRequestIds.length})
+										</Button>
+									)}
+								</Stack>
+								<Divider sx={{ mx: { xs: 2, md: 3 } }} />
+								<PaginatedDataGrid
+									data={stockRequests}
+									isLoading={areRequestsLoading}
+									columns={requestColumns}
+									paginationModel={requestPaginationModel}
+									setPaginationModel={setRequestPaginationModel}
+									searchTerm={requestSearchTerm}
+									setSearchTerm={setRequestSearchTerm}
+									filterModel={requestFilterModel}
+									onFilterModelChange={setRequestFilterModel}
+									toolbar={{ quickFilter: true, debounceMs: 500 }}
+									checkboxSelection
+									selectedIds={selectedRequestIds}
+									onSelectionChange={setSelectedRequestIds}
+								/>
+							</CardContent>
+						</Card>
+					)}
 					<PaginatedDataGrid
 						data={data}
 						isLoading={isLoading}

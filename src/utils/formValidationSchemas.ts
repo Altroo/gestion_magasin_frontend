@@ -121,6 +121,7 @@ export const userSchema = z.object({
 	can_edit: z.boolean(),
 	can_delete: z.boolean(),
 	can_create_promotion: z.boolean(),
+	can_wholesale_sale: z.boolean(),
 	stores: z
 		.array(
 			z.object({

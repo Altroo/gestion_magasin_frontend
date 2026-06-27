@@ -95,6 +95,7 @@ const AttendanceClient = ({ session }: SessionProps) => {
 	];
 	const shiftOptions = [
 		{ value: 'morning', label: t.magasin.morningShift },
+		{ value: 'afternoon', label: t.magasin.afternoonShift },
 		{ value: 'evening', label: t.magasin.eveningShift },
 		{ value: 'off', label: t.magasin.off },
 	];

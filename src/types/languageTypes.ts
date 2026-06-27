@@ -139,6 +139,11 @@ export type TranslationDictionary = {
     confirmSale: string;
     emptyCart: string;
     saleConfirmed: string;
+    saleType: string;
+    normalSale: string;
+    wholesaleSale: string;
+    printFacture: string;
+    saleFacturePrintError: string;
     queuedOffline: string;
     syncOffline: string;
     offlineQueue: string;
@@ -200,6 +205,7 @@ export type TranslationDictionary = {
     clockOut: string;
     shift: string;
     morningShift: string;
+    afternoonShift: string;
     eveningShift: string;
     delayMinutes: string;
     responsible: string;
@@ -322,8 +328,10 @@ export type TranslationDictionary = {
     stockRequestSent: string;
     stockRequestCreateError: string;
     approveStockRequest: string;
+    approveStockRequests: string;
     rejectStockRequest: string;
     stockRequestApproved: string;
+    stockRequestsApproved: (n: number) => string;
     stockRequestRejected: string;
     stockRequestApproveError: string;
     stockRequestRejectError: string;
@@ -359,6 +367,7 @@ export type TranslationDictionary = {
     deleteExpenseBody: string;
     invoice: string;
     attachInvoice: string;
+    expenseNotePrint: string;
     purchaseCreated: string;
     purchaseUpdated: string;
     purchaseDeleted: string;
@@ -470,6 +479,7 @@ export type TranslationDictionary = {
     canEdit: string;
     canDelete: string;
     canCreatePromotion: string;
+    canWholesaleSale: string;
 	deleteUser: string;
 	deleteUserConfirm: string;
 	addUser: string;

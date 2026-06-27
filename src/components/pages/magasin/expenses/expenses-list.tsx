@@ -10,6 +10,7 @@ import {
 	Delete as DeleteIcon,
 	Edit as EditIcon,
 	PendingActions as PendingActionsIcon,
+	Print as PrintIcon,
 	Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import { GridLogicOperator, type GridColDef, type GridFilterModel, type GridRenderCellParams } from '@mui/x-data-grid';
@@ -265,6 +266,14 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 							onClick: () => router.push(EXPENSES_VIEW(params.row.id, storeId)),
 							color: 'info',
 							show: permissions.can_view,
+						},
+						{
+							label: t.magasin.expenseNotePrint,
+							icon: <PrintIcon />,
+							onClick: () => undefined,
+							color: 'default',
+							show: permissions.can_print,
+							disabled: true,
 						},
 						{
 							label: t.common.edit,

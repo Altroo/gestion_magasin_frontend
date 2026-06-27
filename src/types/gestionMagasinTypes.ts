@@ -177,6 +177,7 @@ export type SaleType = {
 	payment_mode_name?: string | null;
 	status: 'confirmed' | 'void';
 	payment_status: 'paid' | 'in_progress' | 'cancelled';
+	sale_type: 'normal' | 'wholesale';
 	subtotal: string;
 	discount_amount: string;
 	total: string;
@@ -209,6 +210,7 @@ export type SaleCreatePayload = {
 	payment_mode?: number;
 	payment_mode_code?: string;
 	payment_status?: 'paid' | 'in_progress' | 'cancelled';
+	sale_type?: 'normal' | 'wholesale';
 	discount_amount?: string;
 	paid_amount?: string;
 	idempotency_key?: string;
@@ -550,7 +552,7 @@ export type AttendancePayload = {
 	observations?: string;
 };
 
-export type AttendanceShiftType = 'morning' | 'evening' | 'off';
+export type AttendanceShiftType = 'morning' | 'afternoon' | 'evening' | 'off';
 
 export type NotificationType = {
 	id: number;

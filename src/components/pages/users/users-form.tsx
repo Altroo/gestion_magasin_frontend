@@ -85,6 +85,7 @@ interface UserFormValues {
 	can_edit: boolean;
 	can_delete: boolean;
 	can_create_promotion: boolean;
+	can_wholesale_sale: boolean;
 	stores: UserStoreAssignmentType[];
 	avatar: string | ArrayBuffer | null;
 	avatar_cropped: string | ArrayBuffer | null;
@@ -99,11 +100,19 @@ type FormikContentProps = {
 const permissionFields: Array<
 	keyof Pick<
 		UserFormValues,
-		'can_view' | 'can_print' | 'can_create' | 'can_edit' | 'can_delete' | 'can_create_promotion'
+		| 'can_view'
+		| 'can_print'
+		| 'can_create'
+		| 'can_edit'
+		| 'can_delete'
+		| 'can_create_promotion'
+		| 'can_wholesale_sale'
 	>
-> = ['can_view', 'can_print', 'can_create', 'can_edit', 'can_delete', 'can_create_promotion'];
+> = ['can_view', 'can_print', 'can_create', 'can_edit', 'can_delete', 'can_create_promotion', 'can_wholesale_sale'];
 
-const baseAdminPermissionFields: Array<Exclude<(typeof permissionFields)[number], 'can_create_promotion'>> = [
+const baseAdminPermissionFields: Array<
+	Exclude<(typeof permissionFields)[number], 'can_create_promotion' | 'can_wholesale_sale'>
+> = [
 	'can_view',
 	'can_print',
 	'can_create',
@@ -156,6 +165,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 			can_edit: rawData?.can_edit ?? false,
 			can_delete: rawData?.can_delete ?? false,
 			can_create_promotion: rawData?.can_create_promotion ?? false,
+			can_wholesale_sale: rawData?.can_wholesale_sale ?? false,
 			stores: rawData?.stores ?? [],
 			avatar: rawData?.avatar ?? '',
 			avatar_cropped: rawData?.avatar_cropped ?? '',
@@ -219,6 +229,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 			can_edit: t.users.canEdit,
 			can_delete: t.users.canDelete,
 			can_create_promotion: t.users.canCreatePromotion,
+			can_wholesale_sale: t.users.canWholesaleSale,
 			stores: t.users.storeAccess,
 			globalError: t.errors.globalError,
 		}),
@@ -286,6 +297,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 				can_edit: formik.values.can_edit,
 				can_delete: formik.values.can_delete,
 				can_create_promotion: formik.values.can_create_promotion,
+				can_wholesale_sale: formik.values.can_wholesale_sale,
 				[field]: checked,
 			};
 			void formik.setFieldValue(
@@ -855,6 +867,16 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 											/>
 										}
 										label={t.users.canCreatePromotion}
+									/>
+									<FormControlLabel
+										control={
+											<Switch
+												checked={formik.values.can_wholesale_sale}
+												onChange={handlePermissionChange('can_wholesale_sale')}
+												name="can_wholesale_sale"
+											/>
+										}
+										label={t.users.canWholesaleSale}
 									/>
 								</Stack>
 							</CardContent>

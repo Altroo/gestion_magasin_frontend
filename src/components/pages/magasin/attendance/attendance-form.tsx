@@ -34,7 +34,8 @@ const inputTheme = textInputTheme();
 const dropdownTheme = customDropdownTheme();
 const shiftStartMinutes: Record<Exclude<AttendanceShiftType, 'off'>, number> = {
 	morning: 9 * 60,
-	evening: 15 * 60,
+	afternoon: 15 * 60,
+	evening: 19 * 60,
 };
 
 const parseTimeMinutes = (value?: string | null) => {
@@ -66,8 +67,9 @@ const calculateWorkedHours = (values: AttendanceTimeFields) => {
 
 const calculateDelayMinutes = (values: AttendanceDelayFields) => {
 	if (values.status !== 'present' || values.shift === 'off') return '0';
+	if (!values.shift) return '';
 	const clockIn = parseTimeMinutes(values.clock_in);
-	if (clockIn === null || values.shift !== 'morning' && values.shift !== 'evening') return '';
+	if (clockIn === null) return '';
 	return String(Math.max(clockIn - shiftStartMinutes[values.shift], 0));
 };
 
@@ -378,11 +380,12 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 																helperText={fieldError('shift')}
 																disabled={formik.values.status === 'off'}
 																fullWidth
-															>
-																<MenuItem value="morning">{t.magasin.morningShift}</MenuItem>
-																<MenuItem value="evening">{t.magasin.eveningShift}</MenuItem>
-																<MenuItem value="off">{t.magasin.off}</MenuItem>
-															</TextField>
+																>
+																	<MenuItem value="morning">{t.magasin.morningShift}</MenuItem>
+																	<MenuItem value="afternoon">{t.magasin.afternoonShift}</MenuItem>
+																	<MenuItem value="evening">{t.magasin.eveningShift}</MenuItem>
+																	<MenuItem value="off">{t.magasin.off}</MenuItem>
+																</TextField>
 														</ThemeProvider>
 														{(['clock_in', 'break_start', 'break_end', 'clock_out'] as const).map((field) => (
 															<MuiFormikTimePicker

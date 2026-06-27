@@ -22,6 +22,7 @@ export class UserClass {
 		public can_edit: boolean,
 		public can_delete: boolean,
 		public can_create_promotion: boolean = false,
+		public can_wholesale_sale: boolean = false,
 		public stores?: UserStoreAssignmentType[],
 	) {}
 }

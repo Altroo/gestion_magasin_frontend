@@ -15,6 +15,7 @@ import {
 	Payment as PaymentIcon,
 	Person as PersonIcon,
 	PointOfSale as PointOfSaleIcon,
+	Print as PrintIcon,
 	Storefront as StorefrontIcon,
 } from '@mui/icons-material';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
@@ -30,9 +31,11 @@ import {
 	LineItemsCard,
 	StatusChip,
 } from '@/components/pages/magasin/shared/view-components';
+import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useGetSaleQuery, useVoidSaleMutation } from '@/store/services/magasin';
 import { SALES_LIST } from '@/utils/routes';
+import { fetchFileBlob } from '@/utils/apiHelpers';
 import { extractApiErrorMessage, formatDate, formatNumber } from '@/utils/helpers';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
 import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '@/types/_initTypes';
@@ -66,6 +69,20 @@ const SalesViewClient = ({ session, id }: Props) => {
 		}
 	};
 
+	const handlePrintFacture = async () => {
+		if (!token || !sale) {
+			return;
+		}
+		try {
+			const blob = await fetchFileBlob(`${process.env.NEXT_PUBLIC_SALES_ROOT}${sale.id}/facture/`, token);
+			const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+			const blobUrl = window.URL.createObjectURL(pdfBlob);
+			window.open(blobUrl, '_blank');
+		} catch {
+			onError(t.magasin.saleFacturePrintError);
+		}
+	};
+
 	return (
 		<NavigationBar title={t.magasin.saleDetails}>
 			<Protected permission="can_view">
@@ -82,16 +99,23 @@ const SalesViewClient = ({ session, id }: Props) => {
 								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(SALES_LIST)}>
 									{t.magasin.backToSales}
 								</Button>
-								{sale && sale.status !== 'void' && permissions.can_delete && (
-									<Button
-										variant="outlined"
-										color="error"
-										startIcon={<DeleteIcon />}
-										onClick={() => setShowVoidModal(true)}
-									>
-										{t.magasin.voidSale}
-									</Button>
-								)}
+								<Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+									{sale?.sale_type === 'wholesale' && permissions.can_print && (
+										<Button variant="outlined" startIcon={<PrintIcon />} onClick={() => void handlePrintFacture()}>
+											{t.magasin.printFacture}
+										</Button>
+									)}
+									{sale && sale.status !== 'void' && permissions.can_delete && (
+										<Button
+											variant="outlined"
+											color="error"
+											startIcon={<DeleteIcon />}
+											onClick={() => setShowVoidModal(true)}
+										>
+											{t.magasin.voidSale}
+										</Button>
+									)}
+								</Stack>
 							</Stack>
 							{isLoading ? (
 								<ApiProgress backdropColor="#FFFFFF" circularColor="#0D070B" />
@@ -113,6 +137,12 @@ const SalesViewClient = ({ session, id }: Props) => {
 									/>
 									<DetailCard icon={<PointOfSaleIcon />} title={t.magasin.saleDetails}>
 										<InfoRow icon={<StorefrontIcon />} label={t.magasin.store} value={sale.store_name} />
+										<Divider />
+										<InfoRow
+											icon={<PointOfSaleIcon />}
+											label={t.magasin.saleType}
+											value={magasinStatusLabel(t, sale.sale_type)}
+										/>
 										<Divider />
 										<InfoRow icon={<CalendarIcon />} label={t.magasin.date} value={formatDate(sale.date_created)} />
 										<Divider />
