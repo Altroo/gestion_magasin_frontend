@@ -23,7 +23,7 @@ export const usePermission = () => {
 		can_print: is_staff || !!can_print,
 		can_create: is_staff || !!can_create,
 		can_edit: is_staff || !!can_edit,
-		can_delete: is_staff || !!can_delete,
+		can_delete: is_staff || pointage_only || !!can_delete,
 		can_create_promotion: is_staff || !!can_create_promotion,
 		can_wholesale_sale: is_staff || !!can_wholesale_sale,
 	};

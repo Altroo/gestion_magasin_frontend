@@ -82,6 +82,17 @@ describe('usePermission', () => {
 		expect(result.current.can_edit).toBe(false);
 		expect(result.current.can_delete).toBe(false);
 	});
+
+	it('allows pointage-only users to delete pointage records', () => {
+		const { result } = renderHook(() => usePermission(), {
+			wrapper: makeWrapper({
+				is_staff: false,
+				pointage_only: true,
+				can_delete: false,
+			}),
+		});
+		expect(result.current.can_delete).toBe(true);
+	});
 });
 
 // ─── useIsClient ─────────────────────────────────────────────────────────────

@@ -129,7 +129,7 @@ const pointageOnlyPermissionDefaults = {
 	can_print: false,
 	can_create: true,
 	can_edit: true,
-	can_delete: false,
+	can_delete: true,
 	can_create_promotion: false,
 	can_wholesale_sale: false,
 };
