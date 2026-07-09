@@ -30,7 +30,7 @@ describe('InitEffects', () => {
 			return undefined;
 		});
 
-		(useRouter as jest.Mock).mockReturnValue({ push: jest.fn() });
+		(useRouter as jest.Mock).mockReturnValue({ push: jest.fn(), replace: jest.fn() });
 		(usePathname as jest.Mock).mockReturnValue('/');
 
 		(useGetProfilQuery as jest.Mock).mockReturnValue({ data: undefined });
@@ -86,7 +86,7 @@ describe('InitEffects', () => {
 
 	it('redirects to DASHBOARD_PASSWORD when default_password_set is true', async () => {
 		const mockPush = jest.fn();
-		(useRouter as jest.Mock).mockReturnValue({ push: mockPush });
+		(useRouter as jest.Mock).mockReturnValue({ push: mockPush, replace: jest.fn() });
 		(usePathname as jest.Mock).mockReturnValue('/dashboard/contracts');
 
 		(useSession as jest.Mock).mockReturnValue({ data: { user: {} }, status: 'authenticated' });
@@ -102,7 +102,7 @@ describe('InitEffects', () => {
 
 	it('does not redirect when already on password page', async () => {
 		const mockPush = jest.fn();
-		(useRouter as jest.Mock).mockReturnValue({ push: mockPush });
+		(useRouter as jest.Mock).mockReturnValue({ push: mockPush, replace: jest.fn() });
 		(usePathname as jest.Mock).mockReturnValue('/dashboard/settings/password');
 
 		(useSession as jest.Mock).mockReturnValue({ data: { user: {} }, status: 'authenticated' });
@@ -113,6 +113,22 @@ describe('InitEffects', () => {
 
 		await waitFor(() => {
 			expect(mockPush).not.toHaveBeenCalled();
+		});
+	});
+
+	it('redirects pointage-only users to pointage outside the pointage route', async () => {
+		const mockReplace = jest.fn();
+		(useRouter as jest.Mock).mockReturnValue({ push: jest.fn(), replace: mockReplace });
+		(usePathname as jest.Mock).mockReturnValue('/dashboard/sales');
+
+		(useSession as jest.Mock).mockReturnValue({ data: { user: {} }, status: 'authenticated' });
+		const mockUser = { id: 1, first_name: 'A', default_password_set: false, pointage_only: true };
+		(useGetProfilQuery as jest.Mock).mockReturnValue({ data: mockUser });
+
+		render(<InitEffects />);
+
+		await waitFor(() => {
+			expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('/dashboard/pointage'));
 		});
 	});
 });

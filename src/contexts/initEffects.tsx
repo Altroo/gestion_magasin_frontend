@@ -8,7 +8,10 @@ import { initAppAction, initAppSessionTokensAction } from '@/store/actions/_init
 import { getAccessToken } from '@/store/selectors';
 import { useGetProfilQuery } from '@/store/services/account';
 import { accountSetProfilAction } from '@/store/actions/accountActions';
-import { DASHBOARD_PASSWORD } from '@/utils/routes';
+import { DASHBOARD_ATTENDANCE, DASHBOARD_PASSWORD } from '@/utils/routes';
+
+const POINTAGE_ROUTE_PREFIX = '/dashboard/pointage';
+const PASSWORD_ROUTE = '/dashboard/settings/password';
 
 export const InitEffects: React.FC = () => {
 	const { data: session, status } = useSession();
@@ -50,8 +53,12 @@ export const InitEffects: React.FC = () => {
 
 	// Redirect if user still has default password
 	useEffect(() => {
-		if (user && user.default_password_set && pathname !== '/dashboard/settings/password') {
+		if (user && user.default_password_set && pathname !== PASSWORD_ROUTE) {
 			router.push(DASHBOARD_PASSWORD);
+			return;
+		}
+		if (user?.pointage_only && !pathname.startsWith(POINTAGE_ROUTE_PREFIX)) {
+			router.replace(DASHBOARD_ATTENDANCE);
 		}
 	}, [user, pathname, router]);
 

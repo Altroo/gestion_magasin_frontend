@@ -289,6 +289,14 @@ const UsersViewClient: React.FC<Props> = ({ session, id }) => {
 																	size="small"
 																/>
 															)}
+															{userData?.pointage_only && (
+																<Chip
+																	icon={<SecurityIcon />}
+																	label={t.users.pointageOnlyUser}
+																	color="info"
+																	size="small"
+																/>
+															)}
 															{userData?.is_active ? (
 																<Chip icon={<CheckCircleIcon />} label={t.users.active} color="success" size="small" />
 															) : (
@@ -340,6 +348,18 @@ const UsersViewClient: React.FC<Props> = ({ session, id }) => {
 													value={
 														userData?.is_staff ? (
 															<Chip icon={<CheckCircleIcon />} label={t.common.yes} color="primary" size="small" />
+														) : (
+															<Chip icon={<CancelIcon />} label={t.common.no} size="small" variant="outlined" />
+														)
+													}
+												/>
+												<Divider />
+												<InfoRow
+													icon={<SecurityIcon />}
+													label={t.users.pointageOnlyUser}
+													value={
+														userData?.pointage_only ? (
+															<Chip icon={<CheckCircleIcon />} label={t.common.yes} color="info" size="small" />
 														) : (
 															<Chip icon={<CancelIcon />} label={t.common.no} size="small" variant="outlined" />
 														)

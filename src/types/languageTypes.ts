@@ -496,6 +496,9 @@ export type TranslationDictionary = {
     permissions: string;
     activeAccount: string;
     adminAccount: string;
+    userType: string;
+    standardUser: string;
+    pointageOnlyUser: string;
     deleteUsers: (n: number) => string;
     male: string;
     female: string;

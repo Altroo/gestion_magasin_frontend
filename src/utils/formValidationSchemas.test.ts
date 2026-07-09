@@ -130,6 +130,7 @@ describe('Zod Schema Validation', () => {
 			can_delete: false,
 			can_create_promotion: false,
 			can_wholesale_sale: false,
+			pointage_only: false,
 		};
 
 		it('validates required fields', () => {

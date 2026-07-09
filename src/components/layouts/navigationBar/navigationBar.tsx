@@ -39,6 +39,7 @@ import {
 	Menu as MenuIcon,
 	MoreVert as MoreVertIcon,
 	Notifications as NotificationsIcon,
+	PendingActions as PendingActionsIcon,
 	People as PeopleIcon,
 	PointOfSale as PointOfSaleIcon,
 	Settings as SettingsIcon,
@@ -88,7 +89,31 @@ import {
 import { setUnreadCount } from '@/store/slices/notificationSlice';
 import type { NotificationType } from '@/types/gestionMagasinTypes';
 
-const getNavigationMenu = (isStaff: boolean, t: TranslationDictionary) => {
+type NavigationItem = {
+	title: string;
+	label: string;
+	path: string;
+};
+
+type NavigationSection = {
+	title: string;
+	icon: React.ReactNode;
+	items: NavigationItem[];
+};
+
+type NavigationMenu = Record<string, NavigationSection>;
+
+const getNavigationMenu = (isStaff: boolean, pointageOnly: boolean, t: TranslationDictionary): NavigationMenu => {
+	if (pointageOnly) {
+		return {
+			pointage: {
+				title: t.navigation.attendance,
+				icon: <PendingActionsIcon />,
+				items: [{ title: t.navigation.attendance, label: t.navigation.attendance, path: DASHBOARD_ATTENDANCE }],
+			},
+		};
+	}
+
 	return {
 		...(isStaff && {
 			mbrSouth: {
@@ -214,15 +239,16 @@ const NavigationBar = (props: Props) => {
 	const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 	const [open, setOpen] = useState(!isMobile);
 	const { data: session, status } = useSession();
-	const { avatar_cropped, first_name, last_name, gender, is_staff } = useAppSelector(getProfilState);
+	const { avatar_cropped, first_name, last_name, gender, is_staff, pointage_only } = useAppSelector(getProfilState);
 	const { t, language, setLanguage } = useLanguage();
-	const navigationMenu = useMemo(() => getNavigationMenu(is_staff, t), [is_staff, t]);
+	const navigationMenu = useMemo(() => getNavigationMenu(is_staff, !!pointage_only, t), [is_staff, pointage_only, t]);
 	const dispatch = useAppDispatch();
 	const moreVertRef = useRef<HTMLButtonElement>(null);
 	const [mobileMenuAnchor, setMobileMenuAnchor] = useState<HTMLElement | null>(null);
 	const unreadCount = useAppSelector(getUnreadNotificationCount);
-	const { data: unreadCountData } = useGetUnreadNotificationCountQuery(undefined, { skip: status !== 'authenticated' });
-	const { data: firstPage } = useGetNotificationsQuery({ page: 1 }, { skip: status !== 'authenticated' });
+	const skipNotifications = status !== 'authenticated' || !!pointage_only;
+	const { data: unreadCountData } = useGetUnreadNotificationCountQuery(undefined, { skip: skipNotifications });
+	const { data: firstPage } = useGetNotificationsQuery({ page: 1 }, { skip: skipNotifications });
 	const [fetchNotifications] = useLazyGetNotificationsQuery();
 	const [markRead] = useMarkNotificationsReadMutation();
 	const [notifAnchor, setNotifAnchor] = useState<HTMLElement | null>(null);
@@ -395,11 +421,13 @@ const NavigationBar = (props: Props) => {
 								{!loading && session && (
 									<>
 										<Desktop>
-											<IconButton color="inherit" onClick={handleNotifOpen} aria-label={t.navigation.notifications}>
-												<Badge badgeContent={unreadCount} color="primary" max={99}>
-													<NotificationsIcon />
-												</Badge>
-											</IconButton>
+											{!pointage_only && (
+												<IconButton color="inherit" onClick={handleNotifOpen} aria-label={t.navigation.notifications}>
+													<Badge badgeContent={unreadCount} color="primary" max={99}>
+														<NotificationsIcon />
+													</Badge>
+												</IconButton>
+											)}
 											<LanguageSwitcher />
 											{is_staff && (
 												<Button
@@ -433,19 +461,21 @@ const NavigationBar = (props: Props) => {
 												anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
 												transformOrigin={{ vertical: 'top', horizontal: 'right' }}
 											>
-												<MenuItem
-													onClick={() => {
-														setMobileMenuAnchor(null);
-														setNotifAnchor(moreVertRef.current);
-													}}
-												>
-													<MenuListItemIcon>
-														<Badge badgeContent={unreadCount} color="primary" max={99}>
-															<NotificationsIcon fontSize="small" />
-														</Badge>
-													</MenuListItemIcon>
-													<MenuListItemText>{t.navigation.notifications}</MenuListItemText>
-												</MenuItem>
+												{!pointage_only && (
+													<MenuItem
+														onClick={() => {
+															setMobileMenuAnchor(null);
+															setNotifAnchor(moreVertRef.current);
+														}}
+													>
+														<MenuListItemIcon>
+															<Badge badgeContent={unreadCount} color="primary" max={99}>
+																<NotificationsIcon fontSize="small" />
+															</Badge>
+														</MenuListItemIcon>
+														<MenuListItemText>{t.navigation.notifications}</MenuListItemText>
+													</MenuItem>
+												)}
 												<MenuItem
 													onClick={() => {
 														setLanguage(language === 'fr' ? 'en' : 'fr');

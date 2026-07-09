@@ -11,6 +11,10 @@ jest.mock('@/utils/hooks', () => ({
 	useLanguage: () => ({ language: 'fr', setLanguage: jest.fn(), t: jest.requireActual('@/translations').translations.fr }),
 }));
 
+jest.mock('next/navigation', () => ({
+	usePathname: jest.fn(() => '/dashboard'),
+}));
+
 describe('Protected component', () => {
 	it('renders children when is_staff is true (default permission)', () => {
 		(useAppSelector as jest.Mock).mockReturnValue({ id: 1 });

@@ -8,7 +8,11 @@ import {
 	Box,
 	Button,
 	FormControlLabel,
+	FormControl,
+	FormLabel,
 	Checkbox,
+	Radio,
+	RadioGroup,
 	Switch,
 	Stack,
 	Typography,
@@ -86,6 +90,7 @@ interface UserFormValues {
 	can_delete: boolean;
 	can_create_promotion: boolean;
 	can_wholesale_sale: boolean;
+	pointage_only: boolean;
 	stores: UserStoreAssignmentType[];
 	avatar: string | ArrayBuffer | null;
 	avatar_cropped: string | ArrayBuffer | null;
@@ -119,6 +124,17 @@ const baseAdminPermissionFields: Array<
 	'can_edit',
 	'can_delete',
 ];
+
+const pointageOnlyPermissionDefaults = {
+	is_staff: false,
+	can_view: true,
+	can_print: false,
+	can_create: true,
+	can_edit: true,
+	can_delete: false,
+	can_create_promotion: false,
+	can_wholesale_sale: false,
+};
 
 const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) => {
 	const { token, id } = props;
@@ -166,6 +182,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 			can_delete: rawData?.can_delete ?? false,
 			can_create_promotion: rawData?.can_create_promotion ?? false,
 			can_wholesale_sale: rawData?.can_wholesale_sale ?? false,
+			pointage_only: rawData?.pointage_only ?? false,
 			stores: rawData?.stores ?? [],
 			avatar: rawData?.avatar ?? '',
 			avatar_cropped: rawData?.avatar_cropped ?? '',
@@ -179,10 +196,16 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 			setIsPending(true);
 			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 			const { globalError, ...fields } = data;
+			const normalizedFields = fields.pointage_only
+				? {
+						...fields,
+						...pointageOnlyPermissionDefaults,
+					}
+				: fields;
 			const payload = {
-				...fields,
-				can_create_promotion: fields.is_staff ? fields.can_create_promotion : false,
-				stores: fields.stores.map((store) => ({
+				...normalizedFields,
+				can_create_promotion: normalizedFields.is_staff ? normalizedFields.can_create_promotion : false,
+				stores: normalizedFields.stores.map((store) => ({
 					store_id: store.store_id,
 					role: store.role,
 				})),
@@ -230,6 +253,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 			can_delete: t.users.canDelete,
 			can_create_promotion: t.users.canCreatePromotion,
 			can_wholesale_sale: t.users.canWholesaleSale,
+			pointage_only: t.users.pointageOnlyUser,
 			stores: t.users.storeAccess,
 			globalError: t.errors.globalError,
 		}),
@@ -275,6 +299,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 
 	const handleAdminChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const checked = event.target.checked;
+		void formik.setFieldValue('pointage_only', false, true);
 		void formik.setFieldValue('is_staff', checked, true);
 		setAllPermissions(checked);
 		if (!checked) {
@@ -282,8 +307,26 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 		}
 	};
 
+	const handleUserTypeChange = (_event: React.ChangeEvent<HTMLInputElement>, value: string) => {
+		if (value === 'pointage_only') {
+			void formik.setValues(
+				{
+					...formik.values,
+					pointage_only: true,
+					...pointageOnlyPermissionDefaults,
+				},
+				true,
+			);
+			return;
+		}
+		void formik.setFieldValue('pointage_only', false, true);
+	};
+
 	const handlePermissionChange =
 		(field: (typeof permissionFields)[number]) => (event: React.ChangeEvent<HTMLInputElement>) => {
+			if (formik.values.pointage_only) {
+				return;
+			}
 			if (field === 'can_create_promotion' && !formik.values.is_staff) {
 				void formik.setFieldValue('can_create_promotion', false, true);
 				return;
@@ -576,6 +619,26 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 											</Stack>
 										}
 									/>
+									<FormControl component="fieldset">
+										<FormLabel component="legend">{t.users.userType}</FormLabel>
+										<RadioGroup
+											row={!isMobile}
+											name="user_type"
+											value={formik.values.pointage_only ? 'pointage_only' : 'standard'}
+											onChange={handleUserTypeChange}
+										>
+											<FormControlLabel
+												value="standard"
+												control={<Radio />}
+												label={t.users.standardUser}
+											/>
+											<FormControlLabel
+												value="pointage_only"
+												control={<Radio />}
+												label={t.users.pointageOnlyUser}
+											/>
+										</RadioGroup>
+									</FormControl>
 									<FormControlLabel
 										control={
 											<Checkbox
@@ -583,6 +646,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 												onChange={handleAdminChange}
 												name="is_staff"
 												color="primary"
+												disabled={formik.values.pointage_only}
 											/>
 										}
 										label={
@@ -813,6 +877,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 												checked={formik.values.can_view}
 												onChange={handlePermissionChange('can_view')}
 												name="can_view"
+												disabled={formik.values.pointage_only}
 											/>
 										}
 										label={t.users.canView}
@@ -823,6 +888,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 												checked={formik.values.can_print}
 												onChange={handlePermissionChange('can_print')}
 												name="can_print"
+												disabled={formik.values.pointage_only}
 											/>
 										}
 										label={t.users.canPrint}
@@ -833,6 +899,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 												checked={formik.values.can_create}
 												onChange={handlePermissionChange('can_create')}
 												name="can_create"
+												disabled={formik.values.pointage_only}
 											/>
 										}
 										label={t.users.canCreate}
@@ -843,6 +910,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 												checked={formik.values.can_edit}
 												onChange={handlePermissionChange('can_edit')}
 												name="can_edit"
+												disabled={formik.values.pointage_only}
 											/>
 										}
 										label={t.users.canEdit}
@@ -853,6 +921,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 												checked={formik.values.can_delete}
 												onChange={handlePermissionChange('can_delete')}
 												name="can_delete"
+												disabled={formik.values.pointage_only}
 											/>
 										}
 										label={t.users.canDelete}
@@ -863,7 +932,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 												checked={formik.values.is_staff && formik.values.can_create_promotion}
 												onChange={handlePermissionChange('can_create_promotion')}
 												name="can_create_promotion"
-												disabled={!formik.values.is_staff}
+												disabled={!formik.values.is_staff || formik.values.pointage_only}
 											/>
 										}
 										label={t.users.canCreatePromotion}
@@ -874,6 +943,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 												checked={formik.values.can_wholesale_sale}
 												onChange={handlePermissionChange('can_wholesale_sale')}
 												name="can_wholesale_sale"
+												disabled={formik.values.pointage_only}
 											/>
 										}
 										label={t.users.canWholesaleSale}
