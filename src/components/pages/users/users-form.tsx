@@ -617,56 +617,6 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 											</Stack>
 										}
 									/>
-									<Stack
-										direction={isMobile ? 'column' : 'row'}
-										spacing={isMobile ? 1 : 2}
-										sx={{
-											alignItems: isMobile ? 'flex-start' : 'center',
-											py: 0.5,
-										}}
-									>
-										<Stack
-											direction="row"
-											spacing={1}
-											sx={{
-												alignItems: 'center',
-												minWidth: { xs: 'auto', sm: 220 },
-												pl: { xs: 0, sm: 5 },
-											}}
-										>
-											<SecurityIcon
-												fontSize="small"
-												color={formik.values.pointage_only ? 'primary' : 'disabled'}
-											/>
-											<Typography>{t.users.userType}</Typography>
-										</Stack>
-										<RadioGroup
-											row={!isMobile}
-											aria-label={t.users.userType}
-											name="user_type"
-											value={formik.values.pointage_only ? 'pointage_only' : 'standard'}
-											onChange={handleUserTypeChange}
-											sx={{
-												ml: { xs: 3.75, sm: 0 },
-												gap: { xs: 0, sm: 1 },
-												'& .MuiFormControlLabel-root': {
-													ml: 0,
-													mr: { xs: 0, sm: 2 },
-												},
-											}}
-										>
-											<FormControlLabel
-												value="standard"
-												control={<Radio size="small" />}
-												label={t.users.standardUser}
-											/>
-											<FormControlLabel
-												value="pointage_only"
-												control={<Radio size="small" />}
-												label={t.users.pointageOnlyUser}
-											/>
-										</RadioGroup>
-									</Stack>
 									<FormControlLabel
 										control={
 											<Checkbox
@@ -693,6 +643,65 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 											</Stack>
 										}
 									/>
+									<Stack spacing={1.25} sx={{ pt: 1, pl: { xs: 0, sm: 5 } }}>
+										<Stack
+											direction="row"
+											spacing={1}
+											sx={{
+												alignItems: 'center',
+											}}
+										>
+											<SecurityIcon fontSize="small" color={formik.values.pointage_only ? 'primary' : 'disabled'} />
+											<Typography sx={{ fontWeight: 600 }}>{t.users.userType}</Typography>
+										</Stack>
+										<RadioGroup
+											row={!isMobile}
+											aria-label={t.users.userType}
+											name="user_type"
+											value={formik.values.pointage_only ? 'pointage_only' : 'standard'}
+											onChange={handleUserTypeChange}
+											sx={{
+												display: 'grid',
+												gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(220px, 280px))' },
+												gap: 1,
+												maxWidth: { xs: '100%', sm: 580 },
+											}}
+										>
+											{[
+												{ value: 'standard', label: t.users.standardUser },
+												{ value: 'pointage_only', label: t.users.pointageOnlyUser },
+											].map((option) => {
+												const selected =
+													(formik.values.pointage_only ? 'pointage_only' : 'standard') === option.value;
+												return (
+													<Box
+														key={option.value}
+														component="label"
+														sx={{
+															display: 'flex',
+															alignItems: 'center',
+															gap: 1,
+															minHeight: 44,
+															px: 1.5,
+															border: '1px solid',
+															borderColor: selected ? 'primary.main' : 'divider',
+															borderRadius: 1,
+															bgcolor: selected ? 'action.selected' : 'background.paper',
+															cursor: 'pointer',
+															transition: 'border-color 120ms ease, background-color 120ms ease',
+															'&:hover': {
+																borderColor: selected ? 'primary.main' : 'text.secondary',
+																bgcolor: selected ? 'action.selected' : 'grey.50',
+															},
+														}}
+													>
+														<Radio size="small" value={option.value} sx={{ p: 0.5 }} />
+														<Typography sx={{ fontWeight: 600 }}>{option.label}</Typography>
+													</Box>
+												);
+											})}
+										</RadioGroup>
+									</Stack>
 								</Stack>
 							</CardContent>
 						</Card>
