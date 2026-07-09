@@ -8,8 +8,6 @@ import {
 	Box,
 	Button,
 	FormControlLabel,
-	FormControl,
-	FormLabel,
 	Checkbox,
 	Radio,
 	RadioGroup,
@@ -619,26 +617,56 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 											</Stack>
 										}
 									/>
-									<FormControl component="fieldset">
-										<FormLabel component="legend">{t.users.userType}</FormLabel>
+									<Stack
+										direction={isMobile ? 'column' : 'row'}
+										spacing={isMobile ? 1 : 2}
+										sx={{
+											alignItems: isMobile ? 'flex-start' : 'center',
+											py: 0.5,
+										}}
+									>
+										<Stack
+											direction="row"
+											spacing={1}
+											sx={{
+												alignItems: 'center',
+												minWidth: { xs: 'auto', sm: 220 },
+												pl: { xs: 0, sm: 5 },
+											}}
+										>
+											<SecurityIcon
+												fontSize="small"
+												color={formik.values.pointage_only ? 'primary' : 'disabled'}
+											/>
+											<Typography>{t.users.userType}</Typography>
+										</Stack>
 										<RadioGroup
 											row={!isMobile}
+											aria-label={t.users.userType}
 											name="user_type"
 											value={formik.values.pointage_only ? 'pointage_only' : 'standard'}
 											onChange={handleUserTypeChange}
+											sx={{
+												ml: { xs: 3.75, sm: 0 },
+												gap: { xs: 0, sm: 1 },
+												'& .MuiFormControlLabel-root': {
+													ml: 0,
+													mr: { xs: 0, sm: 2 },
+												},
+											}}
 										>
 											<FormControlLabel
 												value="standard"
-												control={<Radio />}
+												control={<Radio size="small" />}
 												label={t.users.standardUser}
 											/>
 											<FormControlLabel
 												value="pointage_only"
-												control={<Radio />}
+												control={<Radio size="small" />}
 												label={t.users.pointageOnlyUser}
 											/>
 										</RadioGroup>
-									</FormControl>
+									</Stack>
 									<FormControlLabel
 										control={
 											<Checkbox
