@@ -133,4 +133,25 @@ describe('InitEffects', () => {
 			expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('/dashboard/pointage'));
 		});
 	});
+
+	it.each(['/dashboard/settings/edit-profile', '/dashboard/settings/password'])(
+		'keeps pointage-only users on allowed settings route %s',
+		async (pathname) => {
+			const mockPush = jest.fn();
+			const mockReplace = jest.fn();
+			(useRouter as jest.Mock).mockReturnValue({ push: mockPush, replace: mockReplace });
+			(usePathname as jest.Mock).mockReturnValue(pathname);
+
+			(useSession as jest.Mock).mockReturnValue({ data: { user: {} }, status: 'authenticated' });
+			const mockUser = { id: 1, first_name: 'A', default_password_set: false, pointage_only: true };
+			(useGetProfilQuery as jest.Mock).mockReturnValue({ data: mockUser });
+
+			render(<InitEffects />);
+
+			await waitFor(() => {
+				expect(mockPush).not.toHaveBeenCalled();
+				expect(mockReplace).not.toHaveBeenCalled();
+			});
+		},
+	);
 });

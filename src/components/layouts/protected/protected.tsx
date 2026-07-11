@@ -4,6 +4,7 @@ import { usePermission, useAppSelector } from '@/utils/hooks';
 import { getProfilState } from '@/store/selectors';
 import NoPermission from '@/components/shared/noPermission/noPermission';
 import { usePathname } from 'next/navigation';
+import { isPointageOnlyPathAllowed } from '@/utils/pointageOnlyAccess';
 
 type PermissionKey =
 	| 'is_staff'
@@ -43,10 +44,7 @@ export const Protected = (props: ProtectedProps) => {
 		);
 	}
 
-	const pointagePathAllowed =
-		pathname.startsWith('/dashboard/pointage') ||
-		(profil.default_password_set && pathname === '/dashboard/settings/password');
-	if (profil.pointage_only && !pointagePathAllowed) {
+	if (profil.pointage_only && !isPointageOnlyPathAllowed(pathname)) {
 		return <NoPermission />;
 	}
 

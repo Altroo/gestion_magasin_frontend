@@ -59,7 +59,14 @@ jest.mock('@/store/services/notification', () => ({
 }));
 
 describe('NavigationBar', () => {
-	let mockProfile = {
+	let mockProfile: {
+		avatar_cropped?: string;
+		first_name: string;
+		last_name: string;
+		gender: string;
+		is_staff: boolean;
+		pointage_only?: boolean;
+	} = {
 		avatar_cropped: undefined,
 		first_name: 'John',
 		last_name: 'Doe',
@@ -159,6 +166,31 @@ describe('NavigationBar', () => {
 			</NavigationBar>,
 		);
 		expect(screen.queryByText('Utilisateurs')).not.toBeInTheDocument();
+	});
+
+	it('shows only pointage and account settings navigation for pointage-only users', () => {
+		mockProfile = {
+			avatar_cropped: undefined,
+			first_name: 'Pointage',
+			last_name: 'User',
+			gender: 'Homme',
+			is_staff: false,
+			pointage_only: true,
+		};
+
+		render(
+			<NavigationBar title="Pointage">
+				<div />
+			</NavigationBar>,
+		);
+
+		expect(screen.getAllByText('Pointage').length).toBeGreaterThanOrEqual(1);
+		expect(screen.getByText('Paramètres')).toBeInTheDocument();
+		expect(screen.getByText('Mon Profil')).toBeInTheDocument();
+		expect(screen.getByText('Changer le mot de passe')).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: /Se déconnecter/i })).toBeInTheDocument();
+		expect(screen.queryByText('Opérations')).not.toBeInTheDocument();
+		expect(screen.queryByText('Notifications')).not.toBeInTheDocument();
 	});
 
 

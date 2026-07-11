@@ -9,8 +9,8 @@ import { getAccessToken } from '@/store/selectors';
 import { useGetProfilQuery } from '@/store/services/account';
 import { accountSetProfilAction } from '@/store/actions/accountActions';
 import { DASHBOARD_ATTENDANCE, DASHBOARD_PASSWORD } from '@/utils/routes';
+import { isPointageOnlyPathAllowed } from '@/utils/pointageOnlyAccess';
 
-const POINTAGE_ROUTE_PREFIX = '/dashboard/pointage';
 const PASSWORD_ROUTE = '/dashboard/settings/password';
 
 export const InitEffects: React.FC = () => {
@@ -59,7 +59,7 @@ export const InitEffects: React.FC = () => {
 			}
 			return;
 		}
-		if (user?.pointage_only && !pathname.startsWith(POINTAGE_ROUTE_PREFIX)) {
+		if (user?.pointage_only && !isPointageOnlyPathAllowed(pathname)) {
 			router.replace(DASHBOARD_ATTENDANCE);
 		}
 	}, [user, pathname, router]);

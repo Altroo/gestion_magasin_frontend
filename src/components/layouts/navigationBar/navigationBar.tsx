@@ -111,6 +111,14 @@ const getNavigationMenu = (isStaff: boolean, pointageOnly: boolean, t: Translati
 				icon: <PendingActionsIcon />,
 				items: [{ title: t.navigation.attendance, label: t.navigation.attendance, path: DASHBOARD_ATTENDANCE }],
 			},
+			parametres: {
+				title: t.navigation.settings,
+				icon: <SettingsIcon />,
+				items: [
+					{ title: t.navigation.myProfile, label: t.navigation.myProfile, path: DASHBOARD_EDIT_PROFILE },
+					{ title: t.navigation.changePassword, label: t.navigation.changePassword, path: DASHBOARD_PASSWORD },
+				],
+			},
 		};
 	}
 
