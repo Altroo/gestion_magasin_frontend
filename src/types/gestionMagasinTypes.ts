@@ -17,6 +17,14 @@ export type StoreType = {
 	is_global_stock: boolean;
 	members_count?: number;
 	managed_by?: StoreManagedByType[];
+	employees?: StoreEmployeeType[];
+};
+
+export type StoreEmployeeType = {
+	id?: number;
+	first_name: string;
+	last_name: string;
+	full_name?: string;
 };
 
 export type StorePayload = {
@@ -27,10 +35,12 @@ export type StorePayload = {
 	is_active: boolean;
 	is_global_stock?: boolean;
 	managed_by?: Array<{ pk: number; role: StoreRoleCode; role_name?: string }>;
+	employees?: StoreEmployeeType[];
 };
 
 export type StoreFormValues = StorePayload & {
 	managed_by: Array<{ pk: number; role: StoreRoleCode }>;
+	employees: StoreEmployeeType[];
 	globalError: string;
 };
 
@@ -480,10 +490,12 @@ export type PromotionEligibleStoreType = StoreType & {
 	}>;
 };
 
-export type PromotionCreateResponseType = PromotionType | {
-	count: number;
-	created: PromotionType[];
-};
+export type PromotionCreateResponseType =
+	| PromotionType
+	| {
+			count: number;
+			created: PromotionType[];
+	  };
 
 export type PromotionPayload = {
 	store?: number;
@@ -510,6 +522,8 @@ export type EmployeeType = {
 	id: number;
 	store: number;
 	store_name: string;
+	first_name: string;
+	last_name: string;
 	full_name: string;
 	position: string;
 	is_active: boolean;

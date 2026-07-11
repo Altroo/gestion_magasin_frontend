@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import {
 	ArrowBack as ArrowBackIcon,
+	Badge as BadgeIcon,
 	CheckCircle as CheckCircleIcon,
 	Close as CloseIcon,
 	Delete as DeleteIcon,
@@ -241,6 +242,36 @@ const StoresViewClient = ({ session, id }: Props) => {
 											<InfoRow icon={<PhoneIcon />} label={t.magasin.storePhone} value={store.phone} />
 											<Divider />
 											<InfoRow icon={<GroupIcon />} label={t.magasin.membersCount} value={store.members_count ?? 0} />
+										</CardContent>
+									</Card>
+									<Card elevation={2} sx={{ borderRadius: 2 }}>
+										<CardContent sx={{ p: 3 }}>
+											<Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 2 }}>
+												<BadgeIcon color="primary" />
+												<Typography variant="h6" sx={{ fontWeight: 700 }}>
+													{t.magasin.pointageEmployees} ({store.employees?.length ?? 0})
+												</Typography>
+											</Stack>
+											<Divider sx={{ mb: 2 }} />
+											{store.employees?.length ? (
+												<Stack divider={<Divider flexItem />}>
+													{store.employees.map((employee) => (
+														<Stack
+															key={employee.id ?? employee.full_name}
+															direction={{ xs: 'column', sm: 'row' }}
+															spacing={1}
+															sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' }, py: 1.5 }}
+														>
+															<Typography sx={{ fontWeight: 600 }}>
+																{employee.first_name} {employee.last_name}
+															</Typography>
+															<Chip label={t.magasin.commercialAdvisor} size="small" variant="outlined" />
+														</Stack>
+													))}
+												</Stack>
+											) : (
+												<Typography color="text.secondary">{t.magasin.noPointageEmployees}</Typography>
+											)}
 										</CardContent>
 									</Card>
 								</Stack>

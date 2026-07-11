@@ -59,6 +59,7 @@ const AttendanceClient = ({ session }: SessionProps) => {
 	const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
 	const storeId = selectedStoreId ?? defaultStore?.id;
 	const selectedMembership = memberships.find((membership) => membership.store.id === storeId);
+	const isMbrSouth = selectedMembership?.store.code === 'mbr-south';
 	const canManageStore = roleCanManage(selectedMembership?.role.code);
 	const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
 	const [searchTerm, setSearchTerm] = useState('');
@@ -70,7 +71,7 @@ const AttendanceClient = ({ session }: SessionProps) => {
 	const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 	const [isExporting, setIsExporting] = useState(false);
 
-	const storeFilterActive = Boolean(chipFilterParams.store_ids);
+	const storeFilterActive = isMbrSouth && Boolean(chipFilterParams.store_ids);
 	const { data, isLoading, refetch } = useGetAttendanceRecordsQuery(
 		{
 			store: storeFilterActive ? undefined : storeId,
@@ -82,7 +83,7 @@ const AttendanceClient = ({ session }: SessionProps) => {
 		},
 		{ skip: !token || (!storeId && !storeFilterActive) },
 	);
-	const { data: employees } = useGetEmployeesQuery({ pageSize: 200 }, { skip: !token });
+	const { data: employees } = useGetEmployeesQuery({ store: storeId, pageSize: 200 }, { skip: !token || !storeId });
 	const [importAttendance, importState] = useImportAttendanceMutation();
 	const [sendAttendanceImportGuideEmail, sendGuideState] = useSendAttendanceImportGuideEmailMutation();
 	const [deleteAttendanceRecord] = useDeleteAttendanceRecordMutation();
@@ -101,12 +102,18 @@ const AttendanceClient = ({ session }: SessionProps) => {
 	];
 	const chipFilters = useMemo(
 		() => [
-			{
-				key: 'store',
-				label: t.magasin.store,
-				paramName: 'store_ids',
-				options: memberships.map((membership) => ({ id: String(membership.store.id), nom: membership.store.name })),
-			},
+			...(isMbrSouth
+				? [
+						{
+							key: 'store',
+							label: t.magasin.store,
+							paramName: 'store_ids',
+							options: memberships
+								.filter((membership) => membership.store.code !== 'mbr-south')
+								.map((membership) => ({ id: String(membership.store.id), nom: membership.store.name })),
+						},
+					]
+				: []),
 			{
 				key: 'employee',
 				label: t.magasin.employee,
@@ -126,6 +133,7 @@ const AttendanceClient = ({ session }: SessionProps) => {
 		],
 		[
 			employees?.results,
+			isMbrSouth,
 			memberships,
 			t.magasin.absent,
 			t.magasin.employee,
@@ -137,6 +145,11 @@ const AttendanceClient = ({ session }: SessionProps) => {
 	);
 	const handleChipFilterChange = (params: Record<string, string>) => {
 		setChipFilterParams(params);
+		setPaginationModel((current) => ({ ...current, page: 0 }));
+	};
+	const handleStoreChange = (nextStoreId: number) => {
+		setSelectedStoreId(nextStoreId);
+		setChipFilterParams({});
 		setPaginationModel((current) => ({ ...current, page: 0 }));
 	};
 
@@ -405,7 +418,7 @@ const AttendanceClient = ({ session }: SessionProps) => {
 		<NavigationBar title={t.magasin.attendance}>
 			<Protected permission="can_view">
 				<Box sx={magasinPageContainerSx}>
-					<StoreTabs selectedStoreId={storeId} onChange={setSelectedStoreId} token={token} includeMbrSouth />
+					<StoreTabs selectedStoreId={storeId} onChange={handleStoreChange} token={token} includeMbrSouth />
 					<Box sx={magasinPageContentSx}>
 						<Stack
 							direction="row"

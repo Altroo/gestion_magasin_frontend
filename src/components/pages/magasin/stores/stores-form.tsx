@@ -36,6 +36,7 @@ import {
 	LocationOn as LocationOnIcon,
 	Phone as PhoneIcon,
 	People as PeopleIcon,
+	PersonAdd as PersonAddIcon,
 	Security as SecurityIcon,
 	Storefront as StorefrontIcon,
 	Tag as TagIcon,
@@ -89,6 +90,11 @@ const toPayload = (values: StoreFormValues): StorePayload => ({
 	is_active: values.is_active,
 	is_global_stock: values.is_global_stock ?? false,
 	managed_by: values.managed_by.map((item) => ({ pk: item.pk, role: item.role })),
+	employees: values.employees.map(({ id, first_name, last_name }) => ({
+		...(id ? { id } : {}),
+		first_name: first_name.trim(),
+		last_name: last_name.trim(),
+	})),
 });
 
 const StoresFormClient = ({ session, id }: Props) => {
@@ -101,6 +107,9 @@ const StoresFormClient = ({ session, id }: Props) => {
 	const [isPending, setIsPending] = useState(false);
 	const [selectedUserId, setSelectedUserId] = useState('');
 	const [selectedRole, setSelectedRole] = useState<StoreRoleCode | ''>('');
+	const [employeeFirstName, setEmployeeFirstName] = useState('');
+	const [employeeLastName, setEmployeeLastName] = useState('');
+	const [employeeInputError, setEmployeeInputError] = useState('');
 	const profile = useAppSelector(getProfilState);
 
 	const {
@@ -146,6 +155,7 @@ const StoresFormClient = ({ session, id }: Props) => {
 			is_active: store?.is_active ?? true,
 			is_global_stock: store?.is_global_stock ?? false,
 			managed_by: defaultManagedBy,
+			employees: store?.employees ?? [],
 			globalError: '',
 		},
 		enableReinitialize: true,
@@ -181,6 +191,7 @@ const StoresFormClient = ({ session, id }: Props) => {
 			phone: t.magasin.storePhone,
 			is_active: t.magasin.activeStore,
 			managed_by: t.users.storeAccess,
+			employees: t.magasin.pointageEmployees,
 			globalError: t.errors.globalError,
 		}),
 		[t],
@@ -222,6 +233,36 @@ const StoresFormClient = ({ session, id }: Props) => {
 			formik.values.managed_by.filter((item) => item.pk !== userId),
 		);
 		void formik.setFieldTouched('managed_by', true);
+	};
+
+	const addPointageEmployee = () => {
+		const firstName = employeeFirstName.trim();
+		const lastName = employeeLastName.trim();
+		if (!firstName || !lastName) return;
+		const fullName = `${firstName} ${lastName}`.toLocaleLowerCase();
+		const alreadyAdded = formik.values.employees.some(
+			(employee) => `${employee.first_name.trim()} ${employee.last_name.trim()}`.toLocaleLowerCase() === fullName,
+		);
+		if (alreadyAdded) {
+			setEmployeeInputError(t.magasin.employeeAlreadyAdded);
+			return;
+		}
+		void formik.setFieldValue('employees', [
+			...formik.values.employees,
+			{ first_name: firstName, last_name: lastName },
+		]);
+		void formik.setFieldTouched('employees', true);
+		setEmployeeFirstName('');
+		setEmployeeLastName('');
+		setEmployeeInputError('');
+	};
+
+	const removePointageEmployee = (index: number) => {
+		void formik.setFieldValue(
+			'employees',
+			formik.values.employees.filter((_, employeeIndex) => employeeIndex !== index),
+		);
+		void formik.setFieldTouched('employees', true);
 	};
 
 	const validationErrors = useMemo(() => {
@@ -621,6 +662,116 @@ const StoresFormClient = ({ session, id }: Props) => {
 															{managedByError}
 														</Typography>
 													)}
+												</Stack>
+											</CardContent>
+										</Card>
+										<Card elevation={2} sx={{ borderRadius: 2 }}>
+											<CardContent sx={{ p: 3 }}>
+												<Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 2 }}>
+													<PersonAddIcon color="primary" />
+													<Typography variant="h6" sx={{ fontWeight: 700 }}>
+														{t.magasin.pointageEmployees}{' '}
+														{formik.values.employees.length > 0 && `(${formik.values.employees.length})`}
+													</Typography>
+												</Stack>
+												<Divider sx={{ mb: 3 }} />
+												<Stack spacing={2.5}>
+													<Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+														<CustomTextInput
+															id="employee_first_name"
+															type="text"
+															label={`${t.users.firstName} *`}
+															value={employeeFirstName}
+															onChange={(event) => {
+																setEmployeeFirstName(event.target.value);
+																setEmployeeInputError('');
+															}}
+															fullWidth
+															size="small"
+															theme={inputTheme}
+															startIcon={<PeopleIcon fontSize="small" />}
+														/>
+														<CustomTextInput
+															id="employee_last_name"
+															type="text"
+															label={`${t.users.lastName} *`}
+															value={employeeLastName}
+															onChange={(event) => {
+																setEmployeeLastName(event.target.value);
+																setEmployeeInputError('');
+															}}
+															fullWidth
+															size="small"
+															theme={inputTheme}
+															startIcon={<PeopleIcon fontSize="small" />}
+														/>
+														<Button
+															variant="contained"
+															startIcon={<AddIcon />}
+															onClick={addPointageEmployee}
+															disabled={!employeeFirstName.trim() || !employeeLastName.trim()}
+															sx={{ minWidth: 140, height: 40 }}
+														>
+															{t.magasin.addPointageEmployee}
+														</Button>
+													</Stack>
+													{employeeInputError && (
+														<Typography color="error" variant="caption">
+															{employeeInputError}
+														</Typography>
+													)}
+													<TableContainer
+														component={Paper}
+														elevation={0}
+														sx={{ border: '1px solid', borderColor: 'grey.200' }}
+													>
+														<Table>
+															<TableHead sx={{ backgroundColor: 'grey.50' }}>
+																<TableRow>
+																	<TableCell sx={{ fontWeight: 700 }}>{t.magasin.employee}</TableCell>
+																	<TableCell sx={{ fontWeight: 700 }}>{t.users.roleHeader}</TableCell>
+																	<TableCell align="right" sx={{ fontWeight: 700 }}>
+																		{t.common.actions}
+																	</TableCell>
+																</TableRow>
+															</TableHead>
+															<TableBody>
+																{formik.values.employees.length === 0 ? (
+																	<TableRow>
+																		<TableCell colSpan={3} align="center" sx={{ py: 4 }}>
+																			<Typography color="text.secondary" variant="body2">
+																				{t.magasin.noPointageEmployees}
+																			</Typography>
+																		</TableCell>
+																	</TableRow>
+																) : (
+																	formik.values.employees.map((employee, index) => (
+																		<TableRow
+																			key={employee.id ?? `${employee.first_name}-${employee.last_name}-${index}`}
+																		>
+																			<TableCell>
+																				<Typography sx={{ fontWeight: 600 }}>
+																					{employee.first_name} {employee.last_name}
+																				</Typography>
+																			</TableCell>
+																			<TableCell>
+																				<Chip label={t.magasin.commercialAdvisor} size="small" variant="outlined" />
+																			</TableCell>
+																			<TableCell align="right">
+																				<IconButton
+																					color="error"
+																					onClick={() => removePointageEmployee(index)}
+																					aria-label={t.common.delete}
+																				>
+																					<DeleteIcon />
+																				</IconButton>
+																			</TableCell>
+																		</TableRow>
+																	))
+																)}
+															</TableBody>
+														</Table>
+													</TableContainer>
 												</Stack>
 											</CardContent>
 										</Card>

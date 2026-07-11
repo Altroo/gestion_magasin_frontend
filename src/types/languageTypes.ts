@@ -102,6 +102,11 @@ export type TranslationDictionary = {
     storePhone: string;
     activeStore: string;
     membersCount: string;
+    pointageEmployees: string;
+    addPointageEmployee: string;
+    noPointageEmployees: string;
+    commercialAdvisor: string;
+    employeeAlreadyAdded: string;
     storeCreated: string;
     storeUpdated: string;
     storeDeleted: string;

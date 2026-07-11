@@ -206,6 +206,13 @@ export const storeSchema = z.object({
 	is_active: z.boolean(),
 	is_global_stock: z.boolean().optional(),
 	managed_by: z.array(z.object({ pk: z.number(), role: z.string().min(1) })).min(1, { error: INPUT_REQUIRED }),
+	employees: z.array(
+		z.object({
+			id: z.number().optional(),
+			first_name: requiredTextField(1, 80),
+			last_name: requiredTextField(1, 80),
+		}),
+	),
 	globalError: optionalTextField(1, 500),
 });
 
