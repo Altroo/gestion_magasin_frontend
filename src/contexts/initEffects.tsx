@@ -51,10 +51,12 @@ export const InitEffects: React.FC = () => {
 		if (user) dispatch(accountSetProfilAction(user));
 	}, [dispatch, user]);
 
-	// Redirect if user still has default password
+	// Password setup takes priority over role-based route restrictions.
 	useEffect(() => {
-		if (user && user.default_password_set && pathname !== PASSWORD_ROUTE) {
-			router.push(DASHBOARD_PASSWORD);
+		if (user?.default_password_set) {
+			if (pathname !== PASSWORD_ROUTE) {
+				router.push(DASHBOARD_PASSWORD);
+			}
 			return;
 		}
 		if (user?.pointage_only && !pathname.startsWith(POINTAGE_ROUTE_PREFIX)) {

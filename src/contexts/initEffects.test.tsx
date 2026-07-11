@@ -100,19 +100,21 @@ describe('InitEffects', () => {
 		});
 	});
 
-	it('does not redirect when already on password page', async () => {
+	it('keeps a pointage-only user on the password page while the default password is set', async () => {
 		const mockPush = jest.fn();
-		(useRouter as jest.Mock).mockReturnValue({ push: mockPush, replace: jest.fn() });
+		const mockReplace = jest.fn();
+		(useRouter as jest.Mock).mockReturnValue({ push: mockPush, replace: mockReplace });
 		(usePathname as jest.Mock).mockReturnValue('/dashboard/settings/password');
 
 		(useSession as jest.Mock).mockReturnValue({ data: { user: {} }, status: 'authenticated' });
-		const mockUser = { id: 1, first_name: 'A', default_password_set: true };
+		const mockUser = { id: 1, first_name: 'A', default_password_set: true, pointage_only: true };
 		(useGetProfilQuery as jest.Mock).mockReturnValue({ data: mockUser });
 
 		render(<InitEffects />);
 
 		await waitFor(() => {
 			expect(mockPush).not.toHaveBeenCalled();
+			expect(mockReplace).not.toHaveBeenCalled();
 		});
 	});
 
