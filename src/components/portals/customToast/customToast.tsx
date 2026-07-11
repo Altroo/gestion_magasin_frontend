@@ -36,7 +36,7 @@ const CustomToast: React.FC<Props> = (props) => {
 		<ThemeProvider theme={customToastTheme()}>
 			<Stack spacing={2} className={Styles.rootStack}>
 				<Snackbar
-					style={{ width: 'max-content' }}
+					style={{ width: 'calc(100vw - 32px)', maxWidth: '560px' }}
 					open={props.show}
 					autoHideDuration={6000}
 					onClose={handleClose}

@@ -32,6 +32,7 @@ import type { AttendanceFormValues, AttendancePayload, AttendanceShiftType } fro
 
 const inputTheme = textInputTheme();
 const dropdownTheme = customDropdownTheme();
+const DEFAULT_ATTENDANCE_RESPONSIBLE = 'Mehdi Zorgane';
 const shiftStartMinutes: Record<Exclude<AttendanceShiftType, 'off'>, number> = {
 	morning: 9 * 60,
 	afternoon: 15 * 60,
@@ -98,7 +99,7 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 	const { onSuccess, onError } = useToast();
 	const router = useRouter();
 	const isEditMode = id !== undefined;
-	const { defaultStore } = useSelectedStore(token);
+	const { defaultStore } = useSelectedStore(token, true);
 	const storeId = initialStoreId ?? defaultStore?.id;
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [isPending, setIsPending] = useState(false);
@@ -127,7 +128,7 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 			hours_worked: attendance?.hours_worked ?? '',
 			delay_minutes: attendance?.delay_minutes !== undefined ? String(attendance.delay_minutes) : '',
 			status: attendance?.status ?? 'present',
-			responsible: attendance?.responsible ?? '',
+			responsible: attendance?.responsible ?? (isEditMode ? '' : DEFAULT_ATTENDANCE_RESPONSIBLE),
 			observations: attendance?.observations ?? '',
 			globalError: '',
 		},

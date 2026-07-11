@@ -82,6 +82,21 @@ describe('CustomToast', () => {
 		unmount();
 	});
 
+	it('constrains long messages to the viewport width', () => {
+		render(
+			<CustomToast
+				type="error"
+				show={true}
+				setShow={setShowMock}
+				message="Autorisez l'accès à la caméra dans les réglages du navigateur."
+			/>,
+		);
+
+		const alert = screen.getByText(/Autorisez l'accès à la caméra/i).closest('[role="alert"]');
+		const snackbar = alert?.closest('.MuiSnackbar-root');
+		expect(snackbar).toHaveStyle({ width: 'calc(100vw - 32px)', maxWidth: '560px' });
+	});
+
 	it('renders an icon (img/svg/alertIcon element) scoped to each alert', () => {
 		const cases: Array<{ type: 'success' | 'error' | 'info' | 'warning'; msg: string }> = [
 			{ type: 'success', msg: 'success-msg' },

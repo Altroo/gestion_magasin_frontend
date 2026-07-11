@@ -55,7 +55,7 @@ const AttendanceClient = ({ session }: SessionProps) => {
 	const permissions = usePermission();
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
-	const { defaultStore, memberships } = useSelectedStore(token);
+	const { defaultStore, memberships } = useSelectedStore(token, true);
 	const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
 	const storeId = selectedStoreId ?? defaultStore?.id;
 	const selectedMembership = memberships.find((membership) => membership.store.id === storeId);
@@ -405,7 +405,7 @@ const AttendanceClient = ({ session }: SessionProps) => {
 		<NavigationBar title={t.magasin.attendance}>
 			<Protected permission="can_view">
 				<Box sx={magasinPageContainerSx}>
-					<StoreTabs selectedStoreId={storeId} onChange={setSelectedStoreId} token={token} />
+					<StoreTabs selectedStoreId={storeId} onChange={setSelectedStoreId} token={token} includeMbrSouth />
 					<Box sx={magasinPageContentSx}>
 						<Stack
 							direction="row"

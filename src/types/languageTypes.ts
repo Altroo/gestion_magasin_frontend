@@ -130,6 +130,9 @@ export type TranslationDictionary = {
     scan: string;
     camera: string;
     stopCamera: string;
+    cameraUnavailable: string;
+    cameraPermissionDenied: string;
+    cameraStartError: string;
     cart: string;
     product: string;
     reference: string;

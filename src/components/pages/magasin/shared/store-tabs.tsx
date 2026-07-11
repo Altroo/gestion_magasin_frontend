@@ -10,13 +10,14 @@ type Props = {
 	selectedStoreId?: number;
 	onChange: (storeId: number) => void;
 	token?: string;
+	includeMbrSouth?: boolean;
 };
 
-const isStoreTabVisible = (membership: StoreMembershipType) =>
+export const isStoreTabVisible = (membership: StoreMembershipType, includeMbrSouth = false) =>
 	membership.is_active &&
 	membership.store.is_active &&
 	!membership.store.is_global_stock &&
-	membership.store.code !== 'mbr-south';
+	(includeMbrSouth || membership.store.code !== 'mbr-south');
 
 const STORE_TAB_STORAGE_KEY = 'gestion-magasin:selected-store-id';
 
@@ -32,10 +33,13 @@ const setPersistedStoreId = (storeId: number) => {
 	window.localStorage.setItem(STORE_TAB_STORAGE_KEY, String(storeId));
 };
 
-export const useSelectedStore = (token?: string) => {
+export const useSelectedStore = (token?: string, includeMbrSouth = false) => {
 	const { data = [], isLoading } = useGetMyStoresQuery(undefined, { skip: !token });
 	const [persistedStoreId] = useState<number | undefined>(() => getPersistedStoreId());
-	const visibleMemberships = useMemo(() => data.filter(isStoreTabVisible), [data]);
+	const visibleMemberships = useMemo(
+		() => data.filter((membership) => isStoreTabVisible(membership, includeMbrSouth)),
+		[data, includeMbrSouth],
+	);
 	const persistedStore = visibleMemberships.find((membership) => membership.store.id === persistedStoreId)?.store;
 	const defaultStore = persistedStore ?? visibleMemberships[0]?.store;
 	const globalStore = data.find((membership) => membership.is_active && membership.store.is_active && membership.store.is_global_stock)?.store;
@@ -47,13 +51,13 @@ export const useSelectedStore = (token?: string) => {
 	};
 };
 
-const StoreTabs = ({ selectedStoreId, onChange, token }: Props) => {
+const StoreTabs = ({ selectedStoreId, onChange, token, includeMbrSouth = false }: Props) => {
 	const { t } = useLanguage();
 	const { data = [] } = useGetMyStoresQuery(undefined, { skip: !token });
 
 	const stores = useMemo(
-		() => data.filter(isStoreTabVisible).map((membership) => membership.store),
-		[data],
+		() => data.filter((membership) => isStoreTabVisible(membership, includeMbrSouth)).map((membership) => membership.store),
+		[data, includeMbrSouth],
 	);
 	const visibleActiveStoreId = selectedStoreId ?? stores[0]?.id;
 

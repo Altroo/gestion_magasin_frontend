@@ -36,6 +36,7 @@ import {
 } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
+import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import CustomTextInput from '@/components/formikElements/customTextInput/customTextInput';
@@ -153,13 +154,13 @@ const PosClient = ({ session }: SessionProps) => {
 	const [cartPaginationModel, setCartPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
 	const [offlineQueue, setOfflineQueue] = useState<SaleCreatePayload[]>(() => readOfflineQueue());
 	const [cameraActive, setCameraActive] = useState(false);
+	const [cameraStarting, setCameraStarting] = useState(false);
 	const [hasAttemptedScan, setHasAttemptedScan] = useState(false);
 	const [selectedPaymentModeId, setSelectedPaymentModeId] = useState('');
 	const [saleType, setSaleType] = useState<SaleMode>('normal');
 	const [lastWholesaleSaleId, setLastWholesaleSaleId] = useState<number | null>(null);
 	const videoRef = useRef<HTMLVideoElement | null>(null);
-	const scanTimerRef = useRef<number | null>(null);
-	const streamRef = useRef<MediaStream | null>(null);
+	const scannerControlsRef = useRef<IScannerControls | null>(null);
 	const [scanProduct, scanState] = useLazyScanProductQuery();
 	const [createSale, createState] = useCreateSaleMutation();
 	const [syncOffline, syncState] = useSyncOfflineSalesMutation();
@@ -526,49 +527,47 @@ const PosClient = ({ session }: SessionProps) => {
 		Boolean(scanFormik.errors.barcode) && (hasAttemptedScan || Boolean(scanFormik.values.barcode));
 
 	const stopCamera = () => {
-		if (scanTimerRef.current) {
-			window.clearInterval(scanTimerRef.current);
-			scanTimerRef.current = null;
+		scannerControlsRef.current?.stop();
+		scannerControlsRef.current = null;
+		if (videoRef.current) {
+			videoRef.current.srcObject = null;
 		}
-		streamRef.current?.getTracks().forEach((track) => track.stop());
-		streamRef.current = null;
 		setCameraActive(false);
 	};
 
 	const startCamera = async () => {
-		if (!('mediaDevices' in navigator) || !(window as unknown as { BarcodeDetector?: unknown }).BarcodeDetector) {
-			onError(t.errors.genericError);
+		if (!navigator.mediaDevices?.getUserMedia || !videoRef.current) {
+			onError(t.magasin.cameraUnavailable);
 			return;
 		}
+		setCameraStarting(true);
 		try {
-			const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-			streamRef.current = stream;
-			if (videoRef.current) {
-				videoRef.current.srcObject = stream;
-				await videoRef.current.play();
-			}
+			const codeReader = new BrowserMultiFormatReader();
+			const controls = await codeReader.decodeFromConstraints(
+				{ audio: false, video: { facingMode: { ideal: 'environment' } } },
+				videoRef.current,
+				(result, _error, activeControls) => {
+					if (!result) return;
+					activeControls.stop();
+					scannerControlsRef.current = null;
+					setCameraActive(false);
+					void scanByCode(result.getText());
+				},
+			);
+			scannerControlsRef.current = controls;
 			setCameraActive(true);
-			const Detector = (
-				window as unknown as {
-					BarcodeDetector: new (args: { formats: string[] }) => {
-						detect: (source: HTMLVideoElement) => Promise<Array<{ rawValue: string }>>;
-					};
-				}
-			).BarcodeDetector;
-			const detector = new Detector({ formats: ['ean_13', 'ean_8', 'code_128', 'qr_code'] });
-			scanTimerRef.current = window.setInterval(async () => {
-				if (!videoRef.current) {
-					return;
-				}
-				const codes = await detector.detect(videoRef.current);
-				const code = codes[0]?.rawValue;
-				if (code) {
-					await scanByCode(code);
-					stopCamera();
-				}
-			}, 700);
-		} catch {
-			onError(t.errors.genericError);
+		} catch (error) {
+			stopCamera();
+			const errorName = error instanceof DOMException ? error.name : '';
+			if (errorName === 'NotAllowedError' || errorName === 'SecurityError') {
+				onError(t.magasin.cameraPermissionDenied);
+			} else if (errorName === 'NotFoundError' || errorName === 'OverconstrainedError') {
+				onError(t.magasin.cameraUnavailable);
+			} else {
+				onError(t.magasin.cameraStartError);
+			}
+		} finally {
+			setCameraStarting(false);
 		}
 	};
 
@@ -665,21 +664,28 @@ const PosClient = ({ session }: SessionProps) => {
 											variant="outlined"
 											startIcon={cameraActive ? <VideocamOffIcon /> : <VideocamIcon />}
 											onClick={cameraActive ? stopCamera : () => void startCamera()}
+											disabled={cameraStarting}
 											sx={{ ...actionButtonSx, minWidth: { xs: '100%', md: 150 } }}
 										>
 											{cameraActive ? t.magasin.stopCamera : t.magasin.camera}
 										</Button>
 									</Box>
-									{cameraActive && (
-										<Box sx={{ mt: 2, overflow: 'hidden', borderRadius: 1, bgcolor: 'black' }}>
+									<Box
+										sx={{
+											mt: cameraActive ? 2 : 0,
+											display: cameraActive ? 'block' : 'none',
+											overflow: 'hidden',
+											borderRadius: 1,
+											bgcolor: 'black',
+										}}
+									>
 											<video
 												ref={videoRef}
 												muted
 												playsInline
 												style={{ display: 'block', width: '100%', maxHeight: 320, objectFit: 'cover' }}
 											/>
-										</Box>
-									)}
+									</Box>
 									{scanFormik.errors.globalError && (
 										<Alert severity="error" sx={{ mt: 2 }}>
 											{scanFormik.errors.globalError}
