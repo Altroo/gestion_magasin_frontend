@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, Box, Button, Card, CardContent, Divider, InputAdornment, MenuItem, Stack, TextField, ThemeProvider, Typography } from '@mui/material';
 import {
@@ -103,6 +103,7 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 	const storeId = initialStoreId ?? defaultStore?.id;
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [isPending, setIsPending] = useState(false);
+	const autoSelectedEmployeeStoreRef = useRef<number | undefined>(undefined);
 	const { data: attendance, isLoading: isAttendanceLoading, error: attendanceError } = useGetAttendanceRecordQuery(
 		{ id: id! },
 		{ skip: !token || !isEditMode },
@@ -210,6 +211,17 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 		delay_minutes: delayMinutes,
 	} = formik.values;
 	const { setFieldValue } = formik;
+
+	useEffect(() => {
+		if (isEditMode || !storeId || !employees || autoSelectedEmployeeStoreRef.current === storeId) return;
+		autoSelectedEmployeeStoreRef.current = storeId;
+		const defaultEmployee = employees.results.find(
+			(employee) => employee.full_name.localeCompare(DEFAULT_ATTENDANCE_RESPONSIBLE, undefined, { sensitivity: 'base' }) === 0,
+		);
+		if (!formik.values.employee && defaultEmployee) {
+			void setFieldValue('employee', String(defaultEmployee.id), false);
+		}
+	}, [employees, formik.values.employee, isEditMode, setFieldValue, storeId]);
 
 	useEffect(() => {
 		const nextHours = calculateWorkedHours({
