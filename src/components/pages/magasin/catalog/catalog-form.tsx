@@ -41,7 +41,6 @@ import { toFormikValidationSchema } from 'zod-formik-adapter';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
 import CustomAutoCompleteSelect from '@/components/formikElements/customAutoCompleteSelect/customAutoCompleteSelect';
-import { MuiFormikDatePicker } from '@/components/formikElements/muiPickers/muiPickers';
 import CustomTextInput from '@/components/formikElements/customTextInput/customTextInput';
 import PrimaryLoadingButton from '@/components/htmlElements/buttons/primaryLoadingButton/primaryLoadingButton';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
@@ -296,18 +295,22 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 		'& .MuiInputBase-input': {
 			py: 0,
 		},
+		'& .MuiInputBase-input::placeholder': {
+			opacity: 0.7,
+		},
 	};
 	const stockTrackingColumns: GridColDef<StockTrackingGridRow>[] = [
 		{
 			field: 'default_stock_alert',
 			headerName: t.magasin.defaultStockAlert,
 			flex: 1,
-			minWidth: 210,
+			minWidth: 170,
 			sortable: false,
 			filterable: false,
 			renderCell: (params: GridRenderCellParams<StockTrackingGridRow>) => (
 				<TextField
 					type="number"
+					size="small"
 					value={params.row.default_stock_alert}
 					onChange={(event) =>
 						void formik.setFieldValue(
@@ -322,7 +325,10 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 					placeholder={`${t.magasin.defaultStockAlert} *`}
 					variant="standard"
 					fullWidth
-					slotProps={{ htmlInput: { min: 0, step: 0.001 } }}
+					slotProps={{
+						input: { disableUnderline: true },
+						htmlInput: { min: 0, step: 0.001 },
+					}}
 					sx={gridPlainInputSx}
 				/>
 			),
@@ -330,31 +336,42 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 		{
 			field: 'expiration_date',
 			headerName: t.magasin.expirationDate,
-			flex: 1.15,
-			minWidth: 230,
+			flex: 0.95,
+			minWidth: 180,
 			sortable: false,
 			filterable: false,
 			renderCell: (params: GridRenderCellParams<StockTrackingGridRow>) => (
-				<Box sx={{ width: '100%' }}>
-					<MuiFormikDatePicker
-						id={`stock_tracking_items.${params.row.index}.expiration_date`}
-						label={params.row.requires_expiration_date ? `${t.magasin.expirationDate} *` : t.magasin.expirationDate}
-						value={params.row.expiration_date}
-						onChange={(value) =>
-							void formik.setFieldValue(`stock_tracking_items.${params.row.index}.expiration_date`, value)
-						}
-						onBlur={() => void formik.setFieldTouched(`stock_tracking_items.${params.row.index}.expiration_date`, true)}
-						error={Boolean(stockTrackingItemError(params.row.index, 'expiration_date'))}
-						fullWidth
-						size="small"
-					/>
-				</Box>
+				<TextField
+					id={`stock_tracking_items.${params.row.index}.expiration_date`}
+					type="date"
+					size="small"
+					value={params.row.expiration_date}
+					onChange={(event) =>
+						void formik.setFieldValue(
+							`stock_tracking_items.${params.row.index}.expiration_date`,
+							event.target.value,
+						)
+					}
+					onBlur={() => void formik.setFieldTouched(`stock_tracking_items.${params.row.index}.expiration_date`, true)}
+					error={Boolean(stockTrackingItemError(params.row.index, 'expiration_date'))}
+					variant="standard"
+					fullWidth
+					slotProps={{
+						input: { disableUnderline: true },
+						htmlInput: {
+							'aria-label': params.row.requires_expiration_date
+								? `${t.magasin.expirationDate} *`
+								: t.magasin.expirationDate,
+						},
+					}}
+					sx={gridPlainInputSx}
+				/>
 			),
 		},
 		{
 			field: 'requires_expiration_date',
 			headerName: t.magasin.expirationTracking,
-			width: 220,
+			width: 205,
 			align: 'center',
 			headerAlign: 'center',
 			sortable: false,
@@ -376,12 +393,13 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 			field: 'shelf_life_days',
 			headerName: t.magasin.shelfLifeDays,
 			flex: 0.85,
-			minWidth: 180,
+			minWidth: 150,
 			sortable: false,
 			filterable: false,
 			renderCell: (params: GridRenderCellParams<StockTrackingGridRow>) => (
 				<TextField
 					type="number"
+					size="small"
 					value={params.row.shelf_life_days}
 					onChange={(event) =>
 						void formik.setFieldValue(`stock_tracking_items.${params.row.index}.shelf_life_days`, event.target.value)
@@ -391,7 +409,10 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 					placeholder={t.magasin.shelfLifeDays}
 					variant="standard"
 					fullWidth
-					slotProps={{ htmlInput: { min: 0, step: 1 } }}
+					slotProps={{
+						input: { disableUnderline: true },
+						htmlInput: { min: 0, step: 1 },
+					}}
 					sx={gridPlainInputSx}
 				/>
 			),
@@ -399,7 +420,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 		{
 			field: 'actions',
 			headerName: t.common.actions,
-			width: 90,
+			width: 80,
 			align: 'center',
 			headerAlign: 'center',
 			sortable: false,
@@ -681,16 +702,23 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Stack spacing={2.5}>
-													<Box sx={{ width: '100%' }}>
+													<Box sx={{ width: '100%', minWidth: 0 }}>
 														<DataGrid
 															rows={stockTrackingRows}
 															columns={stockTrackingColumns}
+															showToolbar
+															slotProps={{
+																toolbar: {
+																	showQuickFilter: true,
+																	quickFilterProps: { debounceMs: 500 },
+																},
+															}}
 															localeText={frFR.components.MuiDataGrid.defaultProps.localeText}
 															disableRowSelectionOnClick
 															paginationModel={stockPaginationModel}
 															onPaginationModelChange={setStockPaginationModel}
 															pageSizeOptions={[5, 10, 25]}
-															getRowHeight={() => 72}
+															getRowHeight={() => 64}
 															sx={{
 																border: 'none',
 																'& .MuiDataGrid-columnHeaderTitle': {
@@ -704,6 +732,11 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 																},
 																'& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus': {
 																	outline: 'none',
+																},
+																'& .MuiDataGrid-toolbarContainer': {
+																	px: 0,
+																	pt: 0,
+																	pb: 1,
 																},
 															}}
 														/>
