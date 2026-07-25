@@ -24,12 +24,13 @@ import {
 	Delete as DeleteIcon,
 	Description as DescriptionIcon,
 	Edit as EditIcon,
-	Event as EventIcon,
 	Fingerprint as FingerprintIcon,
 	Inventory2 as InventoryIcon,
 	QrCodeScanner as QrCodeScannerIcon,
 	Straighten as StraightenIcon,
 } from '@mui/icons-material';
+import { DataGrid, type GridColDef, type GridPaginationModel } from '@mui/x-data-grid';
+import { frFR } from '@mui/x-data-grid/locales';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
@@ -43,6 +44,7 @@ import { CATALOG_EDIT, CATALOG_LIST } from '@/utils/routes';
 import { extractApiErrorMessage, formatDateShort, formatNumber } from '@/utils/helpers';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
 import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '@/types/_initTypes';
+import type { ProductStockTrackingItemType } from '@/types/gestionMagasinTypes';
 
 type Props = SessionProps & {
 	id: number;
@@ -53,6 +55,10 @@ type InfoRowProps = {
 	icon: React.ReactNode;
 	label: string;
 	value: React.ReactNode;
+};
+
+type StockTrackingGridRow = Omit<ProductStockTrackingItemType, 'id'> & {
+	id: number;
 };
 
 const InfoRow = ({ icon, label, value }: InfoRowProps) => {
@@ -111,12 +117,65 @@ const CatalogViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
 	const { defaultStore } = useSelectedStore(token);
 	const storeId = initialStoreId ?? defaultStore?.id;
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [stockPaginationModel, setStockPaginationModel] = useState<GridPaginationModel>({
+		page: 0,
+		pageSize: 5,
+	});
 	const { data: product, isLoading, error } = useGetProductQuery({ id, store: storeId }, { skip: !token || !storeId });
 	const axiosError = useMemo(
 		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
 		[error],
 	);
 	const [deleteProduct] = useDeleteProductMutation();
+	const stockTrackingRows: StockTrackingGridRow[] = (
+		product?.stock_tracking_items?.length
+			? product.stock_tracking_items
+			: product
+				? [
+						{
+							default_stock_alert: product.default_stock_alert,
+							expiration_date: product.expiration_date,
+							requires_expiration_date: product.requires_expiration_date,
+							shelf_life_days: product.shelf_life_days ?? null,
+						},
+					]
+				: []
+	).map((item, index) => ({
+		...item,
+		id: item.id ?? index + 1,
+	}));
+	const stockTrackingColumns = useMemo<GridColDef<StockTrackingGridRow>[]>(
+		() => [
+			{
+				field: 'default_stock_alert',
+				headerName: t.magasin.defaultStockAlert,
+				flex: 1,
+				minWidth: 210,
+			},
+			{
+				field: 'expiration_date',
+				headerName: t.magasin.expirationDate,
+				flex: 1,
+				minWidth: 180,
+				renderCell: ({ row }) => formatDateShort(row.expiration_date),
+			},
+			{
+				field: 'requires_expiration_date',
+				headerName: t.magasin.expirationTracking,
+				flex: 1,
+				minWidth: 220,
+				renderCell: ({ row }) => (row.requires_expiration_date ? t.common.yes : t.common.no),
+			},
+			{
+				field: 'shelf_life_days',
+				headerName: t.magasin.shelfLifeDays,
+				flex: 0.8,
+				minWidth: 180,
+				renderCell: ({ row }) => row.shelf_life_days ?? '-',
+			},
+		],
+		[t],
+	);
 
 	const handleDelete = async () => {
 		try {
@@ -326,25 +385,28 @@ const CatalogViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
 												value={product.available_stock}
 											/>
 											<Divider />
-											<InfoRow
-												icon={<InventoryIcon />}
-												label={t.magasin.minimumStock}
-												value={product.min_stock ?? product.default_stock_alert}
-											/>
-											<Divider />
-											<InfoRow
-												icon={<EventIcon />}
-												label={t.magasin.expirationDate}
-												value={formatDateShort(product.expiration_date)}
-											/>
-											<Divider />
-											<InfoRow
-												icon={<EventIcon />}
-												label={t.magasin.expirationTracking}
-												value={product.requires_expiration_date ? t.common.yes : t.common.no}
-											/>
-											<Divider />
-											<InfoRow icon={<EventIcon />} label={t.magasin.shelfLifeDays} value={product.shelf_life_days} />
+											<Box sx={{ width: '100%', mt: 2 }}>
+												<DataGrid
+													rows={stockTrackingRows}
+													columns={stockTrackingColumns}
+													localeText={frFR.components.MuiDataGrid.defaultProps.localeText}
+													disableRowSelectionOnClick
+													paginationModel={stockPaginationModel}
+													onPaginationModelChange={setStockPaginationModel}
+													pageSizeOptions={[5, 10, 25]}
+													sx={{
+														border: 'none',
+														'& .MuiDataGrid-columnHeaderTitle': {
+															fontWeight: 700,
+															whiteSpace: 'normal',
+															lineHeight: 1.25,
+														},
+														'& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus': {
+															outline: 'none',
+														},
+													}}
+												/>
+											</Box>
 										</CardContent>
 									</Card>
 								</Stack>

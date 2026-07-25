@@ -170,23 +170,12 @@ export const posScanSchema = z.object({
 	globalError: optionalTextField(1, 500),
 });
 
-export const productSchema = z
+const productStockTrackingItemSchema = z
 	.object({
-		reference: optionalTextField(1, 80),
-		barcode: requiredTextField(1, 80),
-		name: requiredTextField(2, 255),
-		category: requiredNumberTextField(),
-		unit: requiredNumberTextField(),
-		purchase_price: requiredNumberTextField(),
-		wholesale_price: requiredNumberTextField(),
-		detail_price: requiredNumberTextField(),
-		counter_price: requiredNumberTextField(),
 		default_stock_alert: requiredNumberTextField(),
 		expiration_date: optionalTextField(1, 20),
 		requires_expiration_date: z.boolean(),
 		shelf_life_days: optionalTextField(1, 10),
-		is_active: z.boolean(),
-		globalError: optionalTextField(1, 500),
 	})
 	.superRefine((data, ctx) => {
 		if (data.requires_expiration_date && !data.expiration_date) {
@@ -197,6 +186,23 @@ export const productSchema = z
 			});
 		}
 	});
+
+export const productSchema = z.object({
+	reference: optionalTextField(1, 80),
+	barcode: requiredTextField(1, 80),
+	name: requiredTextField(2, 255),
+	category: requiredNumberTextField(),
+	unit: requiredNumberTextField(),
+	purchase_price: requiredNumberTextField(),
+	wholesale_price: requiredNumberTextField(),
+	detail_price: requiredNumberTextField(),
+	counter_price: requiredNumberTextField(),
+	stock_tracking_items: z
+		.array(productStockTrackingItemSchema)
+		.min(1, { error: INPUT_REQUIRED }),
+	is_active: z.boolean(),
+	globalError: optionalTextField(1, 500),
+});
 
 export const storeSchema = z.object({
 	name: requiredTextField(2, 160),
@@ -371,4 +377,3 @@ export const notificationPreferencesSchema = z.object({
 	low_stock_repeat_hours: requiredPositiveIntegerTextField(),
 	globalError: optionalTextField(1, 500),
 });
-

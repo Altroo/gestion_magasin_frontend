@@ -10,7 +10,10 @@ import {
 	Checkbox,
 	Divider,
 	FormControlLabel,
+	IconButton,
 	Stack,
+	TextField,
+	Tooltip,
 	Typography,
 	useMediaQuery,
 	useTheme,
@@ -22,16 +25,18 @@ import {
 	Category as CategoryIcon,
 	CheckCircle as CheckCircleIcon,
 	CreditCard as CreditCardIcon,
+	Delete as DeleteIcon,
 	Description as DescriptionIcon,
 	Edit as EditIcon,
-	Event as EventIcon,
 	Fingerprint as FingerprintIcon,
 	Inventory2 as InventoryIcon,
 	QrCodeScanner as QrCodeScannerIcon,
 	Straighten as StraightenIcon,
 	Warning as WarningIcon,
 } from '@mui/icons-material';
-import { useFormik } from 'formik';
+import { DataGrid, type GridColDef, type GridPaginationModel, type GridRenderCellParams } from '@mui/x-data-grid';
+import { frFR } from '@mui/x-data-grid/locales';
+import { getIn, useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
@@ -69,6 +74,18 @@ import type { ProductFormValues, ProductPayload } from '@/types/gestionMagasinTy
 
 const inputTheme = textInputTheme();
 const dropdownTheme = customDropdownTheme();
+const emptyStockTrackingItem = {
+	default_stock_alert: '',
+	expiration_date: '',
+	requires_expiration_date: false,
+	shelf_life_days: '',
+};
+
+type StockTrackingGridRow = typeof emptyStockTrackingItem & {
+	id: number;
+	index: number;
+};
+
 type Props = SessionProps & {
 	id?: number;
 	storeId?: number;
@@ -84,10 +101,12 @@ const toPayload = (values: ProductFormValues): ProductPayload => ({
 	wholesale_price: values.wholesale_price,
 	detail_price: values.detail_price,
 	counter_price: values.counter_price,
-	default_stock_alert: values.default_stock_alert,
-	expiration_date: values.expiration_date || null,
-	requires_expiration_date: values.requires_expiration_date,
-	shelf_life_days: values.shelf_life_days ? Number(values.shelf_life_days) : null,
+	stock_tracking_items: values.stock_tracking_items.map((item) => ({
+		default_stock_alert: item.default_stock_alert,
+		expiration_date: item.expiration_date || null,
+		requires_expiration_date: item.requires_expiration_date,
+		shelf_life_days: item.shelf_life_days ? Number(item.shelf_life_days) : null,
+	})),
 	is_active: values.is_active,
 });
 
@@ -103,6 +122,10 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 	const storeId = initialStoreId ?? defaultStore?.id;
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [isPending, setIsPending] = useState(false);
+	const [stockPaginationModel, setStockPaginationModel] = useState<GridPaginationModel>({
+		page: 0,
+		pageSize: 5,
+	});
 
 	const {
 		data: product,
@@ -137,10 +160,23 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 			wholesale_price: product?.wholesale_price ?? '',
 			detail_price: product?.detail_price ?? '',
 			counter_price: product?.counter_price ?? '',
-			default_stock_alert: product?.default_stock_alert ?? '',
-			expiration_date: product?.expiration_date ?? '',
-			requires_expiration_date: product?.requires_expiration_date ?? false,
-			shelf_life_days: product?.shelf_life_days ? String(product.shelf_life_days) : '',
+			stock_tracking_items: product?.stock_tracking_items?.length
+				? product.stock_tracking_items.map((item) => ({
+						default_stock_alert: item.default_stock_alert,
+						expiration_date: item.expiration_date ?? '',
+						requires_expiration_date: item.requires_expiration_date,
+						shelf_life_days: item.shelf_life_days ? String(item.shelf_life_days) : '',
+					}))
+				: [
+						product
+							? {
+									default_stock_alert: product.default_stock_alert,
+									expiration_date: product.expiration_date ?? '',
+									requires_expiration_date: product.requires_expiration_date,
+									shelf_life_days: product.shelf_life_days ? String(product.shelf_life_days) : '',
+								}
+							: { ...emptyStockTrackingItem },
+					],
 			is_active: product?.is_active ?? true,
 			globalError: '',
 		},
@@ -180,10 +216,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 			wholesale_price: t.magasin.wholesalePrice,
 			detail_price: t.magasin.detailPrice,
 			counter_price: t.magasin.counterPrice,
-			default_stock_alert: t.magasin.defaultStockAlert,
-			expiration_date: t.magasin.expirationDate,
-			requires_expiration_date: t.magasin.expirationTracking,
-			shelf_life_days: t.magasin.shelfLifeDays,
+			stock_tracking_items: t.magasin.stockSettings,
 			is_active: t.magasin.activeProduct,
 			globalError: t.errors.globalError,
 		}),
@@ -197,10 +230,13 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 				if (key !== 'globalError' && typeof value === 'string') {
 					errors[key] = value;
 				}
+				if (key === 'stock_tracking_items' && value && typeof value !== 'string') {
+					errors[key] = t.magasin.fixValidationErrors;
+				}
 			});
 		}
 		return errors;
-	}, [formik.errors, hasAttemptedSubmit]);
+	}, [formik.errors, hasAttemptedSubmit, t.magasin.fixValidationErrors]);
 
 	const isLoading = isPending || addState.isLoading || editState.isLoading || (isEditMode && isProductLoading);
 	const shouldShowError = (axiosError?.status ?? 0) > 400 && !isLoading;
@@ -222,9 +258,169 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 			: '';
 	const categoryError = (formik.touched.category || hasAttemptedSubmit) && Boolean(formik.errors.category);
 	const unitError = (formik.touched.unit || hasAttemptedSubmit) && Boolean(formik.errors.unit);
-	const expirationLabel = formik.values.requires_expiration_date
-		? `${t.magasin.expirationDate} *`
-		: t.magasin.expirationDate;
+	const stockTrackingItemError = (index: number, field: keyof typeof emptyStockTrackingItem) => {
+		const error = getIn(formik.errors, `stock_tracking_items.${index}.${field}`);
+		const touched = getIn(formik.touched, `stock_tracking_items.${index}.${field}`);
+		return (touched || hasAttemptedSubmit) && typeof error === 'string' ? error : '';
+	};
+	const addStockTrackingItem = () => {
+		const nextLength = formik.values.stock_tracking_items.length + 1;
+		void formik.setFieldValue('stock_tracking_items', [
+			...formik.values.stock_tracking_items,
+			{ ...emptyStockTrackingItem },
+		]);
+		setStockPaginationModel((current) => ({
+			...current,
+			page: Math.floor((nextLength - 1) / current.pageSize),
+		}));
+	};
+	const removeStockTrackingItem = (index: number) => {
+		if (formik.values.stock_tracking_items.length === 1) return;
+		const nextItems = formik.values.stock_tracking_items.filter((_, itemIndex) => itemIndex !== index);
+		void formik.setFieldValue('stock_tracking_items', nextItems);
+		setStockPaginationModel((current) => ({
+			...current,
+			page: Math.min(current.page, Math.max(0, Math.ceil(nextItems.length / current.pageSize) - 1)),
+		}));
+	};
+	const stockTrackingRows = formik.values.stock_tracking_items.map((item, index) => ({
+		id: index + 1,
+		index,
+		...item,
+	}));
+	const gridPlainInputSx = {
+		'& .MuiInputBase-root': {
+			fontFamily: 'Poppins',
+			fontSize: '14px',
+		},
+		'& .MuiInputBase-input': {
+			py: 0,
+		},
+	};
+	const stockTrackingColumns: GridColDef<StockTrackingGridRow>[] = [
+		{
+			field: 'default_stock_alert',
+			headerName: t.magasin.defaultStockAlert,
+			flex: 1,
+			minWidth: 210,
+			sortable: false,
+			filterable: false,
+			renderCell: (params: GridRenderCellParams<StockTrackingGridRow>) => (
+				<TextField
+					type="number"
+					value={params.row.default_stock_alert}
+					onChange={(event) =>
+						void formik.setFieldValue(
+							`stock_tracking_items.${params.row.index}.default_stock_alert`,
+							event.target.value,
+						)
+					}
+					onBlur={() =>
+						void formik.setFieldTouched(`stock_tracking_items.${params.row.index}.default_stock_alert`, true)
+					}
+					error={Boolean(stockTrackingItemError(params.row.index, 'default_stock_alert'))}
+					placeholder={`${t.magasin.defaultStockAlert} *`}
+					variant="standard"
+					fullWidth
+					slotProps={{ htmlInput: { min: 0, step: 0.001 } }}
+					sx={gridPlainInputSx}
+				/>
+			),
+		},
+		{
+			field: 'expiration_date',
+			headerName: t.magasin.expirationDate,
+			flex: 1.15,
+			minWidth: 230,
+			sortable: false,
+			filterable: false,
+			renderCell: (params: GridRenderCellParams<StockTrackingGridRow>) => (
+				<Box sx={{ width: '100%' }}>
+					<MuiFormikDatePicker
+						id={`stock_tracking_items.${params.row.index}.expiration_date`}
+						label={params.row.requires_expiration_date ? `${t.magasin.expirationDate} *` : t.magasin.expirationDate}
+						value={params.row.expiration_date}
+						onChange={(value) =>
+							void formik.setFieldValue(`stock_tracking_items.${params.row.index}.expiration_date`, value)
+						}
+						onBlur={() => void formik.setFieldTouched(`stock_tracking_items.${params.row.index}.expiration_date`, true)}
+						error={Boolean(stockTrackingItemError(params.row.index, 'expiration_date'))}
+						fullWidth
+						size="small"
+					/>
+				</Box>
+			),
+		},
+		{
+			field: 'requires_expiration_date',
+			headerName: t.magasin.expirationTracking,
+			width: 220,
+			align: 'center',
+			headerAlign: 'center',
+			sortable: false,
+			filterable: false,
+			renderCell: (params: GridRenderCellParams<StockTrackingGridRow>) => (
+				<Checkbox
+					checked={params.row.requires_expiration_date}
+					onChange={(event) =>
+						void formik.setFieldValue(
+							`stock_tracking_items.${params.row.index}.requires_expiration_date`,
+							event.target.checked,
+						)
+					}
+					slotProps={{ input: { 'aria-label': t.magasin.expirationTracking } }}
+				/>
+			),
+		},
+		{
+			field: 'shelf_life_days',
+			headerName: t.magasin.shelfLifeDays,
+			flex: 0.85,
+			minWidth: 180,
+			sortable: false,
+			filterable: false,
+			renderCell: (params: GridRenderCellParams<StockTrackingGridRow>) => (
+				<TextField
+					type="number"
+					value={params.row.shelf_life_days}
+					onChange={(event) =>
+						void formik.setFieldValue(`stock_tracking_items.${params.row.index}.shelf_life_days`, event.target.value)
+					}
+					onBlur={() => void formik.setFieldTouched(`stock_tracking_items.${params.row.index}.shelf_life_days`, true)}
+					error={Boolean(stockTrackingItemError(params.row.index, 'shelf_life_days'))}
+					placeholder={t.magasin.shelfLifeDays}
+					variant="standard"
+					fullWidth
+					slotProps={{ htmlInput: { min: 0, step: 1 } }}
+					sx={gridPlainInputSx}
+				/>
+			),
+		},
+		{
+			field: 'actions',
+			headerName: t.common.actions,
+			width: 90,
+			align: 'center',
+			headerAlign: 'center',
+			sortable: false,
+			filterable: false,
+			renderCell: (params: GridRenderCellParams<StockTrackingGridRow>) => (
+				<Tooltip title={t.common.delete}>
+					<span>
+						<IconButton
+							size="small"
+							color="error"
+							disabled={formik.values.stock_tracking_items.length === 1}
+							onClick={() => removeStockTrackingItem(params.row.index)}
+							aria-label={t.common.delete}
+						>
+							<DeleteIcon fontSize="small" />
+						</IconButton>
+					</span>
+				</Tooltip>
+			),
+		},
+	];
 
 	return (
 		<NavigationBar title={isEditMode ? t.magasin.editProduct : t.magasin.newProduct}>
@@ -455,85 +651,64 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
 												<Stack
-													direction="row"
+													direction={isMobile ? 'column' : 'row'}
 													spacing={2}
 													sx={{
-														alignItems: 'center',
+														justifyContent: 'space-between',
+														alignItems: isMobile ? 'stretch' : 'center',
 														mb: 2,
 													}}
 												>
-													<InventoryIcon color="primary" />
-													<Typography
-														variant="h6"
-														sx={{
-															fontWeight: 700,
-														}}
+													<Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+														<InventoryIcon color="primary" />
+														<Typography
+															variant="h6"
+															sx={{
+																fontWeight: 700,
+															}}
+														>
+															{t.magasin.stockSettings}
+														</Typography>
+													</Stack>
+													<Button
+														variant="outlined"
+														size="small"
+														startIcon={<AddIcon />}
+														onClick={addStockTrackingItem}
 													>
-														{t.magasin.stockSettings}
-													</Typography>
+														{t.common.add}
+													</Button>
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Stack spacing={2.5}>
-													<CustomTextInput
-														id="default_stock_alert"
-														type="number"
-														label={`${t.magasin.defaultStockAlert} *`}
-														value={formik.values.default_stock_alert}
-														onChange={formik.handleChange('default_stock_alert')}
-														onBlur={formik.handleBlur('default_stock_alert')}
-														error={Boolean(fieldError('default_stock_alert'))}
-														helperText={fieldError('default_stock_alert')}
-														fullWidth
-														size="small"
-														theme={inputTheme}
-														startIcon={<InventoryIcon fontSize="small" />}
-													/>
-													<MuiFormikDatePicker
-														id="expiration_date"
-														label={expirationLabel}
-														value={formik.values.expiration_date}
-														onChange={(value) => void formik.setFieldValue('expiration_date', value)}
-														onBlur={formik.handleBlur('expiration_date')}
-														error={Boolean(fieldError('expiration_date'))}
-														helperText={fieldError('expiration_date')}
-														fullWidth
-														size="small"
-														startIcon={<EventIcon fontSize="small" />}
-													/>
-													<FormControlLabel
-														control={
-															<Checkbox
-																checked={formik.values.requires_expiration_date}
-																onChange={formik.handleChange}
-																name="requires_expiration_date"
-															/>
-														}
-														label={
-															<Stack
-																direction="row"
-																spacing={1}
-																sx={{
+													<Box sx={{ width: '100%' }}>
+														<DataGrid
+															rows={stockTrackingRows}
+															columns={stockTrackingColumns}
+															localeText={frFR.components.MuiDataGrid.defaultProps.localeText}
+															disableRowSelectionOnClick
+															paginationModel={stockPaginationModel}
+															onPaginationModelChange={setStockPaginationModel}
+															pageSizeOptions={[5, 10, 25]}
+															getRowHeight={() => 72}
+															sx={{
+																border: 'none',
+																'& .MuiDataGrid-columnHeaderTitle': {
+																	fontWeight: 700,
+																	whiteSpace: 'normal',
+																	lineHeight: 1.25,
+																},
+																'& .MuiDataGrid-cell': {
+																	display: 'flex',
 																	alignItems: 'center',
-																}}
-															>
-																<EventIcon fontSize="small" /> <Typography>{t.magasin.expirationTracking}</Typography>
-															</Stack>
-														}
-													/>
-													<CustomTextInput
-														id="shelf_life_days"
-														type="number"
-														label={t.magasin.shelfLifeDays}
-														value={formik.values.shelf_life_days}
-														onChange={formik.handleChange('shelf_life_days')}
-														onBlur={formik.handleBlur('shelf_life_days')}
-														error={Boolean(fieldError('shelf_life_days'))}
-														helperText={fieldError('shelf_life_days')}
-														fullWidth
-														size="small"
-														theme={inputTheme}
-														startIcon={<EventIcon fontSize="small" />}
-													/>
+																},
+																'& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus': {
+																	outline: 'none',
+																},
+															}}
+														/>
+													</Box>
+													<Divider />
 													<FormControlLabel
 														control={
 															<Checkbox

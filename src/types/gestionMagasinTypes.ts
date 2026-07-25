@@ -85,6 +85,15 @@ export type ProductUnitType = {
 	date_updated?: string;
 };
 
+export type ProductStockTrackingItemType = {
+	id?: number;
+	default_stock_alert: string;
+	expiration_date: string | null;
+	requires_expiration_date: boolean;
+	shelf_life_days: number | null;
+	position?: number;
+};
+
 export type ProductType = {
 	id: number;
 	reference: string | null;
@@ -102,6 +111,7 @@ export type ProductType = {
 	expiration_date: string | null;
 	requires_expiration_date: boolean;
 	shelf_life_days?: number | null;
+	stock_tracking_items: ProductStockTrackingItemType[];
 	is_active: boolean;
 	available_stock: string | null;
 	min_stock: string | null;
@@ -119,10 +129,12 @@ export type ProductPayload = {
 	wholesale_price: string;
 	detail_price: string;
 	counter_price: string;
-	default_stock_alert: string;
-	expiration_date?: string | null;
-	requires_expiration_date: boolean;
-	shelf_life_days?: number | null;
+	stock_tracking_items: Array<{
+		default_stock_alert: string;
+		expiration_date: string | null;
+		requires_expiration_date: boolean;
+		shelf_life_days: number | null;
+	}>;
 	is_active: boolean;
 };
 
@@ -650,10 +662,12 @@ export type ProductFormValues = {
 	wholesale_price: string;
 	detail_price: string;
 	counter_price: string;
-	default_stock_alert: string;
-	expiration_date: string;
-	requires_expiration_date: boolean;
-	shelf_life_days: string;
+	stock_tracking_items: Array<{
+		default_stock_alert: string;
+		expiration_date: string;
+		requires_expiration_date: boolean;
+		shelf_life_days: string;
+	}>;
 	is_active: boolean;
 	globalError: string;
 };

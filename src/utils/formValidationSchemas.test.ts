@@ -387,10 +387,14 @@ describe('Zod Schema Validation', () => {
 					wholesale_price: '0',
 					detail_price: '0',
 					counter_price: '0',
-					default_stock_alert: '0',
-					expiration_date: '',
-					requires_expiration_date: false,
-					shelf_life_days: '',
+					stock_tracking_items: [
+						{
+							default_stock_alert: '0',
+							expiration_date: '',
+							requires_expiration_date: false,
+							shelf_life_days: '',
+						},
+					],
 					is_active: true,
 				}),
 			).toThrow();
@@ -408,10 +412,14 @@ describe('Zod Schema Validation', () => {
 					wholesale_price: '',
 					detail_price: '',
 					counter_price: '',
-					default_stock_alert: '',
-					expiration_date: '',
-					requires_expiration_date: false,
-					shelf_life_days: '',
+					stock_tracking_items: [
+						{
+							default_stock_alert: '',
+							expiration_date: '',
+							requires_expiration_date: false,
+							shelf_life_days: '',
+						},
+					],
 					is_active: true,
 				}),
 			).toThrow();
@@ -429,10 +437,14 @@ describe('Zod Schema Validation', () => {
 					wholesale_price: '12',
 					detail_price: '14',
 					counter_price: '15',
-					default_stock_alert: '3',
-					expiration_date: '',
-					requires_expiration_date: false,
-					shelf_life_days: '',
+					stock_tracking_items: [
+						{
+							default_stock_alert: '3',
+							expiration_date: '',
+							requires_expiration_date: false,
+							shelf_life_days: '',
+						},
+					],
 					is_active: true,
 				}),
 			).toThrow();
@@ -450,10 +462,14 @@ describe('Zod Schema Validation', () => {
 						wholesale_price: '12',
 						detail_price: '14',
 						counter_price: '15',
-						default_stock_alert: '3',
-						expiration_date: '',
-						requires_expiration_date: true,
-						shelf_life_days: '',
+						stock_tracking_items: [
+							{
+								default_stock_alert: '3',
+								expiration_date: '',
+								requires_expiration_date: true,
+								shelf_life_days: '',
+							},
+						],
 						is_active: true,
 					}),
 				).toThrow();
@@ -547,4 +563,3 @@ describe('Zod Schema Validation', () => {
 		});
 	});
 });
-
