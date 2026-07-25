@@ -21,6 +21,7 @@ type PickerFieldProps = {
 	fullWidth?: boolean;
 	size?: 'small' | 'medium';
 	startIcon?: React.ReactNode;
+	variant?: 'outlined' | 'grid';
 };
 
 const inputTheme = textInputTheme();
@@ -61,6 +62,27 @@ const pickerTextFieldSx = {
 	'& .MuiInputLabel-root': {
 		fontFamily: 'Poppins',
 		fontSize: '16px',
+	},
+};
+
+const gridPickerTextFieldSx = {
+	width: '100%',
+	'& .MuiInputBase-root': {
+		minHeight: 'auto',
+		height: 'auto',
+		fontFamily: 'Poppins',
+		fontSize: '14px',
+	},
+	'& .MuiInputBase-input, & .MuiPickersSectionList-root': {
+		py: 0,
+		fontFamily: 'Poppins',
+		fontSize: '14px',
+	},
+	'& .MuiInput-underline::before, & .MuiInput-underline::after': {
+		borderBottom: 'none',
+	},
+	'& .MuiIconButton-root': {
+		p: 0.5,
 	},
 };
 
@@ -110,29 +132,48 @@ const formatTimeValue = (date: Date | null): string => {
 	return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
 
-const textFieldSlotProps = ({ id, onBlur, error, helperText, fullWidth, size, startIcon }: PickerFieldProps) => ({
+const textFieldSlotProps = ({
 	id,
+	label,
 	onBlur,
 	error,
 	helperText,
 	fullWidth,
-	size: size ?? 'small',
-	variant: 'outlined' as const,
-	sx: pickerTextFieldSx,
-	slotProps: {
-		input: startIcon
-			? {
-					startAdornment: <InputAdornment position="start">{startIcon}</InputAdornment>,
-				}
-			: undefined,
-	},
-});
+	size,
+	startIcon,
+	variant,
+}: PickerFieldProps) => {
+	const isGrid = variant === 'grid';
+
+	return {
+		id,
+		onBlur,
+		error,
+		helperText,
+		fullWidth,
+		size: size ?? 'small',
+		variant: isGrid ? ('standard' as const) : ('outlined' as const),
+		sx: isGrid ? gridPickerTextFieldSx : pickerTextFieldSx,
+		slotProps: {
+			input:
+				startIcon || isGrid
+					? {
+							...(startIcon
+								? { startAdornment: <InputAdornment position="start">{startIcon}</InputAdornment> }
+								: {}),
+							...(isGrid ? { disableUnderline: true } : {}),
+						}
+					: undefined,
+			htmlInput: isGrid ? { 'aria-label': label } : undefined,
+		},
+	};
+};
 
 export const MuiFormikDatePicker = (props: PickerFieldProps) => (
 	<ThemeProvider theme={inputTheme}>
 		<LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={fr}>
 			<DatePicker
-				label={props.label}
+				label={props.variant === 'grid' ? undefined : props.label}
 				format="dd/MM/yyyy"
 				value={parseDateValue(props.value)}
 				onChange={(date) => props.onChange(date ? formatLocalDate(date) : '')}

@@ -41,6 +41,7 @@ import { toFormikValidationSchema } from 'zod-formik-adapter';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
 import CustomAutoCompleteSelect from '@/components/formikElements/customAutoCompleteSelect/customAutoCompleteSelect';
+import { MuiFormikDatePicker } from '@/components/formikElements/muiPickers/muiPickers';
 import CustomTextInput from '@/components/formikElements/customTextInput/customTextInput';
 import PrimaryLoadingButton from '@/components/htmlElements/buttons/primaryLoadingButton/primaryLoadingButton';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
@@ -341,30 +342,22 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 			sortable: false,
 			filterable: false,
 			renderCell: (params: GridRenderCellParams<StockTrackingGridRow>) => (
-				<TextField
+				<MuiFormikDatePicker
 					id={`stock_tracking_items.${params.row.index}.expiration_date`}
-					type="date"
-					size="small"
+					label={
+						params.row.requires_expiration_date
+							? `${t.magasin.expirationDate} *`
+							: t.magasin.expirationDate
+					}
 					value={params.row.expiration_date}
-					onChange={(event) =>
-						void formik.setFieldValue(
-							`stock_tracking_items.${params.row.index}.expiration_date`,
-							event.target.value,
-						)
+					onChange={(value) =>
+						void formik.setFieldValue(`stock_tracking_items.${params.row.index}.expiration_date`, value)
 					}
 					onBlur={() => void formik.setFieldTouched(`stock_tracking_items.${params.row.index}.expiration_date`, true)}
 					error={Boolean(stockTrackingItemError(params.row.index, 'expiration_date'))}
-					variant="standard"
 					fullWidth
-					slotProps={{
-						input: { disableUnderline: true },
-						htmlInput: {
-							'aria-label': params.row.requires_expiration_date
-								? `${t.magasin.expirationDate} *`
-								: t.magasin.expirationDate,
-						},
-					}}
-					sx={gridPlainInputSx}
+					size="small"
+					variant="grid"
 				/>
 			),
 		},
