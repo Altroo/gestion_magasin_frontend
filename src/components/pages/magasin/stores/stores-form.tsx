@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
@@ -34,12 +34,14 @@ import {
 	Delete as DeleteIcon,
 	Edit as EditIcon,
 	LocationOn as LocationOnIcon,
+	Image as ImageIcon,
 	Phone as PhoneIcon,
 	People as PeopleIcon,
 	PersonAdd as PersonAddIcon,
 	Security as SecurityIcon,
 	Storefront as StorefrontIcon,
 	Tag as TagIcon,
+	Upload as UploadIcon,
 	Warning as WarningIcon,
 } from '@mui/icons-material';
 import { useFormik } from 'formik';
@@ -87,6 +89,8 @@ const toPayload = (values: StoreFormValues): StorePayload => ({
 	code: values.code.trim(),
 	address: values.address.trim(),
 	phone: values.phone.trim(),
+	...(values.logo ? { logo: values.logo } : {}),
+	remove_logo: values.remove_logo,
 	is_active: values.is_active,
 	is_global_stock: values.is_global_stock ?? false,
 	managed_by: values.managed_by.map((item) => ({ pk: item.pk, role: item.role })),
@@ -96,6 +100,17 @@ const toPayload = (values: StoreFormValues): StorePayload => ({
 		last_name: last_name.trim(),
 	})),
 });
+
+const resolveLogoUrl = (logo?: string | null) => {
+	if (!logo || /^(?:https?:|data:|blob:)/i.test(logo)) return logo ?? null;
+	const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+	if (!apiUrl) return logo;
+	try {
+		return new URL(logo, apiUrl).toString();
+	} catch {
+		return logo;
+	}
+};
 
 const StoresFormClient = ({ session, id }: Props) => {
 	const token = useInitAccessToken(session);
@@ -110,6 +125,8 @@ const StoresFormClient = ({ session, id }: Props) => {
 	const [employeeFirstName, setEmployeeFirstName] = useState('');
 	const [employeeLastName, setEmployeeLastName] = useState('');
 	const [employeeInputError, setEmployeeInputError] = useState('');
+	const [selectedLogoPreview, setSelectedLogoPreview] = useState<string | null>(null);
+	const logoInputRef = useRef<HTMLInputElement | null>(null);
 	const profile = useAppSelector(getProfilState);
 
 	const {
@@ -152,6 +169,8 @@ const StoresFormClient = ({ session, id }: Props) => {
 			code: store?.code ?? '',
 			address: store?.address ?? '',
 			phone: store?.phone ?? '',
+			logo: null,
+			remove_logo: false,
 			is_active: store?.is_active ?? true,
 			is_global_stock: store?.is_global_stock ?? false,
 			managed_by: defaultManagedBy,
@@ -183,12 +202,40 @@ const StoresFormClient = ({ session, id }: Props) => {
 		},
 	});
 
+	useEffect(() => {
+		if (!formik.values.logo) {
+			setSelectedLogoPreview(null);
+			return;
+		}
+		const objectUrl = window.URL.createObjectURL(formik.values.logo);
+		setSelectedLogoPreview(objectUrl);
+		return () => window.URL.revokeObjectURL(objectUrl);
+	}, [formik.values.logo]);
+
+	const currentLogoUrl = resolveLogoUrl(store?.logo);
+	const logoPreview = selectedLogoPreview ?? (!formik.values.remove_logo ? currentLogoUrl : null);
+	const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.currentTarget.files?.[0];
+		if (!file) return;
+		void formik.setFieldValue('logo', file);
+		void formik.setFieldValue('remove_logo', false);
+		void formik.setFieldTouched('logo', true);
+		event.currentTarget.value = '';
+	};
+	const clearLogo = () => {
+		void formik.setFieldValue('logo', null);
+		void formik.setFieldValue('remove_logo', Boolean(store?.logo));
+		void formik.setFieldTouched('logo', true);
+		if (logoInputRef.current) logoInputRef.current.value = '';
+	};
+
 	const fieldLabels = useMemo<Record<string, string>>(
 		() => ({
 			name: t.magasin.store,
 			code: t.magasin.storeCode,
 			address: t.magasin.storeAddress,
 			phone: t.magasin.storePhone,
+			logo: t.magasin.storeLogo,
 			is_active: t.magasin.activeStore,
 			managed_by: t.users.storeAccess,
 			employees: t.magasin.pointageEmployees,
@@ -409,6 +456,66 @@ const StoresFormClient = ({ session, id }: Props) => {
 														theme={inputTheme}
 														startIcon={<PhoneIcon fontSize="small" />}
 													/>
+													<Box>
+														<Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+															{t.magasin.storeLogo}
+														</Typography>
+														<Stack
+															direction={{ xs: 'column', sm: 'row' }}
+															spacing={2}
+															sx={{ alignItems: { sm: 'center' } }}
+														>
+															<Box
+																sx={{
+																	width: 180,
+																	height: 120,
+																	border: '1px dashed',
+																	borderColor: fieldError('logo') ? 'error.main' : 'grey.400',
+																	borderRadius: 2,
+																	bgcolor: 'grey.50',
+																	display: 'flex',
+																	alignItems: 'center',
+																	justifyContent: 'center',
+																	overflow: 'hidden',
+																	flexShrink: 0,
+																}}
+															>
+																{logoPreview ? (
+																	<Box
+																		component="img"
+																		src={logoPreview}
+																		alt={t.magasin.storeLogoPreview}
+																		sx={{ width: '100%', height: '100%', objectFit: 'contain', p: 1 }}
+																	/>
+																) : (
+																	<Stack spacing={0.5} sx={{ alignItems: 'center', color: 'text.secondary' }}>
+																		<ImageIcon sx={{ fontSize: 36 }} />
+																		<Typography variant="caption">{t.magasin.storeLogoEmpty}</Typography>
+																	</Stack>
+																)}
+															</Box>
+															<Stack spacing={1} sx={{ alignItems: 'flex-start' }}>
+																<Button component="label" variant="outlined" startIcon={<UploadIcon />}>
+																	{logoPreview ? t.magasin.storeLogoReplace : t.magasin.storeLogoUpload}
+																	<input
+																		ref={logoInputRef}
+																		type="file"
+																		hidden
+																		accept="image/jpeg,image/png,image/webp"
+																		onChange={handleLogoChange}
+																	/>
+																</Button>
+																{logoPreview && (
+																	<Button color="error" startIcon={<DeleteIcon />} onClick={clearLogo}>
+																		{t.magasin.storeLogoRemove}
+																	</Button>
+																)}
+																<Typography variant="caption" color={fieldError('logo') ? 'error' : 'text.secondary'}>
+																	{fieldError('logo') || t.magasin.storeLogoHelp}
+																</Typography>
+															</Stack>
+														</Stack>
+													</Box>
 													<FormControlLabel
 														control={
 															<Checkbox

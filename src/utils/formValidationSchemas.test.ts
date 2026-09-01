@@ -280,6 +280,7 @@ describe('Zod Schema Validation', () => {
 					phone: '212600000000',
 					is_active: true,
 					managed_by: [{ pk: 1, role: 'manager' }],
+					employees: [],
 					globalError: '',
 				}),
 			).not.toThrow();
@@ -312,6 +313,47 @@ describe('Zod Schema Validation', () => {
 			).toThrow();
 		});
 	});
+
+		it('accepts a supported store logo', () => {
+			const logo = new File(['logo'], 'store-logo.png', { type: 'image/png' });
+			expect(() =>
+				storeSchema.parse({
+					name: 'MBR SOUTH',
+					code: 'MBR_SOUTH',
+					address: '',
+					phone: '',
+					logo,
+					remove_logo: false,
+					is_active: true,
+					managed_by: [{ pk: 1, role: 'direction' }],
+					employees: [],
+					globalError: '',
+				}),
+			).not.toThrow();
+		});
+
+		it('rejects an unsupported or oversized store logo', () => {
+			const baseStore = {
+				name: 'MBR SOUTH',
+				code: 'MBR_SOUTH',
+				address: '',
+				phone: '',
+				remove_logo: false,
+				is_active: true,
+				managed_by: [{ pk: 1, role: 'direction' }],
+				employees: [],
+				globalError: '',
+			};
+			expect(() =>
+				storeSchema.parse({ ...baseStore, logo: new File(['text'], 'logo.txt', { type: 'text/plain' }) }),
+			).toThrow();
+			expect(() =>
+				storeSchema.parse({
+					...baseStore,
+					logo: new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'large-logo.webp', { type: 'image/webp' }),
+				}),
+			).toThrow();
+		});
 
 	describe('notificationPreferencesSchema', () => {
 		it('validates notification preferences', () => {

@@ -11,6 +11,7 @@ type Props = {
 	onChange: (storeId: number) => void;
 	token?: string;
 	includeMbrSouth?: boolean;
+	compact?: boolean;
 };
 
 export const isStoreTabVisible = (membership: StoreMembershipType, includeMbrSouth = false) =>
@@ -42,7 +43,9 @@ export const useSelectedStore = (token?: string, includeMbrSouth = false) => {
 	);
 	const persistedStore = visibleMemberships.find((membership) => membership.store.id === persistedStoreId)?.store;
 	const defaultStore = persistedStore ?? visibleMemberships[0]?.store;
-	const globalStore = data.find((membership) => membership.is_active && membership.store.is_active && membership.store.is_global_stock)?.store;
+	const globalStore = data.find(
+		(membership) => membership.is_active && membership.store.is_active && membership.store.is_global_stock,
+	)?.store;
 	return {
 		memberships: visibleMemberships,
 		defaultStore,
@@ -51,12 +54,13 @@ export const useSelectedStore = (token?: string, includeMbrSouth = false) => {
 	};
 };
 
-const StoreTabs = ({ selectedStoreId, onChange, token, includeMbrSouth = false }: Props) => {
+const StoreTabs = ({ selectedStoreId, onChange, token, includeMbrSouth = false, compact = false }: Props) => {
 	const { t } = useLanguage();
 	const { data = [] } = useGetMyStoresQuery(undefined, { skip: !token });
 
 	const stores = useMemo(
-		() => data.filter((membership) => isStoreTabVisible(membership, includeMbrSouth)).map((membership) => membership.store),
+		() =>
+			data.filter((membership) => isStoreTabVisible(membership, includeMbrSouth)).map((membership) => membership.store),
 		[data, includeMbrSouth],
 	);
 	const visibleActiveStoreId = selectedStoreId ?? stores[0]?.id;
@@ -71,7 +75,7 @@ const StoreTabs = ({ selectedStoreId, onChange, token, includeMbrSouth = false }
 				width: '100%',
 				borderBottom: 1,
 				borderColor: 'divider',
-				mb: 2,
+				mb: compact ? 1 : 2,
 				bgcolor: 'background.paper',
 			}}
 		>
@@ -94,8 +98,8 @@ const StoreTabs = ({ selectedStoreId, onChange, token, includeMbrSouth = false }
 						textTransform: 'none',
 						fontSize: '0.95rem',
 						fontWeight: 500,
-						minHeight: 56,
-						px: 3,
+						minHeight: compact ? 44 : 56,
+						px: compact ? 2 : 3,
 						transition: 'all 0.2s ease',
 						'&:hover': {
 							backgroundColor: 'action.hover',

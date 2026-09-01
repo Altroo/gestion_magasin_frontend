@@ -20,6 +20,7 @@ type PermissionKey =
 interface ProtectedProps {
 	children: ReactNode;
 	permission?: PermissionKey;
+	allow?: boolean;
 }
 
 export const Protected = (props: ProtectedProps) => {
@@ -48,7 +49,7 @@ export const Protected = (props: ProtectedProps) => {
 		return <NoPermission />;
 	}
 
-	if (!permissions[required]) {
+	if (!props.allow && !permissions[required]) {
 		return <NoPermission />;
 	}
 

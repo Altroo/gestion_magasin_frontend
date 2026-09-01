@@ -13,6 +13,7 @@ export type StoreType = {
 	code: string;
 	address: string;
 	phone: string;
+	logo?: string | null;
 	is_active: boolean;
 	is_global_stock: boolean;
 	members_count?: number;
@@ -32,13 +33,17 @@ export type StorePayload = {
 	code: string;
 	address: string;
 	phone: string;
+	logo?: File | null;
+	remove_logo?: boolean;
 	is_active: boolean;
 	is_global_stock?: boolean;
 	managed_by?: Array<{ pk: number; role: StoreRoleCode; role_name?: string }>;
 	employees?: StoreEmployeeType[];
 };
 
-export type StoreFormValues = StorePayload & {
+export type StoreFormValues = Omit<StorePayload, 'logo' | 'remove_logo'> & {
+	logo: File | null;
+	remove_logo: boolean;
 	managed_by: Array<{ pk: number; role: StoreRoleCode }>;
 	employees: StoreEmployeeType[];
 	globalError: string;

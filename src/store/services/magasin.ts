@@ -68,6 +68,11 @@ const toFormData = (data: Record<string, unknown>, jsonKeys: string[] = []) => {
 	return formData;
 };
 
+const toStoreRequestData = (data: StorePayload) =>
+	hasFileValue(data as unknown as Record<string, unknown>)
+		? toFormData(data as unknown as Record<string, unknown>, ['managed_by', 'employees'])
+		: data;
+
 export const magasinApi = createApi({
 	reducerPath: 'magasinApi',
 	tagTypes: ['Stores', 'Products', 'Stock', 'StockAddRequests', 'Sales', 'Attendance', 'Expenses', 'Purchases', 'Inventory', 'Transfers', 'Promotions', 'PaymentModes', 'Reports'],
@@ -108,7 +113,7 @@ export const magasinApi = createApi({
 			query: (data) => ({
 				url: process.env.NEXT_PUBLIC_STORES_ROOT,
 				method: 'POST',
-				data,
+				data: toStoreRequestData(data),
 			}),
 			invalidatesTags: ['Stores'],
 		}),
@@ -116,7 +121,7 @@ export const magasinApi = createApi({
 			query: ({ id, data }) => ({
 				url: `${process.env.NEXT_PUBLIC_STORES_ROOT}${id}/`,
 				method: 'PUT',
-				data,
+				data: toStoreRequestData(data),
 			}),
 			invalidatesTags: ['Stores'],
 		}),

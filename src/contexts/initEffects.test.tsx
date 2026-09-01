@@ -3,11 +3,13 @@ import { render, waitFor } from '@testing-library/react';
 import { InitEffects } from './initEffects';
 import { useSession } from 'next-auth/react';
 import { useGetProfilQuery } from '@/store/services/account';
+import { useGetMyStoresQuery } from '@/store/services/magasin';
 import { useAppDispatch, useAppSelector } from '@/utils/hooks';
 import { getAccessToken } from '@/store/selectors';
 
 jest.mock('next-auth/react');
 jest.mock('@/store/services/account');
+jest.mock('@/store/services/magasin');
 jest.mock('@/utils/hooks');
 jest.mock('@/store/selectors');
 
@@ -34,6 +36,7 @@ describe('InitEffects', () => {
 		(usePathname as jest.Mock).mockReturnValue('/');
 
 		(useGetProfilQuery as jest.Mock).mockReturnValue({ data: undefined });
+		(useGetMyStoresQuery as jest.Mock).mockReturnValue({ data: [] });
 	});
 
 	it('renders null without errors', () => {
@@ -154,4 +157,30 @@ describe('InitEffects', () => {
 			});
 		},
 	);
+
+	it('redirects a vendeur-only user to caisse', async () => {
+		const mockReplace = jest.fn();
+		(useRouter as jest.Mock).mockReturnValue({ push: jest.fn(), replace: mockReplace });
+		(usePathname as jest.Mock).mockReturnValue('/dashboard');
+		(useSession as jest.Mock).mockReturnValue({ data: { user: {} }, status: 'authenticated' });
+		(useGetProfilQuery as jest.Mock).mockReturnValue({
+			data: { id: 1, default_password_set: false, is_staff: false, pointage_only: false },
+		});
+		(useGetMyStoresQuery as jest.Mock).mockReturnValue({
+			data: [
+				{
+					id: 1,
+					store: { id: 1, is_active: true, is_global_stock: false },
+					role: { code: 'vendeur' },
+					is_active: true,
+				},
+			],
+		});
+
+		render(<InitEffects />);
+
+		await waitFor(() => {
+			expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('/dashboard/caise'));
+		});
+	});
 });

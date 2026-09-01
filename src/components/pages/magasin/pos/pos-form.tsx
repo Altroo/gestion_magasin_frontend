@@ -2,53 +2,46 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-	Alert,
 	Box,
 	Button,
 	Chip,
+	CircularProgress,
 	Divider,
-	IconButton,
-	InputAdornment,
-	MenuItem,
+	Dialog,
+	DialogActions,
+	DialogContent,
+	DialogTitle,
 	Stack,
-	TextField,
-	ThemeProvider,
 	Typography,
 	ToggleButton,
 	ToggleButtonGroup,
 } from '@mui/material';
-import { DataGrid, type GridColDef, type GridPaginationModel, type GridRenderCellParams } from '@mui/x-data-grid';
-import { frFR } from '@mui/x-data-grid/locales';
 import {
-	Add as AddIcon,
+	Backspace as BackspaceIcon,
+	Clear as ClearIcon,
 	CreditCard as CreditCardIcon,
-	Delete as DeleteIcon,
-	Inventory2 as InventoryIcon,
-	LocalOffer as LocalOfferIcon,
+	Dialpad as DialpadIcon,
 	PointOfSale as PointOfSaleIcon,
 	Print as PrintIcon,
 	QrCodeScanner as QrCodeScannerIcon,
 	ReceiptLong as ReceiptLongIcon,
-	Remove as RemoveIcon,
 	Sync as SyncIcon,
-	Videocam as VideocamIcon,
-	VideocamOff as VideocamOffIcon,
+	Usb as UsbIcon,
 } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
-import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import CustomTextInput from '@/components/formikElements/customTextInput/customTextInput';
-import { MagasinKpiCard, MagasinSectionCard } from '@/components/pages/magasin/shared/magasin-card';
+import { MagasinSectionCard } from '@/components/pages/magasin/shared/magasin-card';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import StoreTabs, { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
+import PosCart from '@/components/pages/magasin/pos/pos-cart';
 import { useInitAccessToken } from '@/contexts/InitContext';
+import { useSerialReceiptPrinter } from '@/hooks/useSerialReceiptPrinter';
 import {
 	useCreateSaleMutation,
-	useGetDashboardStatsQuery,
 	useGetPaymentModesQuery,
-	useGetPromotionsQuery,
 	useLazyScanProductQuery,
 	useSyncOfflineSalesMutation,
 } from '@/store/services/magasin';
@@ -56,36 +49,35 @@ import { fetchFileBlob } from '@/utils/apiHelpers';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
 import { setFormikAutoErrors } from '@/utils/helpers';
 import { posScanSchema } from '@/utils/formValidationSchemas';
-import { customDropdownTheme, textInputTheme } from '@/utils/themes';
+import { textInputTheme } from '@/utils/themes';
 import type { SessionProps } from '@/types/_initTypes';
-import type { PosScanFormValues, ProductType, PromotionType, SaleCreatePayload } from '@/types/gestionMagasinTypes';
+import type {
+	PosScanFormValues,
+	ProductType,
+	PromotionType,
+	SaleCreatePayload,
+	SaleType,
+	StoreType,
+} from '@/types/gestionMagasinTypes';
 
-type ProductCartLine = {
+export type ProductCartLine = {
 	type: 'product';
 	product: ProductType;
 	quantity: number;
 	unitPrice: number;
 };
 
-type PromotionCartLine = {
+export type PromotionCartLine = {
 	type: 'promotion';
 	promotion: PromotionType;
 	quantity: number;
 	unitPrice: number;
 };
 
-type CartLine = ProductCartLine | PromotionCartLine;
+export type CartLine = ProductCartLine | PromotionCartLine;
 type SaleMode = 'normal' | 'wholesale';
-
-type CartGridRow = {
-	id: string;
-	name: string;
-	reference: string;
-	typeLabel: string;
-	quantity: number;
-	unitPrice: number;
-	total: number;
-};
+type ReceiptStore = Pick<StoreType, 'id' | 'name' | 'address' | 'phone' | 'logo'>;
+type CompletedSaleReceipt = { sale: SaleType; store: ReceiptStore };
 
 type ScanErrorPayload = {
 	status_code?: number;
@@ -102,14 +94,13 @@ type ScanError = {
 
 const OFFLINE_KEY = 'gestion-magasin-offline-sales';
 const inputTheme = textInputTheme();
-const dropdownTheme = customDropdownTheme();
 const actionButtonSx = {
-	borderRadius: '50px',
-	height: '3rem',
-	px: 3,
+	borderRadius: 2,
+	minHeight: 56,
+	px: 2,
 	textTransform: 'none',
 	fontFamily: 'Poppins',
-	fontSize: '17px',
+	fontSize: '0.95rem',
 	fontWeight: 600,
 };
 
@@ -147,28 +138,28 @@ const PosClient = ({ session }: SessionProps) => {
 	const { t } = useLanguage();
 	const permissions = usePermission();
 	const { onSuccess, onError } = useToast();
-	const { defaultStore } = useSelectedStore(token);
+	const { defaultStore, memberships, isLoading: areStoresLoading } = useSelectedStore(token);
 	const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>(undefined);
 	const storeId = selectedStoreId ?? defaultStore?.id;
+	const selectedStore = memberships.find((membership) => membership.store.id === storeId)?.store ?? defaultStore;
 	const [cart, setCart] = useState<CartLine[]>([]);
-	const [cartPaginationModel, setCartPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
 	const [offlineQueue, setOfflineQueue] = useState<SaleCreatePayload[]>(() => readOfflineQueue());
-	const [cameraActive, setCameraActive] = useState(false);
-	const [cameraStarting, setCameraStarting] = useState(false);
+	const [numericKeypadOpen, setNumericKeypadOpen] = useState(false);
 	const [hasAttemptedScan, setHasAttemptedScan] = useState(false);
 	const [selectedPaymentModeId, setSelectedPaymentModeId] = useState('');
 	const [saleType, setSaleType] = useState<SaleMode>('normal');
 	const [lastWholesaleSaleId, setLastWholesaleSaleId] = useState<number | null>(null);
-	const videoRef = useRef<HTMLVideoElement | null>(null);
-	const scannerControlsRef = useRef<IScannerControls | null>(null);
+	const [lastCompletedSale, setLastCompletedSale] = useState<CompletedSaleReceipt | null>(null);
+	const barcodeInputRef = useRef<HTMLInputElement | null>(null);
+	const wedgeBufferRef = useRef('');
+	const wedgeLastKeyAtRef = useRef(0);
+	const saleInFlightRef = useRef(false);
+	const syncInFlightRef = useRef(false);
+	const pendingScanCodesRef = useRef<string[]>([]);
+	const printer = useSerialReceiptPrinter();
 	const [scanProduct, scanState] = useLazyScanProductQuery();
 	const [createSale, createState] = useCreateSaleMutation();
 	const [syncOffline, syncState] = useSyncOfflineSalesMutation();
-	const { data: stats } = useGetDashboardStatsQuery({ store: storeId }, { skip: !token || !storeId });
-	const { data: promotions } = useGetPromotionsQuery(
-		{ store: storeId, page: 1, pageSize: 50, status: 'active' },
-		{ skip: !token || !storeId },
-	);
 	const { data: paymentModes, isLoading: arePaymentModesLoading } = useGetPaymentModesQuery(
 		{ page: 1, pageSize: 100, is_active: 'true' },
 		{ skip: !token },
@@ -182,30 +173,40 @@ const PosClient = ({ session }: SessionProps) => {
 		[paymentModeOptions],
 	);
 	const effectivePaymentModeId = selectedPaymentModeId || (defaultPaymentMode ? String(defaultPaymentMode.id) : '');
-	const canWholesaleSale = permissions.can_wholesale_sale;
+	const selectedStoreMembership = memberships.find((membership) => membership.store.id === storeId);
+	const isSelectedStoreVendeur = selectedStoreMembership?.role.code === 'vendeur';
+	const canPrintReceipt = permissions.can_print || isSelectedStoreVendeur;
+	const canWholesaleSale = permissions.can_wholesale_sale && !isSelectedStoreVendeur;
 	const effectiveSaleType = canWholesaleSale ? saleType : 'normal';
+	const currentStoreOfflineQueue = useMemo(
+		() => offlineQueue.filter((sale) => sale.store === storeId),
+		[offlineQueue, storeId],
+	);
 
 	const total = useMemo(() => cart.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0), [cart]);
 
-	const addProduct = (product: ProductType) => {
-		setCart((current) => {
-			const existing = current.find((line) => line.type === 'product' && line.product.id === product.id);
-			if (existing) {
-				return current.map((line) =>
-					line.type === 'product' && line.product.id === product.id ? { ...line, quantity: line.quantity + 1 } : line,
-				);
-			}
-			return [
-				...current,
-				{
-					type: 'product',
-					product,
-					quantity: 1,
-					unitPrice: productSalePrice(product, effectiveSaleType),
-				},
-			];
-		});
-	};
+	const addProduct = useCallback(
+		(product: ProductType) => {
+			setCart((current) => {
+				const existing = current.find((line) => line.type === 'product' && line.product.id === product.id);
+				if (existing) {
+					return current.map((line) =>
+						line.type === 'product' && line.product.id === product.id ? { ...line, quantity: line.quantity + 1 } : line,
+					);
+				}
+				return [
+					...current,
+					{
+						type: 'product',
+						product,
+						quantity: 1,
+						unitPrice: productSalePrice(product, effectiveSaleType),
+					},
+				];
+			});
+		},
+		[effectiveSaleType],
+	);
 
 	const handleSaleTypeChange = useCallback((nextType: SaleMode) => {
 		setSaleType(nextType);
@@ -217,49 +218,35 @@ const PosClient = ({ session }: SessionProps) => {
 		);
 	}, []);
 
-	const addPromotion = (promotion: PromotionType) => {
-		setCart((current) => {
-			const existing = current.find((line) => line.type === 'promotion' && line.promotion.id === promotion.id);
-			if (existing) {
-				return current.map((line) =>
-					line.type === 'promotion' && line.promotion.id === promotion.id
-						? { ...line, quantity: line.quantity + 1 }
-						: line,
-				);
-			}
-			return [
-				...current,
-				{
-					type: 'promotion',
-					promotion,
-					quantity: 1,
-					unitPrice: Number(promotion.selling_price || 0),
-				},
-			];
-		});
-	};
-
-	const scanByCode = async (code: string, setFieldError?: (field: string, message: string | undefined) => void) => {
-		if (!storeId || !code) {
-			return false;
-		}
-		try {
-			const product = await scanProduct({ store: storeId, code: code.trim() }).unwrap();
-			addProduct(product);
-			return true;
-		} catch (e) {
-			const { statusCode, message } = getScanErrorPayload(e);
-			if (setFieldError && (statusCode === 400 || statusCode === 404) && message) {
-				setFieldError('barcode', message);
+	const scanByCode = useCallback(
+		async (code: string, setFieldError?: (field: string, message: string | undefined) => void) => {
+			const normalizedCode = code.trim();
+			if (!storeId || !normalizedCode) {
 				return false;
 			}
-			if (setFieldError) {
-				setFormikAutoErrors({ e, setFieldError });
+			if (saleInFlightRef.current) {
+				pendingScanCodesRef.current.push(normalizedCode);
+				return true;
 			}
-			onError(message || t.errors.genericError);
-			return false;
-		}
-	};
+			try {
+				const product = await scanProduct({ store: storeId, code: normalizedCode }).unwrap();
+				addProduct(product);
+				return true;
+			} catch (e) {
+				const { statusCode, message } = getScanErrorPayload(e);
+				if (setFieldError && (statusCode === 400 || statusCode === 404) && message) {
+					setFieldError('barcode', message);
+					return false;
+				}
+				if (setFieldError) {
+					setFormikAutoErrors({ e, setFieldError });
+				}
+				onError(message || t.errors.genericError);
+				return false;
+			}
+		},
+		[addProduct, onError, scanProduct, storeId, t.errors.genericError],
+	);
 
 	const scanFormik = useFormik<PosScanFormValues>({
 		initialValues: { barcode: '', globalError: '' },
@@ -269,16 +256,30 @@ const PosClient = ({ session }: SessionProps) => {
 		onSubmit: async (values, { resetForm, setFieldError }) => {
 			setHasAttemptedScan(true);
 			try {
-				const scanned = await scanByCode(values.barcode, setFieldError);
-				if (scanned) {
-					resetForm();
-					setHasAttemptedScan(false);
-				}
+				const code = values.barcode;
+				resetForm();
+				setHasAttemptedScan(false);
+				const scanned = await scanByCode(code, setFieldError);
+				if (!scanned) setHasAttemptedScan(true);
 			} catch (e) {
 				setFormikAutoErrors({ e, setFieldError });
 			}
 		},
 	});
+	const appendBarcodeDigit = (digit: string) => {
+		setHasAttemptedScan(false);
+		void scanFormik.setFieldValue('barcode', `${scanFormik.values.barcode}${digit}`, true);
+	};
+	const submitManualBarcode = async () => {
+		setHasAttemptedScan(true);
+		if (!scanFormik.isValid) return;
+		const scanned = await scanByCode(scanFormik.values.barcode, scanFormik.setFieldError);
+		if (scanned) {
+			scanFormik.resetForm();
+			setHasAttemptedScan(false);
+			setNumericKeypadOpen(false);
+		}
+	};
 
 	const lineKey = useCallback(
 		(line: CartLine) => `${line.type}-${line.type === 'product' ? line.product.id : line.promotion.id}`,
@@ -296,151 +297,6 @@ const PosClient = ({ session }: SessionProps) => {
 			);
 		},
 		[lineKey],
-	);
-
-	const cartRows = useMemo<CartGridRow[]>(
-		() =>
-			cart.map((line) => {
-				const isProduct = line.type === 'product';
-				const name = isProduct ? line.product.name : line.promotion.name;
-				const reference = isProduct ? (line.product.reference ?? line.product.barcode ?? '') : t.magasin.promotion;
-				return {
-					id: lineKey(line),
-					name,
-					reference,
-					typeLabel: isProduct ? t.magasin.product : t.magasin.promotion,
-					quantity: line.quantity,
-					unitPrice: line.unitPrice,
-					total: line.quantity * line.unitPrice,
-				};
-			}),
-		[cart, lineKey, t.magasin.product, t.magasin.promotion],
-	);
-
-	const cartColumns = useMemo<GridColDef<CartGridRow>[]>(
-		() => [
-			{
-				field: 'name',
-				headerName: t.magasin.product,
-				flex: 1.4,
-				minWidth: 180,
-				renderCell: (params: GridRenderCellParams<CartGridRow>) => (
-					<Box sx={{ minWidth: 0, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-						<Typography
-							variant="body2"
-							noWrap
-							sx={{
-								fontWeight: 600,
-							}}
-						>
-							{params.row.name}
-						</Typography>
-						<Typography
-							variant="caption"
-							noWrap
-							sx={{
-								color: 'text.secondary',
-							}}
-						>
-							{params.row.reference || params.row.typeLabel}
-						</Typography>
-					</Box>
-				),
-			},
-			{
-				field: 'typeLabel',
-				headerName: 'Type',
-				width: 105,
-				renderCell: (params: GridRenderCellParams<CartGridRow>) => (
-					<Chip label={params.row.typeLabel} size="small" variant="outlined" />
-				),
-			},
-			{
-				field: 'unitPrice',
-				headerName: t.magasin.unitPrice,
-				width: 110,
-				align: 'left',
-				headerAlign: 'left',
-				valueFormatter: (value: number) => money(value),
-			},
-			{
-				field: 'quantity',
-				headerName: t.magasin.quantity,
-				width: 170,
-				align: 'center',
-				headerAlign: 'center',
-				sortable: false,
-				filterable: false,
-				renderCell: (params: GridRenderCellParams<CartGridRow>) => (
-					<Stack
-						direction="row"
-						spacing={0.5}
-						sx={{
-							justifyContent: 'center',
-							alignItems: 'center',
-							width: '100%',
-							height: '100%',
-						}}
-					>
-						<IconButton
-							type="button"
-							size="small"
-							onClick={() => updateQuantity(params.row.id, -1)}
-							aria-label="Diminuer"
-						>
-							<RemoveIcon fontSize="small" />
-						</IconButton>
-						<Typography variant="body2" sx={{ width: 42, textAlign: 'center', fontWeight: 600 }}>
-							{params.row.quantity}
-						</Typography>
-						<IconButton
-							type="button"
-							size="small"
-							onClick={() => updateQuantity(params.row.id, 1)}
-							aria-label="Augmenter"
-						>
-							<AddIcon fontSize="small" />
-						</IconButton>
-					</Stack>
-				),
-			},
-			{
-				field: 'total',
-				headerName: t.magasin.total,
-				width: 120,
-				align: 'left',
-				headerAlign: 'left',
-				valueFormatter: (value: number) => money(value),
-			},
-			{
-				field: 'actions',
-				headerName: t.common.actions,
-				width: 95,
-				sortable: false,
-				filterable: false,
-				disableColumnMenu: true,
-				align: 'left',
-				renderCell: (params: GridRenderCellParams<CartGridRow>) => (
-					<IconButton
-						type="button"
-						color="error"
-						size="small"
-						onClick={() => setCart((current) => current.filter((item) => lineKey(item) !== params.row.id))}
-					>
-						<DeleteIcon fontSize="small" />
-					</IconButton>
-				),
-			},
-		],
-		[
-			lineKey,
-			t.common.actions,
-			t.magasin.product,
-			t.magasin.quantity,
-			t.magasin.total,
-			t.magasin.unitPrice,
-			updateQuantity,
-		],
 	);
 
 	const payload = (): SaleCreatePayload | null => {
@@ -471,26 +327,96 @@ const PosClient = ({ session }: SessionProps) => {
 	};
 
 	const queueOfflineSale = (salePayload: SaleCreatePayload) => {
-		const nextQueue = [...offlineQueue, salePayload];
-		writeOfflineQueue(nextQueue);
-		setOfflineQueue(nextQueue);
+		setOfflineQueue((current) => {
+			const nextQueue = [...current, salePayload];
+			writeOfflineQueue(nextQueue);
+			return nextQueue;
+		});
 		onError(t.magasin.queuedOffline);
 	};
 
+	const focusBarcode = useCallback(() => {
+		window.requestAnimationFrame(() => barcodeInputRef.current?.focus({ preventScroll: true }));
+	}, []);
+
+	const printTicket = useCallback(
+		async (sale: SaleType, receiptStore: ReceiptStore, quiet = false) => {
+			try {
+				await printer.printReceipt(sale, {
+					storeName: receiptStore.name,
+					storeAddress: receiptStore.address,
+					storePhone: receiptStore.phone,
+					logoUrl: receiptStore.logo ? `${process.env.NEXT_PUBLIC_STORES_ROOT}${receiptStore.id}/logo/` : null,
+					logoAccessToken: token,
+				});
+				if (!quiet) onSuccess(t.magasin.ticketPrinted);
+				focusBarcode();
+				return true;
+			} catch {
+				onError(t.magasin.ticketPrintError);
+				focusBarcode();
+				return false;
+			}
+		},
+		[
+			focusBarcode,
+			onError,
+			onSuccess,
+			printer,
+			t.magasin.ticketPrintError,
+			t.magasin.ticketPrinted,
+			token,
+		],
+	);
+
+	const isConnectionFailure = (error: unknown) => {
+		const status = (error as { status?: string | number })?.status;
+		return (
+			status === 0 ||
+			status === 'FETCH_ERROR' ||
+			status === 'TIMEOUT_ERROR' ||
+			(typeof navigator !== 'undefined' && !navigator.onLine)
+		);
+	};
+
 	const confirmSale = async () => {
-		const salePayload = payload();
-		if (!salePayload) {
+		if (saleInFlightRef.current || syncInFlightRef.current) {
 			return;
 		}
+		const salePayload = payload();
+		if (!salePayload || !selectedStore) {
+			return;
+		}
+		const receiptStore: ReceiptStore = selectedStore;
+		saleInFlightRef.current = true;
 		try {
 			const sale = await createSale(salePayload).unwrap();
 			setLastWholesaleSaleId(sale.sale_type === 'wholesale' ? sale.id : null);
+			setLastCompletedSale({ sale, store: receiptStore });
 			setCart([]);
 			onSuccess(t.magasin.saleConfirmed);
-		} catch {
+			if (canPrintReceipt && printer.autoPrint) {
+				if (printer.isConnected) {
+					await printTicket(sale, receiptStore, true);
+				} else {
+					onError(t.magasin.saleSavedPrinterDisconnected);
+				}
+			}
+		} catch (error) {
 			setLastWholesaleSaleId(null);
-			queueOfflineSale(salePayload);
-			setCart([]);
+			if (isConnectionFailure(error)) {
+				queueOfflineSale(salePayload);
+				setCart([]);
+			} else {
+				onError(t.errors.genericError);
+			}
+		} finally {
+			saleInFlightRef.current = false;
+			const pendingCodes = pendingScanCodesRef.current.splice(0);
+			for (const code of pendingCodes) {
+				await scanByCode(code);
+			}
+			focusBarcode();
 		}
 	};
 
@@ -505,386 +431,351 @@ const PosClient = ({ session }: SessionProps) => {
 			window.open(blobUrl, '_blank');
 		} catch {
 			onError(t.magasin.saleFacturePrintError);
+		} finally {
+			focusBarcode();
 		}
 	};
 
 	const syncQueue = async () => {
-		if (!storeId || offlineQueue.length === 0) {
+		if (
+			!storeId ||
+			currentStoreOfflineQueue.length === 0 ||
+			saleInFlightRef.current ||
+			syncInFlightRef.current
+		) {
 			return;
 		}
+		syncInFlightRef.current = true;
 		try {
-			const response = await syncOffline({ store: storeId, sales: offlineQueue }).unwrap();
-			const failed = response.errors?.length ? offlineQueue.slice(-response.errors.length) : [];
-			writeOfflineQueue(failed);
-			setOfflineQueue(failed);
+			const response = await syncOffline({ store: storeId, sales: currentStoreOfflineQueue }).unwrap();
+			const failedIndexes = new Set(
+				(response.errors ?? [])
+					.map((error) => Number((error as { index?: number }).index))
+					.filter((index) => Number.isInteger(index)),
+			);
+			const failedForStore = currentStoreOfflineQueue.filter((_, index) => failedIndexes.has(index));
+			const otherStores = offlineQueue.filter((sale) => sale.store !== storeId);
+			const remaining = [...otherStores, ...failedForStore];
+			writeOfflineQueue(remaining);
+			setOfflineQueue(remaining);
 			onSuccess(t.magasin.syncOffline);
 		} catch {
 			onError(t.errors.genericError);
+		} finally {
+			syncInFlightRef.current = false;
+			focusBarcode();
 		}
 	};
 
 	const shouldShowBarcodeError =
 		Boolean(scanFormik.errors.barcode) && (hasAttemptedScan || Boolean(scanFormik.values.barcode));
 
-	const stopCamera = () => {
-		scannerControlsRef.current?.stop();
-		scannerControlsRef.current = null;
-		if (videoRef.current) {
-			videoRef.current.srcObject = null;
-		}
-		setCameraActive(false);
-	};
+	useEffect(() => {
+		const handleScannerKey = (event: KeyboardEvent) => {
+			if (event.ctrlKey || event.metaKey || event.altKey) return;
+			const target = event.target as HTMLElement | null;
+			if (target === barcodeInputRef.current) return;
+			if (target?.matches('input, textarea, [contenteditable="true"]')) return;
+			const now = performance.now();
 
-	const startCamera = async () => {
-		if (!navigator.mediaDevices?.getUserMedia || !videoRef.current) {
-			onError(t.magasin.cameraUnavailable);
-			return;
-		}
-		setCameraStarting(true);
-		try {
-			const codeReader = new BrowserMultiFormatReader();
-			const controls = await codeReader.decodeFromConstraints(
-				{ audio: false, video: { facingMode: { ideal: 'environment' } } },
-				videoRef.current,
-				(result, _error, activeControls) => {
-					if (!result) return;
-					activeControls.stop();
-					scannerControlsRef.current = null;
-					setCameraActive(false);
-					void scanByCode(result.getText());
-				},
-			);
-			scannerControlsRef.current = controls;
-			setCameraActive(true);
-		} catch (error) {
-			stopCamera();
-			const errorName = error instanceof DOMException ? error.name : '';
-			if (errorName === 'NotAllowedError' || errorName === 'SecurityError') {
-				onError(t.magasin.cameraPermissionDenied);
-			} else if (errorName === 'NotFoundError' || errorName === 'OverconstrainedError') {
-				onError(t.magasin.cameraUnavailable);
-			} else {
-				onError(t.magasin.cameraStartError);
+			if (event.key === 'Enter' || event.key === 'Tab') {
+				const code = wedgeBufferRef.current;
+				wedgeBufferRef.current = '';
+				if (code.length >= 3 && now - wedgeLastKeyAtRef.current < 180) {
+					event.preventDefault();
+					void scanByCode(code).finally(focusBarcode);
+				}
+				return;
 			}
-		} finally {
-			setCameraStarting(false);
-		}
-	};
 
-	useEffect(() => stopCamera, []);
+			if (event.key.length !== 1) return;
+			if (now - wedgeLastKeyAtRef.current > 180) {
+				wedgeBufferRef.current = '';
+			}
+			wedgeBufferRef.current += event.key;
+			wedgeLastKeyAtRef.current = now;
+			event.preventDefault();
+		};
+
+		window.addEventListener('keydown', handleScannerKey, true);
+		return () => window.removeEventListener('keydown', handleScannerKey, true);
+	}, [focusBarcode, scanByCode]);
+
+	const printerStatusLabel =
+		printer.status === 'unsupported'
+			? t.magasin.printerUnsupported
+			: printer.status === 'connected'
+				? t.magasin.printerConnected
+				: printer.status === 'printing'
+					? t.magasin.printerPrinting
+					: printer.status === 'connecting'
+						? t.magasin.printerConnecting
+						: printer.status === 'error'
+							? t.magasin.printerError
+							: t.magasin.printerDisconnected;
+	const printerStatusColor = printer.isConnected
+		? 'success.main'
+		: printer.status === 'error'
+			? 'error.main'
+			: 'warning.main';
+
+	if (areStoresLoading) {
+		return (
+			<NavigationBar title={t.magasin.pos} compact>
+				<Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+					<CircularProgress />
+				</Box>
+			</NavigationBar>
+		);
+	}
 
 	return (
-		<NavigationBar title={t.magasin.pos}>
-			<Protected permission="can_create">
-				<Box sx={magasinPageContainerSx}>
-					<StoreTabs selectedStoreId={storeId} onChange={setSelectedStoreId} token={token} />
-					<Box sx={magasinPageContentSx}>
-						<Stack spacing={2}>
-							<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2 }}>
-								<Box>
-									<MagasinKpiCard
-										icon={<PointOfSaleIcon fontSize="small" />}
-										label={t.magasin.todaySales}
-										value={money(stats?.total_sales ?? 0)}
-										color="#2e7d32"
-									/>
-								</Box>
-								<Box>
-									<MagasinKpiCard
-										icon={<ReceiptLongIcon fontSize="small" />}
-										label={t.magasin.sales}
-										value={stats?.sales_count ?? 0}
-										color="#1976d2"
-									/>
-								</Box>
-								<Box>
-									<MagasinKpiCard
-										icon={<InventoryIcon fontSize="small" />}
-										label={t.magasin.lowStock}
-										value={stats?.low_stock_count ?? 0}
-										color="#ed6c02"
-									/>
-								</Box>
-							</Box>
-							<Box component="form" onSubmit={scanFormik.handleSubmit}>
-								<MagasinSectionCard contentSx={{ p: 2, '&:last-child': { pb: 2 } }}>
-									<Box
-										sx={{
-											display: 'grid',
-											gridTemplateColumns: { xs: '1fr', md: 'minmax(320px, 1fr) 150px 150px' },
-											gap: 1.5,
-											alignItems: 'flex-start',
-											justifyContent: 'flex-start',
-										}}
-									>
-										<CustomTextInput
-											id="barcode"
-											name="barcode"
-											type="text"
-											theme={inputTheme}
-											label={t.magasin.barcode}
-											value={scanFormik.values.barcode}
-											onChange={(event) => {
-												setHasAttemptedScan(false);
-												scanFormik.handleChange(event);
+		<NavigationBar title={t.magasin.pos} compact>
+			<Protected permission="can_create" allow={isSelectedStoreVendeur}>
+				<Box sx={{ ...magasinPageContainerSx, height: { sm: 'calc(100dvh - 64px)' }, overflow: { sm: 'hidden' } }}>
+					<StoreTabs
+						selectedStoreId={storeId}
+						onChange={(nextStoreId) => {
+							if (!saleInFlightRef.current) setSelectedStoreId(nextStoreId);
+						}}
+						token={token}
+						compact
+					/>
+					<Box
+						sx={{
+							...magasinPageContentSx,
+							px: { xs: 1, sm: 1.25 },
+							pt: 0,
+							height: { sm: 'calc(100% - 53px)' },
+							overflow: { xs: 'visible', sm: 'hidden' },
+						}}
+					>
+						<Box
+							sx={{
+								display: 'grid',
+								gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1fr) minmax(280px, 32%)' },
+								gap: 1.25,
+								height: { sm: '100%' },
+								minHeight: 0,
+							}}
+						>
+							<MagasinSectionCard
+								sx={{ height: { sm: '100%' }, minHeight: 0 }}
+								contentSx={{ p: 1.25, '&:last-child': { pb: 1.25 }, height: '100%', boxSizing: 'border-box' }}
+							>
+								<Stack spacing={1} sx={{ height: '100%', minHeight: 0 }}>
+									<Box component="form" onSubmit={scanFormik.handleSubmit}>
+										<Box
+											sx={{
+												display: 'grid',
+												gridTemplateColumns: 'minmax(0, 1fr) auto',
+												gap: 0.75,
+												alignItems: 'start',
 											}}
-											onBlur={scanFormik.handleBlur}
-											onKeyDown={(event) => {
-												if (event.key === 'Enter') {
-													event.preventDefault();
-													void scanFormik.submitForm();
-												}
-											}}
-											error={shouldShowBarcodeError}
-											helperText={shouldShowBarcodeError ? scanFormik.errors.barcode : ''}
-											startIcon={<QrCodeScannerIcon fontSize="small" />}
-											fullWidth
-											size="small"
-											slotProps={{
-												input: {
-													sx: {
-														height: 48,
-														'& .MuiInputBase-input': { py: 1 },
+										>
+											<CustomTextInput
+												id="barcode"
+												name="barcode"
+												type="text"
+												theme={inputTheme}
+												label={t.magasin.barcode}
+												value={scanFormik.values.barcode}
+												onChange={(event) => {
+													setHasAttemptedScan(false);
+													scanFormik.handleChange(event);
+												}}
+												onBlur={scanFormik.handleBlur}
+												onClick={() => setNumericKeypadOpen(true)}
+												onKeyDown={(event) => {
+													if (event.key === 'Enter' || event.key === 'Tab') {
+														event.preventDefault();
+														void scanFormik.submitForm();
+													}
+												}}
+												error={shouldShowBarcodeError}
+												helperText={shouldShowBarcodeError ? scanFormik.errors.barcode : ''}
+												startIcon={<QrCodeScannerIcon fontSize="small" />}
+												inputRef={barcodeInputRef}
+												fullWidth
+												size="medium"
+												sx={{
+													'& .MuiOutlinedInput-root': { height: 76 },
+													'& .MuiInputBase-input': { fontSize: '1.25rem', fontWeight: 700 },
+												}}
+												autoComplete="off"
+												slotProps={{
+													htmlInput: { inputMode: 'none', enterKeyHint: 'done' },
+													input: {
+														sx: { height: 76, '& .MuiInputBase-input': { py: 1, fontSize: '1.25rem', fontWeight: 700 } },
 													},
-												},
-											}}
-											autoFocus
-										/>
-										<Button
-											type="submit"
-											variant="contained"
-											startIcon={<QrCodeScannerIcon />}
-											disabled={!storeId || !scanFormik.isValid || scanState.isFetching}
-											sx={{ ...actionButtonSx, minWidth: { xs: '100%', md: 150 } }}
-										>
-											{t.magasin.scan}
-										</Button>
-										<Button
-											type="button"
-											variant="outlined"
-											startIcon={cameraActive ? <VideocamOffIcon /> : <VideocamIcon />}
-											onClick={cameraActive ? stopCamera : () => void startCamera()}
-											disabled={cameraStarting}
-											sx={{ ...actionButtonSx, minWidth: { xs: '100%', md: 150 } }}
-										>
-											{cameraActive ? t.magasin.stopCamera : t.magasin.camera}
-										</Button>
-									</Box>
-									<Box
-										sx={{
-											mt: cameraActive ? 2 : 0,
-											display: cameraActive ? 'block' : 'none',
-											overflow: 'hidden',
-											borderRadius: 1,
-											bgcolor: 'black',
-										}}
-									>
-											<video
-												ref={videoRef}
-												muted
-												playsInline
-												style={{ display: 'block', width: '100%', maxHeight: 320, objectFit: 'cover' }}
+												}}
+												autoFocus
 											/>
-									</Box>
-									{scanFormik.errors.globalError && (
-										<Alert severity="error" sx={{ mt: 2 }}>
-											{scanFormik.errors.globalError}
-										</Alert>
-									)}
-								</MagasinSectionCard>
-							</Box>
-							{(promotions?.results?.length ?? 0) > 0 && (
-								<MagasinSectionCard
-									title={t.magasin.promotions}
-									icon={<LocalOfferIcon fontSize="small" />}
-									contentSx={{ p: 2, '&:last-child': { pb: 2 } }}
-								>
-									<Stack
-										direction="row"
-										spacing={1}
-										useFlexGap
-										sx={{
-											flexWrap: 'wrap',
-										}}
-									>
-										{promotions?.results.map((promotion) => (
 											<Button
 												type="button"
-												key={promotion.id}
-												variant="outlined"
-												startIcon={<LocalOfferIcon />}
-												onClick={() => addPromotion(promotion)}
-												sx={{ borderRadius: '50px', textTransform: 'none' }}
+												variant="contained"
+												onClick={() => setNumericKeypadOpen(true)}
+												disabled={!storeId || scanState.isFetching}
+												aria-label={t.magasin.numericKeypad}
+												sx={{ ...actionButtonSx, width: 80, minWidth: 80, height: 76, px: 0 }}
 											>
-												{promotion.name} - {money(promotion.selling_price)}
+												<DialpadIcon />
 											</Button>
-										))}
-									</Stack>
-								</MagasinSectionCard>
-							)}
-							<MagasinSectionCard
-								title={t.magasin.cart}
-								icon={<PointOfSaleIcon fontSize="small" />}
-								action={
-									offlineQueue.length > 0 ? (
-										<Stack direction="row" spacing={1}>
-											<Chip label={`${t.magasin.offlineQueue}: ${offlineQueue.length}`} size="small" />
-											<IconButton
-												type="button"
-												onClick={() => void syncQueue()}
-												disabled={syncState.isLoading}
-												aria-label={t.magasin.syncOffline}
-											>
-												<SyncIcon />
-											</IconButton>
+										</Box>
+									</Box>
+
+									<Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+										<Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
+											<PointOfSaleIcon color="primary" fontSize="small" />
+											<Typography sx={{ fontWeight: 800 }}>{t.magasin.cart}</Typography>
+											<Chip label={cart.length} size="small" />
 										</Stack>
-									) : undefined
-								}
-								sx={{ width: '100%' }}
-								contentSx={{ p: 2, '&:last-child': { pb: 2 } }}
-							>
-								{cart.length === 0 ? (
-									<Alert severity="info">{t.magasin.emptyCart}</Alert>
-								) : (
-									<Box sx={{ width: '100%' }}>
-										<DataGrid
-											rows={cartRows}
-											columns={cartColumns}
-											showToolbar
-											slotProps={{
-												toolbar: {
-													showQuickFilter: true,
-													quickFilterProps: { debounceMs: 500 },
-												},
+										{currentStoreOfflineQueue.length > 0 && (
+											<Button
+												type="button"
+											startIcon={<SyncIcon />}
+											onClick={() => void syncQueue()}
+											disabled={syncState.isLoading || createState.isLoading}
+												sx={{ ...actionButtonSx, minHeight: 44 }}
+											>
+												{currentStoreOfflineQueue.length}
+											</Button>
+										)}
+									</Stack>
+									<Divider />
+									<Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', pr: 0.25 }}>
+										<PosCart
+											cart={cart}
+											lineKey={lineKey}
+											onUpdateQuantity={(key, delta) => {
+												updateQuantity(key, delta);
+												focusBarcode();
 											}}
-											localeText={frFR.components.MuiDataGrid.defaultProps.localeText}
-											disableRowSelectionOnClick
-											paginationModel={cartPaginationModel}
-											onPaginationModelChange={setCartPaginationModel}
-											pageSizeOptions={[5, 10, 25]}
-											getRowHeight={() => 64}
-											sx={{
-												border: 'none',
-												'& .MuiDataGrid-columnHeaderTitle': {
-													fontWeight: 700,
-												},
-												'& .MuiDataGrid-cell': {
-													display: 'flex',
-													alignItems: 'center',
-												},
-												'& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus': {
-													outline: 'none',
-												},
-												'& .MuiDataGrid-toolbarContainer': {
-													px: 0,
-													pt: 0,
-													pb: 1,
-												},
+											onRemove={(key) => {
+												setCart((current) => current.filter((line) => lineKey(line) !== key));
+												focusBarcode();
 											}}
 										/>
 									</Box>
-								)}
-								<Divider sx={{ my: 2 }} />
-								<Stack
-									direction={{ xs: 'column', sm: 'row' }}
-									spacing={2}
-									sx={{
-										justifyContent: 'space-between',
-										alignItems: { xs: 'stretch', sm: 'center' },
-									}}
-								>
+								</Stack>
+							</MagasinSectionCard>
+
+							<MagasinSectionCard
+								sx={{ height: { sm: '100%' }, minHeight: 0 }}
+								contentSx={{
+									p: 1.25,
+									'&:last-child': { pb: 1.25 },
+									height: '100%',
+									boxSizing: 'border-box',
+									overflowY: 'auto',
+								}}
+							>
+								<Stack spacing={1.1} sx={{ minHeight: '100%' }}>
+									<Box sx={{ p: 1.25, borderRadius: 2, bgcolor: 'primary.main', color: 'primary.contrastText' }}>
+										<Typography variant="caption" sx={{ opacity: 0.82, textTransform: 'uppercase', fontWeight: 700 }}>
+											{t.magasin.total}
+										</Typography>
+										<Typography sx={{ fontSize: { xs: '1.8rem', sm: '2rem' }, lineHeight: 1.1, fontWeight: 900 }}>
+											{money(total)}
+										</Typography>
+									</Box>
+
 									{canWholesaleSale && (
-										<Stack spacing={0.75} sx={{ minWidth: { xs: '100%', sm: 280 } }}>
-											<Typography variant="caption" sx={{ color: 'text.secondary' }}>
+										<Stack spacing={0.5}>
+											<Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700 }}>
 												{t.magasin.saleType}
 											</Typography>
 											<ToggleButtonGroup
 												exclusive
-												size="small"
 												value={saleType}
-												onChange={(_, value: SaleMode | null) => {
-													if (value) {
-														handleSaleTypeChange(value);
-													}
-												}}
-												sx={{
-													height: 40,
-													'& .MuiToggleButton-root': {
-														flex: 1,
-														px: 2,
-														textTransform: 'none',
-														fontWeight: 600,
-														whiteSpace: 'nowrap',
-													},
-												}}
+												onChange={(_, value: SaleMode | null) => value && handleSaleTypeChange(value)}
 												fullWidth
+												sx={{
+													height: 56,
+													'& .MuiToggleButton-root': { flex: 1, textTransform: 'none', fontWeight: 700, px: 0.5 },
+												}}
 											>
 												<ToggleButton value="normal">{t.magasin.normalSale}</ToggleButton>
 												<ToggleButton value="wholesale">{t.magasin.wholesaleSale}</ToggleButton>
 											</ToggleButtonGroup>
 										</Stack>
 									)}
-									<ThemeProvider theme={dropdownTheme}>
-										<TextField
-											select
-											size="small"
-											id="payment_mode"
-											label={`${t.magasin.paymentMode} *`}
-											value={effectivePaymentModeId}
-											onChange={(event) => setSelectedPaymentModeId(event.target.value)}
-											disabled={arePaymentModesLoading || paymentModeOptions.length === 0}
-											slotProps={{
-												input: {
-													startAdornment: (
-														<InputAdornment position="start">
-															<CreditCardIcon fontSize="small" />
-														</InputAdornment>
-													),
-												},
-											}}
-											sx={{ minWidth: { xs: '100%', sm: 260 } }}
-										>
+
+									<Stack spacing={0.5} sx={{ minHeight: 0 }}>
+										<Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700 }}>
+											{t.magasin.paymentMode}
+										</Typography>
+										<Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.75 }}>
 											{paymentModeOptions.map((mode) => (
-												<MenuItem key={mode.id} value={String(mode.id)}>
+												<Button
+													key={mode.id}
+													type="button"
+													variant={effectivePaymentModeId === String(mode.id) ? 'contained' : 'outlined'}
+													startIcon={<CreditCardIcon />}
+													onClick={() => {
+														setSelectedPaymentModeId(String(mode.id));
+														focusBarcode();
+													}}
+													disabled={arePaymentModesLoading || createState.isLoading}
+													sx={{ ...actionButtonSx, minHeight: 64, px: 0.75, fontSize: '1rem' }}
+												>
 													{mode.name}
-												</MenuItem>
+												</Button>
 											))}
-										</TextField>
-									</ThemeProvider>
-									<Stack spacing={0.25}>
-										<Typography
-											variant="caption"
-											sx={{
-												color: 'text.secondary',
-											}}
-										>
-											{t.magasin.total}
-										</Typography>
-										<Typography
-											variant="h6"
-											sx={{
-												fontWeight: 700,
-											}}
-										>
-											{money(total)}
-										</Typography>
+										</Box>
 									</Stack>
-									<Button
-										type="button"
-										variant="contained"
-										size="large"
-										startIcon={<PointOfSaleIcon />}
-										disabled={!cart.length || !effectivePaymentModeId || createState.isLoading}
-										onClick={() => void confirmSale()}
-										sx={actionButtonSx}
-									>
-										{t.magasin.confirmSale}
-									</Button>
-									{lastWholesaleSaleId && permissions.can_print && (
+
+									{canPrintReceipt && (
+										<Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1 }}>
+											<Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
+												<Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0 }}>
+													<UsbIcon sx={{ color: printerStatusColor }} />
+													<Box sx={{ minWidth: 0 }}>
+														<Typography noWrap sx={{ fontSize: '0.82rem', fontWeight: 800 }}>
+															{t.magasin.ticketPrinter}
+														</Typography>
+														<Typography noWrap variant="caption" sx={{ color: printerStatusColor }}>
+															{printerStatusLabel}
+														</Typography>
+													</Box>
+												</Stack>
+											</Stack>
+											{!printer.isConnected && printer.status !== 'unsupported' && (
+												<Button
+													type="button"
+													variant="outlined"
+													fullWidth
+													startIcon={<UsbIcon />}
+													onClick={async () => {
+														const connected = await printer.connect();
+														if (!connected) onError(t.magasin.printerConnectionError);
+														focusBarcode();
+													}}
+													sx={{ ...actionButtonSx, mt: 0.5 }}
+												>
+													{t.magasin.connectPrinter}
+												</Button>
+											)}
+										</Box>
+									)}
+
+									<Box sx={{ flex: 1 }} />
+									{canPrintReceipt && lastCompletedSale && (
 										<Button
 											type="button"
 											variant="outlined"
-											size="large"
+											startIcon={<ReceiptLongIcon />}
+											disabled={!printer.isConnected}
+											onClick={() => void printTicket(lastCompletedSale.sale, lastCompletedSale.store)}
+											sx={actionButtonSx}
+										>
+											{t.magasin.reprintLastTicket}
+										</Button>
+									)}
+									{canPrintReceipt && lastWholesaleSaleId && (
+										<Button
+											type="button"
+											variant="text"
 											startIcon={<PrintIcon />}
 											onClick={() => void handlePrintFacture()}
 											sx={actionButtonSx}
@@ -892,11 +783,105 @@ const PosClient = ({ session }: SessionProps) => {
 											{t.magasin.printFacture}
 										</Button>
 									)}
+									<Button
+										type="button"
+										variant="contained"
+										startIcon={canPrintReceipt && printer.autoPrint ? <PrintIcon /> : <PointOfSaleIcon />}
+										disabled={!cart.length || !effectivePaymentModeId || createState.isLoading || syncState.isLoading}
+										onClick={() => void confirmSale()}
+										sx={{
+											...actionButtonSx,
+											minHeight: 72,
+											fontSize: '1.1rem',
+											position: 'sticky',
+											bottom: 0,
+											zIndex: 1,
+										}}
+									>
+										{canPrintReceipt && printer.autoPrint ? t.magasin.confirmAndPrint : t.magasin.confirmSale}
+									</Button>
 								</Stack>
 							</MagasinSectionCard>
-						</Stack>
+						</Box>
 					</Box>
 				</Box>
+
+				<Dialog
+					open={numericKeypadOpen}
+					onClose={() => {
+						setNumericKeypadOpen(false);
+						focusBarcode();
+					}}
+					fullWidth
+					maxWidth="xs"
+				>
+					<DialogTitle>{t.magasin.barcode}</DialogTitle>
+					<DialogContent>
+						<Box
+							sx={{
+								mb: 1.5,
+								p: 1.5,
+								minHeight: 64,
+								border: '2px solid',
+								borderColor: 'divider',
+								borderRadius: 2,
+								fontSize: '1.4rem',
+								fontWeight: 800,
+								letterSpacing: '0.08em',
+								textAlign: 'center',
+							}}
+						>
+							{scanFormik.values.barcode || '—'}
+						</Box>
+						<Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
+							{['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
+								<Button
+									key={digit}
+									variant="outlined"
+									onClick={() => appendBarcodeDigit(digit)}
+									sx={{ ...actionButtonSx, minHeight: 68, fontSize: '1.5rem' }}
+								>
+									{digit}
+								</Button>
+							))}
+							<Button
+								color="error"
+								variant="outlined"
+								onClick={() => void scanFormik.setFieldValue('barcode', '', true)}
+								sx={{ ...actionButtonSx, minHeight: 68 }}
+							>
+								<ClearIcon />
+							</Button>
+							<Button
+								variant="outlined"
+								onClick={() => appendBarcodeDigit('0')}
+								sx={{ ...actionButtonSx, minHeight: 68, fontSize: '1.5rem' }}
+							>
+								0
+							</Button>
+							<Button
+								variant="outlined"
+								onClick={() =>
+									void scanFormik.setFieldValue('barcode', scanFormik.values.barcode.slice(0, -1), true)
+								}
+								sx={{ ...actionButtonSx, minHeight: 68 }}
+							>
+								<BackspaceIcon />
+							</Button>
+						</Box>
+					</DialogContent>
+					<DialogActions sx={{ p: 2 }}>
+						<Button
+							fullWidth
+							variant="contained"
+							disabled={!storeId || !scanFormik.isValid || scanState.isFetching}
+							onClick={() => void submitManualBarcode()}
+							sx={{ ...actionButtonSx, minHeight: 64, fontSize: '1.05rem' }}
+						>
+							{t.magasin.scan}
+						</Button>
+					</DialogActions>
+				</Dialog>
 			</Protected>
 		</NavigationBar>
 	);

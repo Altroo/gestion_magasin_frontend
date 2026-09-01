@@ -12,6 +12,21 @@ import { getT } from '@/utils/helpers';
 
 const base64ImageField = z.url().or(z.string().startsWith('data:image/')).nullable().optional();
 
+const STORE_LOGO_MAX_SIZE = 5 * 1024 * 1024;
+const STORE_LOGO_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const storeLogoField = z
+	.custom<File | null | undefined>(
+		(value) => value === undefined || value === null || (typeof File !== 'undefined' && value instanceof File),
+		{ error: () => getT().magasin.storeLogoInvalidType },
+	)
+	.refine((value) => !value || STORE_LOGO_MIME_TYPES.includes(value.type), {
+		error: () => getT().magasin.storeLogoInvalidType,
+	})
+	.refine((value) => !value || value.size <= STORE_LOGO_MAX_SIZE, {
+		error: () => getT().magasin.storeLogoTooLarge,
+	})
+	.optional();
+
 const passwordField = z.preprocess(
 	(val) => (val === undefined ? '' : val),
 	z
@@ -209,6 +224,8 @@ export const storeSchema = z.object({
 	code: requiredTextField(2, 40),
 	address: optionalTextField(1, 255),
 	phone: optionalTextField(1, 40),
+	logo: storeLogoField,
+	remove_logo: z.boolean().optional(),
 	is_active: z.boolean(),
 	is_global_stock: z.boolean().optional(),
 	managed_by: z.array(z.object({ pk: z.number(), role: z.string().min(1) })).min(1, { error: INPUT_REQUIRED }),

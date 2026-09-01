@@ -7,9 +7,11 @@ import { useRouter, usePathname } from 'next/navigation';
 import { initAppAction, initAppSessionTokensAction } from '@/store/actions/_initActions';
 import { getAccessToken } from '@/store/selectors';
 import { useGetProfilQuery } from '@/store/services/account';
+import { useGetMyStoresQuery } from '@/store/services/magasin';
 import { accountSetProfilAction } from '@/store/actions/accountActions';
-import { DASHBOARD_ATTENDANCE, DASHBOARD_PASSWORD } from '@/utils/routes';
+import { DASHBOARD_ATTENDANCE, DASHBOARD_PASSWORD, DASHBOARD_POS } from '@/utils/routes';
 import { isPointageOnlyPathAllowed } from '@/utils/pointageOnlyAccess';
+import { isVendeurOnly, isVendeurPathAllowed } from '@/utils/vendeurAccess';
 
 const PASSWORD_ROUTE = '/dashboard/settings/password';
 
@@ -33,6 +35,8 @@ export const InitEffects: React.FC = () => {
 	}, [dispatch]);
 
 	const { data: user } = useGetProfilQuery(undefined, { skip });
+	const { data: storeMemberships = [] } = useGetMyStoresQuery(undefined, { skip });
+	const vendeurOnly = !user?.is_staff && isVendeurOnly(storeMemberships);
 
 	// Sync Redux tokens whenever the access token changes (covers initial login + every refresh)
 	useEffect(() => {
@@ -61,8 +65,12 @@ export const InitEffects: React.FC = () => {
 		}
 		if (user?.pointage_only && !isPointageOnlyPathAllowed(pathname)) {
 			router.replace(DASHBOARD_ATTENDANCE);
+			return;
 		}
-	}, [user, pathname, router]);
+		if (vendeurOnly && !isVendeurPathAllowed(pathname)) {
+			router.replace(DASHBOARD_POS);
+		}
+	}, [user, vendeurOnly, pathname, router]);
 
 	return null;
 };

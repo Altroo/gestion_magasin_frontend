@@ -100,4 +100,25 @@ describe('Protected component', () => {
 		expect(screen.getByText('Accès Refusé')).toBeInTheDocument();
 		expect(screen.queryByText('Editable Content')).not.toBeInTheDocument();
 	});
+
+	it('renders children when an explicit role allowance is granted', () => {
+		(useAppSelector as jest.Mock).mockReturnValue({ id: 1 });
+		(usePermission as jest.Mock).mockReturnValue({
+			is_staff: false,
+			can_view: true,
+			can_print: false,
+			can_create: false,
+			can_edit: false,
+			can_delete: false,
+		});
+
+		render(
+			<Protected permission="can_create" allow>
+				<div>Vendeur Checkout</div>
+			</Protected>,
+		);
+
+		expect(screen.getByText('Vendeur Checkout')).toBeInTheDocument();
+		expect(screen.queryByText('Accès Refusé')).not.toBeInTheDocument();
+	});
 });

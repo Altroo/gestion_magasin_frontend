@@ -41,6 +41,7 @@ import {
 	Notifications as NotificationsIcon,
 	PendingActions as PendingActionsIcon,
 	People as PeopleIcon,
+	Person as PersonIcon,
 	PointOfSale as PointOfSaleIcon,
 	Settings as SettingsIcon,
 	Storefront as StorefrontIcon,
@@ -86,8 +87,10 @@ import {
 	useLazyGetNotificationsQuery,
 	useMarkNotificationsReadMutation,
 } from '@/store/services/notification';
+import { useGetMyStoresQuery } from '@/store/services/magasin';
 import { setUnreadCount } from '@/store/slices/notificationSlice';
 import type { NotificationType } from '@/types/gestionMagasinTypes';
+import { isVendeurOnly } from '@/utils/vendeurAccess';
 
 type NavigationItem = {
 	title: string;
@@ -103,13 +106,35 @@ type NavigationSection = {
 
 type NavigationMenu = Record<string, NavigationSection>;
 
-const getNavigationMenu = (isStaff: boolean, pointageOnly: boolean, t: TranslationDictionary): NavigationMenu => {
+const getNavigationMenu = (
+	isStaff: boolean,
+	pointageOnly: boolean,
+	vendeurOnly: boolean,
+	t: TranslationDictionary,
+): NavigationMenu => {
 	if (pointageOnly) {
 		return {
 			pointage: {
 				title: t.navigation.attendance,
 				icon: <PendingActionsIcon />,
 				items: [{ title: t.navigation.attendance, label: t.navigation.attendance, path: DASHBOARD_ATTENDANCE }],
+			},
+			parametres: {
+				title: t.navigation.settings,
+				icon: <SettingsIcon />,
+				items: [
+					{ title: t.navigation.myProfile, label: t.navigation.myProfile, path: DASHBOARD_EDIT_PROFILE },
+					{ title: t.navigation.changePassword, label: t.navigation.changePassword, path: DASHBOARD_PASSWORD },
+				],
+			},
+		};
+	}
+	if (vendeurOnly) {
+		return {
+			operations: {
+				title: t.navigation.operations,
+				icon: <PointOfSaleIcon />,
+				items: [{ title: t.navigation.pos, label: t.navigation.pos, path: DASHBOARD_POS }],
 			},
 			parametres: {
 				title: t.navigation.settings,
@@ -240,21 +265,30 @@ const AppBar = styled(MuiAppBar, {
 type Props = {
 	title: string;
 	children: React.ReactNode;
+	compact?: boolean;
 };
 
 const NavigationBar = (props: Props) => {
 	const theme = useTheme();
 	const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-	const [open, setOpen] = useState(!isMobile);
+	const [open, setOpen] = useState(props.compact ? false : !isMobile);
 	const { data: session, status } = useSession();
 	const { avatar_cropped, first_name, last_name, gender, is_staff, pointage_only } = useAppSelector(getProfilState);
 	const { t, language, setLanguage } = useLanguage();
-	const navigationMenu = useMemo(() => getNavigationMenu(is_staff, !!pointage_only, t), [is_staff, pointage_only, t]);
+	const { data: storeMemberships = [], isSuccess: storeMembershipsLoaded } = useGetMyStoresQuery(undefined, {
+		skip: status !== 'authenticated' || is_staff || !!pointage_only,
+	});
+	const vendeurOnly =
+		!is_staff && !pointage_only && (!storeMembershipsLoaded || isVendeurOnly(storeMemberships));
+	const navigationMenu = useMemo(
+		() => getNavigationMenu(is_staff, !!pointage_only, vendeurOnly, t),
+		[is_staff, pointage_only, vendeurOnly, t],
+	);
 	const dispatch = useAppDispatch();
 	const moreVertRef = useRef<HTMLButtonElement>(null);
 	const [mobileMenuAnchor, setMobileMenuAnchor] = useState<HTMLElement | null>(null);
 	const unreadCount = useAppSelector(getUnreadNotificationCount);
-	const skipNotifications = status !== 'authenticated' || !!pointage_only;
+	const skipNotifications = status !== 'authenticated' || !!pointage_only || vendeurOnly;
 	const { data: unreadCountData } = useGetUnreadNotificationCountQuery(undefined, { skip: skipNotifications });
 	const { data: firstPage } = useGetNotificationsQuery({ page: 1 }, { skip: skipNotifications });
 	const [fetchNotifications] = useLazyGetNotificationsQuery();
@@ -284,13 +318,14 @@ const NavigationBar = (props: Props) => {
 	useEffect(() => {
 		if (
 			status === 'authenticated' &&
+			!vendeurOnly &&
 			typeof window !== 'undefined' &&
 			'Notification' in window &&
 			Notification.permission === 'default'
 		) {
 			void Notification.requestPermission();
 		}
-	}, [status]);
+	}, [status, vendeurOnly]);
 
 	const handleNotifOpen = (event: React.MouseEvent<HTMLElement>) => {
 		setNotifAnchor(event.currentTarget);
@@ -328,7 +363,7 @@ const NavigationBar = (props: Props) => {
 	};
 
 	const handleDrawerToggle = () => {
-		if (isMobile) {
+		if (isMobile || props.compact) {
 			setOpen(!open);
 		}
 	};
@@ -411,7 +446,7 @@ const NavigationBar = (props: Props) => {
 									alignItems: 'center',
 								}}
 							>
-								{isMobile && (
+								{(isMobile || props.compact) && (
 									<IconButton
 										color="inherit"
 										aria-label={t.accessibility.toggleDrawer}
@@ -429,7 +464,7 @@ const NavigationBar = (props: Props) => {
 								{!loading && session && (
 									<>
 										<Desktop>
-											{!pointage_only && (
+											{!pointage_only && !vendeurOnly && (
 												<IconButton color="inherit" onClick={handleNotifOpen} aria-label={t.navigation.notifications}>
 													<Badge badgeContent={unreadCount} color="primary" max={99}>
 														<NotificationsIcon />
@@ -437,6 +472,14 @@ const NavigationBar = (props: Props) => {
 												</IconButton>
 											)}
 											<LanguageSwitcher />
+											<Button
+												variant="text"
+												color="inherit"
+												href={DASHBOARD_EDIT_PROFILE}
+												startIcon={<PersonIcon />}
+											>
+												{t.navigation.myProfile}
+											</Button>
 											{is_staff && (
 												<Button
 													variant="text"
@@ -469,7 +512,7 @@ const NavigationBar = (props: Props) => {
 												anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
 												transformOrigin={{ vertical: 'top', horizontal: 'right' }}
 											>
-												{!pointage_only && (
+												{!pointage_only && !vendeurOnly && (
 													<MenuItem
 														onClick={() => {
 															setMobileMenuAnchor(null);
@@ -494,6 +537,16 @@ const NavigationBar = (props: Props) => {
 														<LanguageFlag language={language === 'fr' ? 'en' : 'fr'} />
 													</MenuListItemIcon>
 													<MenuListItemText>{language === 'fr' ? 'English' : 'Français'}</MenuListItemText>
+												</MenuItem>
+												<MenuItem
+													component={Link}
+													href={DASHBOARD_EDIT_PROFILE}
+													onClick={() => setMobileMenuAnchor(null)}
+												>
+													<MenuListItemIcon>
+														<PersonIcon fontSize="small" />
+													</MenuListItemIcon>
+													<MenuListItemText>{t.navigation.myProfile}</MenuListItemText>
 												</MenuItem>
 												{is_staff && (
 													<MenuItem

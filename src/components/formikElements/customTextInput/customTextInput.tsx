@@ -23,6 +23,7 @@ type Props = {
 	startIcon?: React.ReactNode;
 	endIcon?: React.ReactNode;
 	slotProps?: TextFieldProps['slotProps'];
+	sx?: TextFieldProps['sx'];
 	name?: string;
 	required?: boolean;
 	autoComplete?: string;
@@ -32,6 +33,7 @@ type Props = {
 	shrink?: boolean;
 	multiline?: boolean;
 	rows?: number;
+	inputRef?: React.Ref<HTMLInputElement>;
 };
 
 const CustomTextInput = forwardRef<HTMLInputElement, Props>((props: Props, ref: ForwardedRef<HTMLInputElement>) => {

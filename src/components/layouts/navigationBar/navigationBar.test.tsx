@@ -58,6 +58,11 @@ jest.mock('@/store/services/notification', () => ({
 	useMarkNotificationsReadMutation: () => [mockMarkNotificationsRead],
 }));
 
+const mockUseGetMyStoresQuery = jest.fn();
+jest.mock('@/store/services/magasin', () => ({
+	useGetMyStoresQuery: (...args: unknown[]) => mockUseGetMyStoresQuery(...args),
+}));
+
 describe('NavigationBar', () => {
 	let mockProfile: {
 		avatar_cropped?: string;
@@ -88,6 +93,7 @@ describe('NavigationBar', () => {
 			selector.name === 'getUnreadNotificationCount' ? 0 : mockProfile
 		));
 		mockUseSession.mockImplementation(() => ({ data: {}, status: 'authenticated' }));
+		mockUseGetMyStoresQuery.mockReturnValue({ data: [], isSuccess: true });
 		mockIsMobile = false;
 	});
 
@@ -168,6 +174,35 @@ describe('NavigationBar', () => {
 		expect(screen.queryByText('Utilisateurs')).not.toBeInTheDocument();
 	});
 
+	it('shows only caisse and personal settings for a vendeur', () => {
+		mockUseGetMyStoresQuery.mockReturnValue({
+			isSuccess: true,
+			data: [
+				{
+					id: 1,
+					store: { id: 1, is_active: true, is_global_stock: false },
+					role: { code: 'vendeur' },
+					is_active: true,
+				},
+			],
+		});
+
+		render(
+			<NavigationBar title="Caisse">
+				<div />
+			</NavigationBar>,
+		);
+
+		expect(screen.getByText('Opérations')).toBeInTheDocument();
+		expect(screen.getAllByText('Caisse').length).toBeGreaterThanOrEqual(1);
+		expect(screen.getByText('Paramètres')).toBeInTheDocument();
+		expect(screen.queryByText('Articles')).not.toBeInTheDocument();
+		expect(screen.queryByText('Stock')).not.toBeInTheDocument();
+		expect(screen.queryByText('Ventes')).not.toBeInTheDocument();
+		expect(screen.queryByText('Notifications')).not.toBeInTheDocument();
+		expect(screen.queryByText('Administration')).not.toBeInTheDocument();
+	});
+
 	it('shows only pointage and account settings navigation for pointage-only users', () => {
 		mockProfile = {
 			avatar_cropped: undefined,
@@ -186,7 +221,7 @@ describe('NavigationBar', () => {
 
 		expect(screen.getAllByText('Pointage').length).toBeGreaterThanOrEqual(1);
 		expect(screen.getByText('Paramètres')).toBeInTheDocument();
-		expect(screen.getByText('Mon Profil')).toBeInTheDocument();
+		expect(screen.getAllByText('Mon Profil').length).toBeGreaterThanOrEqual(1);
 		expect(screen.getByText('Changer le mot de passe')).toBeInTheDocument();
 		expect(screen.getByRole('button', { name: /Se déconnecter/i })).toBeInTheDocument();
 		expect(screen.queryByText('Opérations')).not.toBeInTheDocument();
