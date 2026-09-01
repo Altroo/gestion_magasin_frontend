@@ -1,5 +1,6 @@
 import {
 	buildEscPosReceipt,
+	buildBrowserReceiptHtml,
 	buildReceiptText,
 	imageDataToEscPosRaster,
 	printEscPosReceipt,
@@ -68,6 +69,28 @@ describe('receiptPrinter', () => {
 
 		expect(Array.from(bytes.slice(0, 2))).toEqual([0x1b, 0x40]);
 		expect(Array.from(bytes.slice(-4))).toEqual([0x1d, 0x56, 0x41, 0x00]);
+	});
+
+	it('builds an 80 mm Windows print ticket with the complete sale and logo', () => {
+		const html = buildBrowserReceiptHtml(
+			sale,
+			{
+				storeName: 'Vape & More',
+				storeAddress: 'Casablanca, Maroc',
+				storePhone: '05 22 00 00 00',
+			},
+			'data:image/png;base64,logo',
+		);
+
+		expect(html).toContain('@page { size: auto;');
+		expect(html).toContain('html, body { width: 80mm;');
+		expect(html).toContain('data:image/png;base64,logo');
+		expect(html).toContain('Ticket #42');
+		expect(html).toContain('Produit mentholé avec un nom très long');
+		expect(html).toContain('Pack été');
+		expect(html).toContain('240.00 DH');
+		expect(html).toContain('Espèces');
+		expect(html).toContain('caisse@example.com');
 	});
 
 	it('converts a monochrome logo to the ESC/POS raster command', () => {

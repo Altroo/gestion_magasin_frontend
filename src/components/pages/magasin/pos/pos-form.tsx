@@ -26,7 +26,6 @@ import {
 	QrCodeScanner as QrCodeScannerIcon,
 	ReceiptLong as ReceiptLongIcon,
 	Sync as SyncIcon,
-	Usb as UsbIcon,
 } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
@@ -38,7 +37,7 @@ import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages
 import StoreTabs, { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import PosCart from '@/components/pages/magasin/pos/pos-cart';
 import { useInitAccessToken } from '@/contexts/InitContext';
-import { useSerialReceiptPrinter } from '@/hooks/useSerialReceiptPrinter';
+import { useReceiptPrinter } from '@/hooks/useReceiptPrinter';
 import {
 	useCreateSaleMutation,
 	useGetPaymentModesQuery,
@@ -156,7 +155,7 @@ const PosClient = ({ session }: SessionProps) => {
 	const saleInFlightRef = useRef(false);
 	const syncInFlightRef = useRef(false);
 	const pendingScanCodesRef = useRef<string[]>([]);
-	const printer = useSerialReceiptPrinter();
+	const printer = useReceiptPrinter();
 	const [scanProduct, scanState] = useLazyScanProductQuery();
 	const [createSale, createState] = useCreateSaleMutation();
 	const [syncOffline, syncState] = useSyncOfflineSalesMutation();
@@ -358,15 +357,7 @@ const PosClient = ({ session }: SessionProps) => {
 				return false;
 			}
 		},
-		[
-			focusBarcode,
-			onError,
-			onSuccess,
-			printer,
-			t.magasin.ticketPrintError,
-			t.magasin.ticketPrinted,
-			token,
-		],
+		[focusBarcode, onError, onSuccess, printer, t.magasin.ticketPrintError, t.magasin.ticketPrinted, token],
 	);
 
 	const isConnectionFailure = (error: unknown) => {
@@ -396,11 +387,7 @@ const PosClient = ({ session }: SessionProps) => {
 			setCart([]);
 			onSuccess(t.magasin.saleConfirmed);
 			if (canPrintReceipt && printer.autoPrint) {
-				if (printer.isConnected) {
-					await printTicket(sale, receiptStore, true);
-				} else {
-					onError(t.magasin.saleSavedPrinterDisconnected);
-				}
+				await printTicket(sale, receiptStore, true);
 			}
 		} catch (error) {
 			setLastWholesaleSaleId(null);
@@ -437,12 +424,7 @@ const PosClient = ({ session }: SessionProps) => {
 	};
 
 	const syncQueue = async () => {
-		if (
-			!storeId ||
-			currentStoreOfflineQueue.length === 0 ||
-			saleInFlightRef.current ||
-			syncInFlightRef.current
-		) {
+		if (!storeId || currentStoreOfflineQueue.length === 0 || saleInFlightRef.current || syncInFlightRef.current) {
 			return;
 		}
 		syncInFlightRef.current = true;
@@ -502,22 +484,12 @@ const PosClient = ({ session }: SessionProps) => {
 	}, [focusBarcode, scanByCode]);
 
 	const printerStatusLabel =
-		printer.status === 'unsupported'
-			? t.magasin.printerUnsupported
-			: printer.status === 'connected'
-				? t.magasin.printerConnected
-				: printer.status === 'printing'
-					? t.magasin.printerPrinting
-					: printer.status === 'connecting'
-						? t.magasin.printerConnecting
-						: printer.status === 'error'
-							? t.magasin.printerError
-							: t.magasin.printerDisconnected;
-	const printerStatusColor = printer.isConnected
-		? 'success.main'
-		: printer.status === 'error'
-			? 'error.main'
-			: 'warning.main';
+		printer.status === 'printing'
+			? t.magasin.printerPrinting
+			: printer.status === 'error'
+				? t.magasin.printerError
+				: t.magasin.printerSystemReady;
+	const printerStatusColor = printer.status === 'error' ? 'error.main' : 'success.main';
 
 	if (areStoresLoading) {
 		return (
@@ -606,7 +578,10 @@ const PosClient = ({ session }: SessionProps) => {
 												slotProps={{
 													htmlInput: { inputMode: 'none', enterKeyHint: 'done' },
 													input: {
-														sx: { height: 76, '& .MuiInputBase-input': { py: 1, fontSize: '1.25rem', fontWeight: 700 } },
+														sx: {
+															height: 76,
+															'& .MuiInputBase-input': { py: 1, fontSize: '1.25rem', fontWeight: 700 },
+														},
 													},
 												}}
 												autoFocus
@@ -633,9 +608,9 @@ const PosClient = ({ session }: SessionProps) => {
 										{currentStoreOfflineQueue.length > 0 && (
 											<Button
 												type="button"
-											startIcon={<SyncIcon />}
-											onClick={() => void syncQueue()}
-											disabled={syncState.isLoading || createState.isLoading}
+												startIcon={<SyncIcon />}
+												onClick={() => void syncQueue()}
+												disabled={syncState.isLoading || createState.isLoading}
 												sx={{ ...actionButtonSx, minHeight: 44 }}
 											>
 												{currentStoreOfflineQueue.length}
@@ -729,7 +704,7 @@ const PosClient = ({ session }: SessionProps) => {
 										<Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1 }}>
 											<Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
 												<Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0 }}>
-													<UsbIcon sx={{ color: printerStatusColor }} />
+													<PrintIcon sx={{ color: printerStatusColor }} />
 													<Box sx={{ minWidth: 0 }}>
 														<Typography noWrap sx={{ fontSize: '0.82rem', fontWeight: 800 }}>
 															{t.magasin.ticketPrinter}
@@ -740,22 +715,6 @@ const PosClient = ({ session }: SessionProps) => {
 													</Box>
 												</Stack>
 											</Stack>
-											{!printer.isConnected && printer.status !== 'unsupported' && (
-												<Button
-													type="button"
-													variant="outlined"
-													fullWidth
-													startIcon={<UsbIcon />}
-													onClick={async () => {
-														const connected = await printer.connect();
-														if (!connected) onError(t.magasin.printerConnectionError);
-														focusBarcode();
-													}}
-													sx={{ ...actionButtonSx, mt: 0.5 }}
-												>
-													{t.magasin.connectPrinter}
-												</Button>
-											)}
 										</Box>
 									)}
 
@@ -765,7 +724,7 @@ const PosClient = ({ session }: SessionProps) => {
 											type="button"
 											variant="outlined"
 											startIcon={<ReceiptLongIcon />}
-											disabled={!printer.isConnected}
+											disabled={!printer.isReady}
 											onClick={() => void printTicket(lastCompletedSale.sale, lastCompletedSale.store)}
 											sx={actionButtonSx}
 										>
@@ -861,9 +820,7 @@ const PosClient = ({ session }: SessionProps) => {
 							</Button>
 							<Button
 								variant="outlined"
-								onClick={() =>
-									void scanFormik.setFieldValue('barcode', scanFormik.values.barcode.slice(0, -1), true)
-								}
+								onClick={() => void scanFormik.setFieldValue('barcode', scanFormik.values.barcode.slice(0, -1), true)}
 								sx={{ ...actionButtonSx, minHeight: 68 }}
 							>
 								<BackspaceIcon />

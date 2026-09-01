@@ -23,6 +23,161 @@ export type ReceiptPrinterDetails = {
 	logoAccessToken?: string;
 };
 
+const escapeHtml = (value: string | number) =>
+	String(value)
+		.replaceAll('&', '&amp;')
+		.replaceAll('<', '&lt;')
+		.replaceAll('>', '&gt;')
+		.replaceAll('"', '&quot;')
+		.replaceAll("'", '&#039;');
+
+const receiptDate = (value: string) => {
+	const date = new Date(value);
+	if (Number.isNaN(date.getTime())) return value;
+	return new Intl.DateTimeFormat('fr-MA', {
+		day: '2-digit',
+		month: '2-digit',
+		year: 'numeric',
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: false,
+	}).format(date);
+};
+
+export const buildBrowserReceiptHtml = (
+	sale: SaleType,
+	details: ReceiptPrinterDetails,
+	logoDataUrl?: string | null,
+) => {
+	const itemRows = [...sale.lines, ...sale.promotion_lines]
+		.map((line) => {
+			const name = 'product_name' in line ? line.product_name : line.promotion_name;
+			return `<div class="item">
+				<div class="item-name">${escapeHtml(name)}</div>
+				<div class="row"><span>${escapeHtml(quantity(line.quantity))} × ${escapeHtml(moneyValue(line.unit_price))}</span><strong>${escapeHtml(moneyValue(line.total))}</strong></div>
+			</div>`;
+		})
+		.join('');
+	const discount = Number(sale.discount_amount || 0);
+	const change = Number(sale.change_amount || 0);
+
+	return `<!doctype html>
+<html lang="fr">
+	<head>
+		<meta charset="utf-8" />
+		<title>Ticket ${escapeHtml(sale.id)}</title>
+		<style>
+			@page { size: auto; margin: 0; }
+			* { box-sizing: border-box; }
+			html, body { width: 80mm; margin: 0; padding: 0; background: #fff; color: #000; }
+			body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; line-height: 1.3; }
+			.receipt { width: 72mm; margin: 0 auto; padding: 3mm 0 7mm; }
+			.header { text-align: center; }
+			.logo { display: block; max-width: 48mm; max-height: 22mm; object-fit: contain; margin: 0 auto 2mm; }
+			.store-name { font-size: 17px; font-weight: 800; }
+			.separator { border-top: 1px dashed #000; margin: 2mm 0; }
+			.row { display: flex; justify-content: space-between; align-items: baseline; gap: 3mm; }
+			.row > :last-child { text-align: right; white-space: nowrap; }
+			.item { margin-bottom: 1.5mm; }
+			.item-name { font-weight: 700; overflow-wrap: anywhere; }
+			.total { font-size: 17px; font-weight: 900; margin: 1.5mm 0; }
+			.footer { text-align: center; margin-top: 3mm; font-weight: 700; }
+		</style>
+	</head>
+	<body>
+		<main class="receipt">
+			<header class="header">
+				${logoDataUrl ? `<img class="logo" src="${escapeHtml(logoDataUrl)}" alt="" />` : ''}
+				<div class="store-name">${escapeHtml(details.storeName)}</div>
+				${details.storeAddress ? `<div>${escapeHtml(details.storeAddress)}</div>` : ''}
+				${details.storePhone ? `<div>Tél : ${escapeHtml(details.storePhone)}</div>` : ''}
+			</header>
+			<div class="separator"></div>
+			<div class="row"><strong>Ticket #${escapeHtml(sale.id)}</strong><span>${escapeHtml(receiptDate(sale.date_created))}</span></div>
+			${sale.seller_email ? `<div>Vendeur : ${escapeHtml(sale.seller_email)}</div>` : ''}
+			<div class="separator"></div>
+			${itemRows}
+			<div class="separator"></div>
+			${discount > 0 ? `<div class="row"><span>Remise</span><strong>${escapeHtml(moneyValue(discount))}</strong></div>` : ''}
+			<div class="row total"><span>TOTAL</span><span>${escapeHtml(moneyValue(sale.total))}</span></div>
+			<div class="row"><span>Paiement</span><span>${escapeHtml(sale.payment_mode_name || '-')}</span></div>
+			<div class="row"><span>Reçu</span><span>${escapeHtml(moneyValue(sale.paid_amount))}</span></div>
+			${change > 0 ? `<div class="row"><span>Monnaie</span><span>${escapeHtml(moneyValue(change))}</span></div>` : ''}
+			<div class="separator"></div>
+			<footer class="footer">Merci de votre visite</footer>
+		</main>
+	</body>
+</html>`;
+};
+
+const blobToDataUrl = (blob: Blob) =>
+	new Promise<string>((resolve, reject) => {
+		const reader = new FileReader();
+		reader.onload = () => resolve(String(reader.result));
+		reader.onerror = () => reject(reader.error ?? new Error('RECEIPT_LOGO_READ_FAILED'));
+		reader.readAsDataURL(blob);
+	});
+
+const loadLogoDataUrl = async (details: ReceiptPrinterDetails) => {
+	if (!details.logoUrl) return null;
+	const controller = new AbortController();
+	const timeout = window.setTimeout(() => controller.abort(), 3000);
+	try {
+		const response = await fetch(details.logoUrl, {
+			headers: details.logoAccessToken ? { Authorization: `Bearer ${details.logoAccessToken}` } : undefined,
+			signal: controller.signal,
+		});
+		if (!response.ok) return null;
+		return await blobToDataUrl(await response.blob());
+	} catch {
+		return null;
+	} finally {
+		window.clearTimeout(timeout);
+	}
+};
+
+export const printBrowserReceipt = async (sale: SaleType, details: ReceiptPrinterDetails) => {
+	const logoDataUrl = await loadLogoDataUrl(details);
+	const frame = document.createElement('iframe');
+	frame.setAttribute('aria-hidden', 'true');
+	frame.style.position = 'fixed';
+	frame.style.right = '0';
+	frame.style.bottom = '0';
+	frame.style.width = '1px';
+	frame.style.height = '1px';
+	frame.style.border = '0';
+	frame.style.opacity = '0';
+	document.body.appendChild(frame);
+
+	const printWindow = frame.contentWindow;
+	const printDocument = frame.contentDocument;
+	if (!printWindow || !printDocument) {
+		frame.remove();
+		throw new Error('SYSTEM_PRINTER_UNAVAILABLE');
+	}
+
+	printDocument.open();
+	printDocument.write(buildBrowserReceiptHtml(sale, details, logoDataUrl));
+	printDocument.close();
+	await Promise.all(
+		Array.from(printDocument.images).map(
+			(image) =>
+				image.complete ||
+				new Promise<void>((resolve) => {
+					image.onload = () => resolve();
+					image.onerror = () => resolve();
+				}),
+		),
+	);
+	await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+	try {
+		printWindow.focus();
+		printWindow.print();
+	} finally {
+		window.setTimeout(() => frame.remove(), 1000);
+	}
+};
+
 const ESC = 0x1b;
 const GS = 0x1d;
 

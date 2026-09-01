@@ -174,6 +174,7 @@ export type TranslationDictionary = {
     printerDisconnected: string;
     printerConnecting: string;
     printerPrinting: string;
+    printerSystemReady: string;
     printerUnsupported: string;
     printerError: string;
     printerConnectionError: string;
