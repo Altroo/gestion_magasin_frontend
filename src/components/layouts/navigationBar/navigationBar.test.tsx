@@ -163,6 +163,9 @@ describe('NavigationBar', () => {
 			</NavigationBar>,
 		);
 		expect(screen.getByText('Utilisateurs')).toBeInTheDocument();
+		const installerLink = screen.getByRole('link', { name: "Installer l'imprimante caisse" });
+		expect(installerLink).toHaveAttribute('href', '/downloads/Installer-Caisse.cmd');
+		expect(installerLink).toHaveAttribute('download');
 	});
 
 	it('does not show Utilisateurs section for non-staff users', () => {

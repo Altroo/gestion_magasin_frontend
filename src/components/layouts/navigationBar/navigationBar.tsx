@@ -281,6 +281,7 @@ const NavigationBar = (props: Props) => {
 	});
 	const vendeurOnly =
 		!is_staff && !pointage_only && (!storeMembershipsLoaded || isVendeurOnly(storeMemberships));
+	const canInstallPrinter = is_staff || (storeMembershipsLoaded && vendeurOnly);
 	const navigationMenu = useMemo(
 		() => getNavigationMenu(is_staff, !!pointage_only, vendeurOnly, t),
 		[is_staff, pointage_only, vendeurOnly, t],
@@ -465,7 +466,7 @@ const NavigationBar = (props: Props) => {
 								{!loading && session && (
 									<>
 										<Desktop>
-											{storeMembershipsLoaded && vendeurOnly && (
+											{canInstallPrinter && (
 												<Tooltip describeChild title={t.magasin.installPosPrinterHelp}>
 													<IconButton
 														component="a"
@@ -527,7 +528,7 @@ const NavigationBar = (props: Props) => {
 												anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
 												transformOrigin={{ vertical: 'top', horizontal: 'right' }}
 											>
-												{storeMembershipsLoaded && vendeurOnly && (
+												{canInstallPrinter && (
 													<MenuItem
 														component="a"
 														href="/downloads/Installer-Caisse.cmd"
