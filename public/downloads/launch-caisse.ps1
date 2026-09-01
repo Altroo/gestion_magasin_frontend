@@ -29,6 +29,17 @@ function Set-AndConfirmDefaultPrinter {
     throw "Windows n'a pas confirme '$($Printer.Name)' comme imprimante par defaut."
 }
 
+function Get-CaisseChromeProcesses {
+    @(
+        Get-CimInstance -ClassName Win32_Process -Filter "Name = 'chrome.exe'" |
+            Where-Object {
+                $_.CommandLine -and
+                $_.CommandLine.IndexOf($profileDirectory, [System.StringComparison]::OrdinalIgnoreCase) -ge 0 -and
+                $_.CommandLine -notmatch '(?i)(?:^|\s)--type='
+            }
+    )
+}
+
 try {
     if (-not $env:LOCALAPPDATA) { throw 'Le dossier LOCALAPPDATA de cet utilisateur est introuvable.' }
     if (-not [System.IO.File]::Exists($printerNamePath)) {
@@ -53,14 +64,22 @@ try {
     if (-not $chromePath) { throw 'Google Chrome est introuvable. Installez Chrome, puis relancez le raccourci Caisse.' }
 
     [System.IO.Directory]::CreateDirectory($profileDirectory) | Out-Null
-    $chromeArguments = @(
-        "--user-data-dir=`"$profileDirectory`"",
-        '--kiosk',
-        '--kiosk-printing',
-        '--use-system-default-printer',
-        '--no-first-run',
-        "`"$caisseUrl`""
-    )
+
+    $staleCaisseProcesses = @(Get-CaisseChromeProcesses | Where-Object { $_.CommandLine -notmatch '(?i)(?:^|\s)--kiosk-printing(?:\s|$)' })
+    foreach ($process in $staleCaisseProcesses) {
+        Stop-Process -Id $process.ProcessId -Force
+    }
+    if ($staleCaisseProcesses.Count -gt 0) {
+        for ($attempt = 0; $attempt -lt 30; $attempt += 1) {
+            if ((Get-CaisseChromeProcesses).Count -eq 0) { break }
+            Start-Sleep -Milliseconds 100
+        }
+        if ((Get-CaisseChromeProcesses).Count -gt 0) {
+            throw "L'ancienne fenetre Caisse n'a pas pu etre fermee. Fermez-la manuellement, puis relancez le raccourci Caisse."
+        }
+    }
+
+    $chromeArguments = "--user-data-dir=`"$profileDirectory`" --kiosk --kiosk-printing --use-system-default-printer --no-first-run --app=`"$caisseUrl`""
     Start-Process -FilePath $chromePath -ArgumentList $chromeArguments
     exit 0
 } catch {

@@ -14,7 +14,7 @@ $caisseRoot = Join-Path $env:LOCALAPPDATA 'GestionMagasinPOS'
 $printerNamePath = Join-Path $caisseRoot 'printer-name.txt'
 $launcherPath = Join-Path $caisseRoot 'launch-caisse.ps1'
 $launcherUri = 'https://gestion-magasin.elbouazzatiholding.ma/downloads/launch-caisse.ps1'
-$launcherSha256 = '2608446c02d5b2fb5f75f25f9dcb4353da4c39f7b642dd30719b438cf6bbb8a0'
+$launcherSha256 = '88f345ca12b2e1396583b6370d83afeed8b43f7660cb7e2035216a52d248e943'
 $printerPattern = 'WDLink|WD8260|POSPrinter|POS[- ]?80'
 $temporaryPaths = [System.Collections.Generic.List[string]]::new()
 
@@ -101,10 +101,11 @@ try {
     $shortcutPath = Join-Path $desktopPath 'Caisse.lnk'
     $shortcutTemporaryPath = Join-Path $desktopPath ("Caisse.$([guid]::NewGuid().ToString('N')).lnk")
     $temporaryPaths.Add($shortcutTemporaryPath)
+    $launcherArguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$launcherPath`""
     $shell = New-Object -ComObject WScript.Shell
     $shortcut = $shell.CreateShortcut($shortcutTemporaryPath)
     $shortcut.TargetPath = $powerShellPath
-    $shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$launcherPath`""
+    $shortcut.Arguments = $launcherArguments
     $shortcut.WorkingDirectory = $caisseRoot
     $shortcut.IconLocation = "$powerShellPath,0"
     $shortcut.Description = 'Gestion Magasin - Caisse'
@@ -112,7 +113,8 @@ try {
     Install-FileAtomically -Source $shortcutTemporaryPath -Destination $shortcutPath
     $temporaryPaths.Remove($shortcutTemporaryPath) | Out-Null
 
-    Show-CaisseMessage -Message "Installation terminee.`n`nImprimante : $($printer.Name)`nLe raccourci 'Caisse' a ete ajoute au Bureau.`n`nDouble-cliquez sur ce raccourci pour ouvrir la caisse."
+    Show-CaisseMessage -Message "Installation terminee.`n`nImprimante : $($printer.Name)`nLe raccourci 'Caisse' a ete ajoute au Bureau.`n`nLa caisse va maintenant s'ouvrir. Pour imprimer directement, utilisez toujours ce raccourci et non l'ancienne application Chrome."
+    Start-Process -FilePath $powerShellPath -ArgumentList $launcherArguments
     exit 0
 } catch {
     Show-CaisseMessage -IsError $true -Message "L'installation de la caisse a echoue.`n`n$($_.Exception.Message)"
