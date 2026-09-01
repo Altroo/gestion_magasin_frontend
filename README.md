@@ -66,11 +66,12 @@ bun run build
 
 The ticket uses a compact 68 mm layout on 80 mm paper. On the Windows caisse machine:
 
-1. Install the **POSPrinter WDLink WD8260** driver. The device must appear under **Printers & scanners**, not only Device Manager.
-2. Select 80 mm roll paper in its printing preferences and print a Windows test page.
-3. Create a desktop shortcut that runs `deploy/windows/launch-caisse.ps1` with PowerShell.
+1. Install Google Chrome.
+2. Install the **POSPrinter WDLink WD8260** driver. The device must appear under **Printers & scanners**, not only Device Manager.
+3. Select 80 mm roll paper in its printing preferences and print a Windows test page.
+4. On the cashier's Windows account, sign in to Gestion Magasin as an application administrator. Open **Liste des magasins**, click **Installer l'imprimante caisse**, then double-click the downloaded `Installer-Caisse.cmd` normally (not **Run as administrator**).
 
-The launcher sets the detected WD8260/POS-80 queue as the Windows default printer, then starts a dedicated Chrome caisse profile with `--kiosk --kiosk-printing`. It does not change browser policies. The seller signs in once, then all tickets print to the POS-80 without preview or “Save as PDF.”
+The installer saves the exact WD8260/POS-80 printer, adds a **Caisse** shortcut to the desktop, and opens a dedicated Chrome profile. Every use of that shortcut reselects the saved printer before starting Chrome with silent kiosk printing. The seller signs in once, then tickets print without preview or “Save as PDF.”
 
 ## Portfolio Note
 

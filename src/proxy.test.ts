@@ -57,14 +57,17 @@ beforeEach(() => {
 });
 
 describe('auth middleware handler', () => {
-	it('allows public paths without redirect', () => {
-		const req: ReqLike = { nextUrl: { pathname: '/login' }, url: 'https://example.com/login', auth: null };
+	it.each(['/login', '/downloads/Installer-Caisse.cmd', '/downloads/launch-caisse.ps1'])(
+		'allows public path %s without redirect',
+		(pathname) => {
+			const req: ReqLike = { nextUrl: { pathname }, url: `https://example.com${pathname}`, auth: null };
 
-		const result = middlewareHandler(req);
+			const result = middlewareHandler(req);
 
-		expect(NextResponse.next).toHaveBeenCalled();
-		expect(result).toBe(NEXT_NEXT_SENTINEL);
-	});
+			expect(NextResponse.next).toHaveBeenCalled();
+			expect(result).toBe(NEXT_NEXT_SENTINEL);
+		},
+	);
 
 	it('redirects /dashboard/settings to edit-profile', () => {
 		const req: ReqLike = {

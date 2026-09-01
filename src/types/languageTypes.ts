@@ -93,6 +93,8 @@ export type TranslationDictionary = {
     allStores: string;
     storesList: string;
     newStore: string;
+    installPosPrinter: string;
+    installPosPrinterHelp: string;
     editStore: string;
     storeDetails: string;
     backToStores: string;

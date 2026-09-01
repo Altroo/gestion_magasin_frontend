@@ -93,6 +93,8 @@ export const en: TranslationDictionary = {
     allStores: 'All stores',
     storesList: 'Stores list',
     newStore: 'New store',
+    installPosPrinter: 'Install POS printer',
+    installPosPrinterHelp: 'Run once on the Windows checkout after installing the POS-80 driver and Google Chrome.',
     editStore: 'Edit store',
     storeDetails: 'Store details',
     backToStores: 'Back to stores',

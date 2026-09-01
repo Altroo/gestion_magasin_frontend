@@ -2,6 +2,8 @@ import { auth } from '@/auth';
 import { NextResponse } from 'next/server';
 
 const PUBLIC_PATHS = [
+	'/downloads/Installer-Caisse.cmd',
+	'/downloads/launch-caisse.ps1',
 	'/login',
 	'/reset-password',
 	'/reset-password/enter-code',
