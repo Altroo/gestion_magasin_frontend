@@ -14,7 +14,7 @@ $caisseRoot = Join-Path $env:LOCALAPPDATA 'GestionMagasinPOS'
 $printerNamePath = Join-Path $caisseRoot 'printer-name.txt'
 $launcherPath = Join-Path $caisseRoot 'launch-caisse.ps1'
 $launcherUri = 'https://gestion-magasin.elbouazzatiholding.ma/downloads/launch-caisse.ps1'
-$launcherSha256 = 'cd126108f3506333be8801e6bdb023a3e7db93710e4a530fcba067950638bc47'
+$launcherSha256 = '2608446c02d5b2fb5f75f25f9dcb4353da4c39f7b642dd30719b438cf6bbb8a0'
 $printerPattern = 'WDLink|WD8260|POSPrinter|POS[- ]?80'
 $temporaryPaths = [System.Collections.Generic.List[string]]::new()
 
@@ -74,14 +74,6 @@ try {
 
     $printer = $matchingPrinters[0]
     Set-AndConfirmDefaultPrinter -Printer $printer
-
-    $chromePolicyPath = 'HKCU:\Software\Policies\Google\Chrome'
-    New-Item -Path $chromePolicyPath -Force | Out-Null
-    New-ItemProperty -Path $chromePolicyPath -Name 'PrintPreviewUseSystemDefaultPrinter' -PropertyType DWord -Value 1 -Force | Out-Null
-    $policyValue = (Get-ItemProperty -Path $chromePolicyPath -Name 'PrintPreviewUseSystemDefaultPrinter').PrintPreviewUseSystemDefaultPrinter
-    if ([int]$policyValue -ne 1) {
-        throw "La strategie Chrome imposant l'imprimante Windows par defaut n'a pas pu etre activee."
-    }
 
     [System.IO.Directory]::CreateDirectory($caisseRoot) | Out-Null
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12

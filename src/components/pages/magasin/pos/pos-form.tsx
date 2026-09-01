@@ -533,14 +533,6 @@ const PosClient = ({ session }: SessionProps) => {
 		return () => window.removeEventListener('keydown', handleScannerKey, true);
 	}, [focusBarcode, scanByCode]);
 
-	const printerStatusLabel =
-		printer.status === 'printing'
-			? t.magasin.printerPrinting
-			: printer.status === 'error'
-				? t.magasin.printerError
-				: t.magasin.printerSystemReady;
-	const printerStatusColor = printer.status === 'error' ? 'error.main' : 'success.main';
-
 	if (areStoresLoading) {
 		return (
 			<NavigationBar title={t.magasin.pos} compact>
@@ -696,10 +688,11 @@ const PosClient = ({ session }: SessionProps) => {
 									'&:last-child': { pb: 1.25 },
 									height: '100%',
 									boxSizing: 'border-box',
-									overflowY: 'auto',
+									overflow: 'hidden',
 								}}
 							>
-								<Stack spacing={1.1} sx={{ minHeight: '100%' }}>
+								<Stack spacing={1} sx={{ height: '100%', minHeight: 0 }}>
+									<Stack spacing={1.1} sx={{ flex: 1, minHeight: 0, overflowY: 'auto', pr: 0.25 }}>
 									<Box sx={{ p: 1.25, borderRadius: 2, bgcolor: 'primary.main', color: 'primary.contrastText' }}>
 										<Typography variant="caption" sx={{ opacity: 0.82, textTransform: 'uppercase', fontWeight: 700 }}>
 											{t.magasin.total}
@@ -769,65 +762,47 @@ const PosClient = ({ session }: SessionProps) => {
 										</Box>
 									</Stack>
 
-									{canPrintReceipt && (
-										<Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1 }}>
-											<Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
-												<Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0 }}>
-													<PrintIcon sx={{ color: printerStatusColor }} />
-													<Box sx={{ minWidth: 0 }}>
-														<Typography noWrap sx={{ fontSize: '0.82rem', fontWeight: 800 }}>
-															{t.magasin.ticketPrinter}
-														</Typography>
-														<Typography noWrap variant="caption" sx={{ color: printerStatusColor }}>
-															{printerStatusLabel}
-														</Typography>
-													</Box>
-												</Stack>
-											</Stack>
-										</Box>
-									)}
+									</Stack>
 
-									<Box sx={{ flex: 1 }} />
-									{canPrintReceipt && lastCompletedSale && (
+									<Stack spacing={1} sx={{ flexShrink: 0, pt: 1, bgcolor: 'background.paper' }}>
+										{canPrintReceipt && lastCompletedSale && (
+											<Button
+												type="button"
+												variant="outlined"
+												startIcon={<ReceiptLongIcon />}
+												disabled={!printer.isReady}
+												onClick={() => void printTicket(lastCompletedSale.sale, lastCompletedSale.store)}
+												sx={actionButtonSx}
+											>
+												{t.magasin.reprintLastTicket}
+											</Button>
+										)}
+										{canPrintReceipt && lastWholesaleSaleId && (
+											<Button
+												type="button"
+												variant="text"
+												startIcon={<PrintIcon />}
+												onClick={() => void handlePrintFacture()}
+												sx={actionButtonSx}
+											>
+												{t.magasin.printFacture}
+											</Button>
+										)}
 										<Button
 											type="button"
-											variant="outlined"
-											startIcon={<ReceiptLongIcon />}
-											disabled={!printer.isReady}
-											onClick={() => void printTicket(lastCompletedSale.sale, lastCompletedSale.store)}
-											sx={actionButtonSx}
+											variant="contained"
+											startIcon={canPrintReceipt && printer.autoPrint ? <PrintIcon /> : <PointOfSaleIcon />}
+											disabled={!cart.length || !effectivePaymentModeId || createState.isLoading || syncState.isLoading}
+											onClick={() => void confirmSale()}
+											sx={{
+												...actionButtonSx,
+												minHeight: 72,
+												fontSize: '1.1rem',
+											}}
 										>
-											{t.magasin.reprintLastTicket}
+											{canPrintReceipt && printer.autoPrint ? t.magasin.confirmAndPrint : t.magasin.confirmSale}
 										</Button>
-									)}
-									{canPrintReceipt && lastWholesaleSaleId && (
-										<Button
-											type="button"
-											variant="text"
-											startIcon={<PrintIcon />}
-											onClick={() => void handlePrintFacture()}
-											sx={actionButtonSx}
-										>
-											{t.magasin.printFacture}
-										</Button>
-									)}
-									<Button
-										type="button"
-										variant="contained"
-										startIcon={canPrintReceipt && printer.autoPrint ? <PrintIcon /> : <PointOfSaleIcon />}
-										disabled={!cart.length || !effectivePaymentModeId || createState.isLoading || syncState.isLoading}
-										onClick={() => void confirmSale()}
-										sx={{
-											...actionButtonSx,
-											minHeight: 72,
-											fontSize: '1.1rem',
-											position: 'sticky',
-											bottom: 0,
-											zIndex: 1,
-										}}
-									>
-										{canPrintReceipt && printer.autoPrint ? t.magasin.confirmAndPrint : t.magasin.confirmSale}
-									</Button>
+									</Stack>
 								</Stack>
 							</MagasinSectionCard>
 						</Box>

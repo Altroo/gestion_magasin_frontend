@@ -57,6 +57,7 @@ try {
         "--user-data-dir=`"$profileDirectory`"",
         '--kiosk',
         '--kiosk-printing',
+        '--use-system-default-printer',
         '--no-first-run',
         "`"$caisseUrl`""
     )
