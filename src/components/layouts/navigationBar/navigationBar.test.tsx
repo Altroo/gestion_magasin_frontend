@@ -172,6 +172,7 @@ describe('NavigationBar', () => {
 			</NavigationBar>,
 		);
 		expect(screen.queryByText('Utilisateurs')).not.toBeInTheDocument();
+		expect(screen.queryByRole('link', { name: "Installer l'imprimante caisse" })).not.toBeInTheDocument();
 	});
 
 	it('shows only caisse and personal settings for a vendeur', () => {
@@ -201,6 +202,9 @@ describe('NavigationBar', () => {
 		expect(screen.queryByText('Ventes')).not.toBeInTheDocument();
 		expect(screen.queryByText('Notifications')).not.toBeInTheDocument();
 		expect(screen.queryByText('Administration')).not.toBeInTheDocument();
+		const installerLink = screen.getByRole('link', { name: "Installer l'imprimante caisse" });
+		expect(installerLink).toHaveAttribute('href', '/downloads/Installer-Caisse.cmd');
+		expect(installerLink).toHaveAttribute('download');
 	});
 
 	it('shows only pointage and account settings navigation for pointage-only users', () => {

@@ -69,7 +69,7 @@ The ticket uses a compact 68 mm layout on 80 mm paper. On the Windows caisse mac
 1. Install Google Chrome.
 2. Install the **POSPrinter WDLink WD8260** driver. The device must appear under **Printers & scanners**, not only Device Manager.
 3. Select 80 mm roll paper in its printing preferences and print a Windows test page.
-4. On the cashier's Windows account, sign in to Gestion Magasin as an application administrator. Open **Liste des magasins**, click **Installer l'imprimante caisse**, then double-click the downloaded `Installer-Caisse.cmd` normally (not **Run as administrator**).
+4. On the cashier's Windows account, sign in as the **Vendeur**. Tap the information icon beside the notification area, then double-click the downloaded `Installer-Caisse.cmd` normally (not **Run as administrator**).
 
 The installer saves the exact WD8260/POS-80 printer, adds a **Caisse** shortcut to the desktop, and opens a dedicated Chrome profile. Every use of that shortcut reselects the saved printer before starting Chrome with silent kiosk printing. The seller signs in once, then tickets print without preview or “Save as PDF.”
 

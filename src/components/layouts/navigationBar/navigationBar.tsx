@@ -35,6 +35,7 @@ import {
 	DoneAll as DoneAllIcon,
 	Domain as DomainIcon,
 	ExpandMore as ExpandMoreIcon,
+	InfoOutlined as InfoOutlinedIcon,
 	Logout as LogoutIcon,
 	Menu as MenuIcon,
 	MoreVert as MoreVertIcon,
@@ -464,6 +465,20 @@ const NavigationBar = (props: Props) => {
 								{!loading && session && (
 									<>
 										<Desktop>
+											{storeMembershipsLoaded && vendeurOnly && (
+												<Tooltip describeChild title={t.magasin.installPosPrinterHelp}>
+													<IconButton
+														component="a"
+														href="/downloads/Installer-Caisse.cmd"
+														download
+														color="inherit"
+														aria-label={t.magasin.installPosPrinter}
+														sx={{ width: 44, height: 44 }}
+													>
+														<InfoOutlinedIcon />
+													</IconButton>
+												</Tooltip>
+											)}
 											{!pointage_only && !vendeurOnly && (
 												<IconButton color="inherit" onClick={handleNotifOpen} aria-label={t.navigation.notifications}>
 													<Badge badgeContent={unreadCount} color="primary" max={99}>
@@ -512,6 +527,19 @@ const NavigationBar = (props: Props) => {
 												anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
 												transformOrigin={{ vertical: 'top', horizontal: 'right' }}
 											>
+												{storeMembershipsLoaded && vendeurOnly && (
+													<MenuItem
+														component="a"
+														href="/downloads/Installer-Caisse.cmd"
+														download
+														onClick={() => setMobileMenuAnchor(null)}
+													>
+														<MenuListItemIcon>
+															<InfoOutlinedIcon fontSize="small" />
+														</MenuListItemIcon>
+														<MenuListItemText>{t.magasin.installPosPrinter}</MenuListItemText>
+													</MenuItem>
+												)}
 												{!pointage_only && !vendeurOnly && (
 													<MenuItem
 														onClick={() => {

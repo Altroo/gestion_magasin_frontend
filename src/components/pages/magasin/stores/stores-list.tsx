@@ -9,7 +9,6 @@ import {
 	CheckCircle as CheckCircleIcon,
 	Close as CloseIcon,
 	Delete as DeleteIcon,
-	Download as DownloadIcon,
 	Edit as EditIcon,
 	Visibility as VisibilityIcon,
 } from '@mui/icons-material';
@@ -231,17 +230,6 @@ const StoresListClient = ({ session }: SessionProps) => {
 							>
 								{t.magasin.newStore}
 							</Button>
-							<DarkTooltip describeChild title={t.magasin.installPosPrinterHelp}>
-								<Button
-									component="a"
-									href="/downloads/Installer-Caisse.cmd"
-									download
-									variant="outlined"
-									startIcon={<DownloadIcon fontSize="small" />}
-								>
-									{t.magasin.installPosPrinter}
-								</Button>
-							</DarkTooltip>
 							{selectedIds.length > 0 && (
 								<Button
 									variant="outlined"
