@@ -18,9 +18,13 @@ import {
 } from '@mui/material';
 import {
 	Backspace as BackspaceIcon,
+	AccountBalance as TransferIcon,
 	Clear as ClearIcon,
 	CreditCard as CreditCardIcon,
 	Dialpad as DialpadIcon,
+	MoreHoriz as OtherIcon,
+	Payments as CashIcon,
+	PersonOutlined as CreditIcon,
 	PointOfSale as PointOfSaleIcon,
 	Print as PrintIcon,
 	QrCodeScanner as QrCodeScannerIcon,
@@ -46,7 +50,7 @@ import {
 } from '@/store/services/magasin';
 import { fetchFileBlob } from '@/utils/apiHelpers';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
-import { setFormikAutoErrors } from '@/utils/helpers';
+import { extractApiErrorMessage, setFormikAutoErrors } from '@/utils/helpers';
 import { posScanSchema } from '@/utils/formValidationSchemas';
 import { textInputTheme } from '@/utils/themes';
 import type { SessionProps } from '@/types/_initTypes';
@@ -106,6 +110,26 @@ const actionButtonSx = {
 const money = (value: number | string) => `${Number(value || 0).toFixed(2)} Dhs`;
 const productSalePrice = (product: ProductType, saleType: SaleMode) =>
 	Number((saleType === 'wholesale' ? product.wholesale_price : product.counter_price) || 0);
+const productAvailableStock = (product: ProductType) => {
+	const stock = Number(product.available_stock ?? 0);
+	return Number.isFinite(stock) ? Math.max(0, stock) : 0;
+};
+const stockQuantity = (value: number) =>
+	Number.isInteger(value) ? String(value) : value.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+const paymentModeIcon = (code: string) => {
+	switch (code) {
+		case 'cash':
+			return <CashIcon />;
+		case 'card':
+			return <CreditCardIcon />;
+		case 'credit':
+			return <CreditIcon />;
+		case 'transfer':
+			return <TransferIcon />;
+		default:
+			return <OtherIcon />;
+	}
+};
 
 const readOfflineQueue = (): SaleCreatePayload[] => {
 	if (typeof window === 'undefined') {
@@ -186,13 +210,16 @@ const PosClient = ({ session }: SessionProps) => {
 
 	const addProduct = useCallback(
 		(product: ProductType) => {
+			const availableStock = productAvailableStock(product);
 			setCart((current) => {
 				const existing = current.find((line) => line.type === 'product' && line.product.id === product.id);
 				if (existing) {
+					if (existing.quantity + 1 > availableStock) return current;
 					return current.map((line) =>
 						line.type === 'product' && line.product.id === product.id ? { ...line, quantity: line.quantity + 1 } : line,
 					);
 				}
+				if (availableStock < 1) return current;
 				return [
 					...current,
 					{
@@ -229,6 +256,18 @@ const PosClient = ({ session }: SessionProps) => {
 			}
 			try {
 				const product = await scanProduct({ store: storeId, code: normalizedCode }).unwrap();
+				const availableStock = productAvailableStock(product);
+				const cartQuantity =
+					cart.find((line) => line.type === 'product' && line.product.id === product.id)?.quantity ?? 0;
+				if (availableStock < 1 || cartQuantity + 1 > availableStock) {
+					const message =
+						availableStock < 1
+							? t.magasin.productOutOfStock(product.name)
+							: t.magasin.stockLimitReached(product.name, stockQuantity(availableStock));
+					setFieldError?.('barcode', message);
+					onError(message);
+					return false;
+				}
 				addProduct(product);
 				return true;
 			} catch (e) {
@@ -244,7 +283,7 @@ const PosClient = ({ session }: SessionProps) => {
 				return false;
 			}
 		},
-		[addProduct, onError, scanProduct, storeId, t.errors.genericError],
+		[addProduct, cart, onError, scanProduct, storeId, t.errors.genericError, t.magasin],
 	);
 
 	const scanFormik = useFormik<PosScanFormValues>({
@@ -287,15 +326,26 @@ const PosClient = ({ session }: SessionProps) => {
 
 	const updateQuantity = useCallback(
 		(targetKey: string, delta: number) => {
+			const target = cart.find((line) => lineKey(line) === targetKey);
+			if (target?.type === 'product' && delta > 0) {
+				const availableStock = productAvailableStock(target.product);
+				if (target.quantity + delta > availableStock) {
+					onError(t.magasin.stockLimitReached(target.product.name, stockQuantity(availableStock)));
+					return;
+				}
+			}
 			setCart((current) =>
 				current
-					.map((line) =>
-						lineKey(line) === targetKey ? { ...line, quantity: Math.max(0, line.quantity + delta) } : line,
-					)
+					.map((line) => {
+						if (lineKey(line) !== targetKey) return line;
+						const nextQuantity = Math.max(0, line.quantity + delta);
+						if (line.type === 'product' && nextQuantity > productAvailableStock(line.product)) return line;
+						return { ...line, quantity: nextQuantity };
+					})
 					.filter((line) => line.quantity > 0),
 			);
 		},
-		[lineKey],
+		[cart, lineKey, onError, t.magasin],
 	);
 
 	const payload = (): SaleCreatePayload | null => {
@@ -395,7 +445,7 @@ const PosClient = ({ session }: SessionProps) => {
 				queueOfflineSale(salePayload);
 				setCart([]);
 			} else {
-				onError(t.errors.genericError);
+				onError(extractApiErrorMessage(error, t.errors.genericError));
 			}
 		} finally {
 			saleInFlightRef.current = false;
@@ -508,7 +558,11 @@ const PosClient = ({ session }: SessionProps) => {
 					<StoreTabs
 						selectedStoreId={storeId}
 						onChange={(nextStoreId) => {
-							if (!saleInFlightRef.current) setSelectedStoreId(nextStoreId);
+							if (!saleInFlightRef.current) {
+								setSelectedStoreId(nextStoreId);
+								setCart([]);
+								setLastWholesaleSaleId(null);
+							}
 						}}
 						token={token}
 						compact
@@ -557,7 +611,6 @@ const PosClient = ({ session }: SessionProps) => {
 													scanFormik.handleChange(event);
 												}}
 												onBlur={scanFormik.handleBlur}
-												onClick={() => setNumericKeypadOpen(true)}
 												onKeyDown={(event) => {
 													if (event.key === 'Enter' || event.key === 'Tab') {
 														event.preventDefault();
@@ -589,12 +642,13 @@ const PosClient = ({ session }: SessionProps) => {
 											<Button
 												type="button"
 												variant="contained"
+												startIcon={<DialpadIcon />}
 												onClick={() => setNumericKeypadOpen(true)}
 												disabled={!storeId || scanState.isFetching}
 												aria-label={t.magasin.numericKeypad}
-												sx={{ ...actionButtonSx, width: 80, minWidth: 80, height: 76, px: 0 }}
+												sx={{ ...actionButtonSx, width: 120, minWidth: 120, height: 76, px: 1.5 }}
 											>
-												<DialpadIcon />
+												{t.magasin.manualBarcode}
 											</Button>
 										</Box>
 									</Box>
@@ -686,13 +740,28 @@ const PosClient = ({ session }: SessionProps) => {
 													key={mode.id}
 													type="button"
 													variant={effectivePaymentModeId === String(mode.id) ? 'contained' : 'outlined'}
-													startIcon={<CreditCardIcon />}
+													startIcon={paymentModeIcon(mode.code)}
 													onClick={() => {
 														setSelectedPaymentModeId(String(mode.id));
 														focusBarcode();
 													}}
 													disabled={arePaymentModesLoading || createState.isLoading}
-													sx={{ ...actionButtonSx, minHeight: 64, px: 0.75, fontSize: '1rem' }}
+													sx={{
+														...actionButtonSx,
+														minHeight: 64,
+														px: 1.5,
+														fontSize: '0.95rem',
+														justifyContent: 'flex-start',
+														textAlign: 'left',
+														color: effectivePaymentModeId === String(mode.id) ? undefined : 'text.primary',
+														'& .MuiButton-startIcon': {
+															m: 0,
+															mr: 1.25,
+															width: 26,
+															justifyContent: 'center',
+															color: effectivePaymentModeId === String(mode.id) ? 'inherit' : 'primary.main',
+														},
+													}}
 												>
 													{mode.name}
 												</Button>
@@ -792,6 +861,11 @@ const PosClient = ({ session }: SessionProps) => {
 						>
 							{scanFormik.values.barcode || '—'}
 						</Box>
+						{hasAttemptedScan && scanFormik.errors.barcode ? (
+							<Typography color="error.main" role="alert" sx={{ mb: 1.5, textAlign: 'center', fontWeight: 700 }}>
+								{scanFormik.errors.barcode}
+							</Typography>
+						) : null}
 						<Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
 							{['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
 								<Button

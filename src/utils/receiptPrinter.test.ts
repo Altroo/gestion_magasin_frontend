@@ -71,7 +71,7 @@ describe('receiptPrinter', () => {
 		expect(Array.from(bytes.slice(-4))).toEqual([0x1d, 0x56, 0x41, 0x00]);
 	});
 
-	it('builds an 80 mm Windows print ticket with the complete sale and logo', () => {
+	it('builds a compact 80 mm Windows print ticket with the complete sale and logo', () => {
 		const html = buildBrowserReceiptHtml(
 			sale,
 			{
@@ -84,6 +84,7 @@ describe('receiptPrinter', () => {
 
 		expect(html).toContain('@page { size: auto;');
 		expect(html).toContain('html, body { width: 80mm;');
+		expect(html).toContain('.receipt { width: 68mm;');
 		expect(html).toContain('data:image/png;base64,logo');
 		expect(html).toContain('Ticket #42');
 		expect(html).toContain('Produit mentholé avec un nom très long');

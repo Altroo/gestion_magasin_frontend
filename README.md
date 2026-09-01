@@ -62,6 +62,16 @@ bun run lint
 bun run build
 ```
 
+## Windows POS-80 Setup
+
+The ticket uses a compact 68 mm layout on 80 mm paper. On the Windows caisse machine:
+
+1. Install the **POSPrinter WDLink WD8260** driver. The device must appear under **Printers & scanners**, not only Device Manager.
+2. Select 80 mm roll paper in its printing preferences and print a Windows test page.
+3. Create a desktop shortcut that runs `deploy/windows/launch-caisse.ps1` with PowerShell.
+
+The launcher sets the detected WD8260/POS-80 queue as the Windows default printer, then starts a dedicated Chrome caisse profile with `--kiosk --kiosk-printing`. It does not change browser policies. The seller signs in once, then all tickets print to the POS-80 without preview or “Save as PDF.”
+
 ## Portfolio Note
 
 The repository is public for portfolio review. Screenshots are redacted, and sensitive production values are intentionally hidden.

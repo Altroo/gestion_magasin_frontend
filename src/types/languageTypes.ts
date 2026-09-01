@@ -158,6 +158,9 @@ export type TranslationDictionary = {
     confirmAndPrint: string;
     emptyCart: string;
     scanFirstProduct: string;
+    productOutOfStock: (name: string) => string;
+    stockLimitReached: (name: string, quantity: string) => string;
+    manualBarcode: string;
     decreaseQuantity: string;
     increaseQuantity: string;
     saleConfirmed: string;

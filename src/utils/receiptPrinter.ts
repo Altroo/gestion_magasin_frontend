@@ -70,18 +70,18 @@ export const buildBrowserReceiptHtml = (
 			@page { size: auto; margin: 0; }
 			* { box-sizing: border-box; }
 			html, body { width: 80mm; margin: 0; padding: 0; background: #fff; color: #000; }
-			body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; line-height: 1.3; }
-			.receipt { width: 72mm; margin: 0 auto; padding: 3mm 0 7mm; }
+			body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; line-height: 1.25; }
+			.receipt { width: 68mm; margin: 0 auto; padding: 2mm 0 5mm; }
 			.header { text-align: center; }
-			.logo { display: block; max-width: 48mm; max-height: 22mm; object-fit: contain; margin: 0 auto 2mm; }
-			.store-name { font-size: 17px; font-weight: 800; }
-			.separator { border-top: 1px dashed #000; margin: 2mm 0; }
+			.logo { display: block; max-width: 40mm; max-height: 18mm; object-fit: contain; margin: 0 auto 1.5mm; }
+			.store-name { font-size: 15px; font-weight: 800; }
+			.separator { border-top: 1px dashed #000; margin: 1.5mm 0; }
 			.row { display: flex; justify-content: space-between; align-items: baseline; gap: 3mm; }
 			.row > :last-child { text-align: right; white-space: nowrap; }
-			.item { margin-bottom: 1.5mm; }
+			.item { margin-bottom: 1mm; }
 			.item-name { font-weight: 700; overflow-wrap: anywhere; }
-			.total { font-size: 17px; font-weight: 900; margin: 1.5mm 0; }
-			.footer { text-align: center; margin-top: 3mm; font-weight: 700; }
+			.total { font-size: 16px; font-weight: 900; margin: 1mm 0; }
+			.footer { text-align: center; margin-top: 2mm; font-weight: 700; }
 		</style>
 	</head>
 	<body>
