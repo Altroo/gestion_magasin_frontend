@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import NavigationBar from './navigationBar';
 import '@testing-library/jest-dom';
@@ -25,6 +25,7 @@ jest.mock('@mui/material', () => {
 });
 
 const mockCookiesDeleter = jest.fn();
+const mockFetch = jest.fn();
 jest.mock('@/utils/apiHelpers', () => ({
 	cookiesDeleter: (...args: unknown[]) => mockCookiesDeleter(...(args as unknown[])),
 }));
@@ -82,6 +83,8 @@ describe('NavigationBar', () => {
 
 	beforeEach(() => {
 		jest.clearAllMocks();
+		mockFetch.mockResolvedValue({ ok: true });
+		Object.defineProperty(global, 'fetch', { configurable: true, writable: true, value: mockFetch });
 		document.cookie = `${CUSTOMER_DISPLAY_COOKIE}=; Max-Age=0; Path=/`;
 		mockPathname = '/dashboard';
 		mockProfile = {
@@ -99,7 +102,7 @@ describe('NavigationBar', () => {
 		mockIsMobile = false;
 	});
 
-	it('shows tactile window controls only in the installed caisse profile', () => {
+	it('shows tactile window controls and confirms before closing the installed caisse', async () => {
 		document.cookie = `${CUSTOMER_DISPLAY_COOKIE}=${CUSTOMER_DISPLAY_COOKIE_VALUE}; Path=/`;
 
 		render(
@@ -109,7 +112,18 @@ describe('NavigationBar', () => {
 		);
 
 		expect(screen.getByRole('button', { name: 'Réduire la caisse' })).toBeInTheDocument();
-		expect(screen.getByRole('button', { name: 'Fermer la caisse' })).toBeInTheDocument();
+		await userEvent.click(screen.getByRole('button', { name: 'Fermer la caisse' }));
+		expect(mockFetch).not.toHaveBeenCalled();
+		expect(screen.getByRole('dialog')).toBeInTheDocument();
+		expect(screen.getByText("Voulez-vous fermer l'application Caisse ?")).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Annuler' })).toBeInTheDocument();
+		await userEvent.click(screen.getByRole('button', { name: 'Fermer' }));
+		await waitFor(() =>
+			expect(mockFetch).toHaveBeenCalledWith(
+				'http://127.0.0.1:37821/window/close',
+				expect.objectContaining({ method: 'POST', body: 'close' }),
+			),
+		);
 	});
 
 	it('renders the title passed as prop', () => {

@@ -97,6 +97,7 @@ export const en: TranslationDictionary = {
     installPosPrinterHelp: 'Run once on the Windows checkout after installing the POS-80 driver and Google Chrome.',
     minimizeCaisse: 'Minimize POS',
     closeCaisse: 'Close POS',
+    closeCaisseConfirm: 'Do you want to close the POS app?',
     editStore: 'Edit store',
     storeDetails: 'Store details',
     backToStores: 'Back to stores',

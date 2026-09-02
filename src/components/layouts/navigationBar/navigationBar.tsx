@@ -84,6 +84,7 @@ import { navigationBarTheme } from '@/utils/themes';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Desktop, TabletAndMobile } from '@/utils/clientHelpers';
+import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import {
 	useGetNotificationsQuery,
 	useGetUnreadNotificationCountQuery,
@@ -305,6 +306,7 @@ const NavigationBar = (props: Props) => {
 	const [loadingMore, setLoadingMore] = useState(false);
 	const [caisseDeviceConfigured, setCaisseDeviceConfigured] = useState(false);
 	const [windowActionPending, setWindowActionPending] = useState<CaisseWindowAction | null>(null);
+	const [closeConfirmationOpen, setCloseConfirmationOpen] = useState(false);
 
 	const loading = status === 'loading';
 
@@ -381,6 +383,7 @@ const NavigationBar = (props: Props) => {
 
 	const handleCaisseWindowAction = async (action: CaisseWindowAction) => {
 		if (windowActionPending) return;
+		setCloseConfirmationOpen(false);
 		setWindowActionPending(action);
 		await requestCaisseWindowAction(action);
 		setWindowActionPending(null);
@@ -638,7 +641,7 @@ const NavigationBar = (props: Props) => {
 														color="inherit"
 														aria-label={t.magasin.closeCaisse}
 														disabled={windowActionPending !== null}
-														onClick={() => void handleCaisseWindowAction('close')}
+														onClick={() => setCloseConfirmationOpen(true)}
 														sx={{
 															width: 48,
 															height: 44,
@@ -860,6 +863,34 @@ const NavigationBar = (props: Props) => {
 					)}
 				</Box>
 			</Popover>
+			{closeConfirmationOpen && (
+				<ActionModals
+					title={t.magasin.closeCaisse}
+					body={t.magasin.closeCaisseConfirm}
+					titleIcon={<CloseIcon />}
+					titleIconColor="#D32F2F"
+					onClose={() => {
+						if (!windowActionPending) setCloseConfirmationOpen(false);
+					}}
+					actions={[
+						{
+							text: t.common.cancel,
+							active: false,
+							onClick: () => setCloseConfirmationOpen(false),
+							color: '#6B6B6B',
+							disabled: windowActionPending !== null,
+						},
+						{
+							text: t.common.close,
+							active: true,
+							onClick: () => void handleCaisseWindowAction('close'),
+							icon: <CloseIcon />,
+							color: '#D32F2F',
+							disabled: windowActionPending !== null,
+						},
+					]}
+				/>
+			)}
 		</ThemeProvider>
 	);
 };

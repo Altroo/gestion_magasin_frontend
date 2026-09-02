@@ -97,6 +97,7 @@ export const fr: TranslationDictionary = {
     installPosPrinterHelp: "À utiliser une seule fois sur la caisse Windows, après l'installation du pilote POS-80 et de Google Chrome.",
     minimizeCaisse: 'Réduire la caisse',
     closeCaisse: 'Fermer la caisse',
+    closeCaisseConfirm: "Voulez-vous fermer l'application Caisse ?",
     editStore: 'Modifier le magasin',
     storeDetails: 'Détails du magasin',
     backToStores: 'Retour aux magasins',
