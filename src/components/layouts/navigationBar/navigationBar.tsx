@@ -33,12 +33,14 @@ import {
 } from '@mui/material';
 import {
 	DoneAll as DoneAllIcon,
+	Close as CloseIcon,
 	Domain as DomainIcon,
 	ExpandMore as ExpandMoreIcon,
 	InfoOutlined as InfoOutlinedIcon,
 	Logout as LogoutIcon,
 	Menu as MenuIcon,
 	MoreVert as MoreVertIcon,
+	Remove as MinimizeIcon,
 	Notifications as NotificationsIcon,
 	PendingActions as PendingActionsIcon,
 	People as PeopleIcon,
@@ -92,6 +94,7 @@ import { useGetMyStoresQuery } from '@/store/services/magasin';
 import { setUnreadCount } from '@/store/slices/notificationSlice';
 import type { NotificationType } from '@/types/gestionMagasinTypes';
 import { isVendeurOnly } from '@/utils/vendeurAccess';
+import { isCaisseDeviceConfigured, requestCaisseWindowAction, type CaisseWindowAction } from '@/utils/customerDisplay';
 
 type NavigationItem = {
 	title: string;
@@ -300,8 +303,14 @@ const NavigationBar = (props: Props) => {
 	const [notifPage, setNotifPage] = useState(1);
 	const [hasMore, setHasMore] = useState(false);
 	const [loadingMore, setLoadingMore] = useState(false);
+	const [caisseDeviceConfigured, setCaisseDeviceConfigured] = useState(false);
+	const [windowActionPending, setWindowActionPending] = useState<CaisseWindowAction | null>(null);
 
 	const loading = status === 'loading';
+
+	useEffect(() => {
+		setCaisseDeviceConfigured(isCaisseDeviceConfigured());
+	}, []);
 
 	useEffect(() => {
 		if (firstPage) {
@@ -368,6 +377,13 @@ const NavigationBar = (props: Props) => {
 		if (isMobile || props.compact) {
 			setOpen(!open);
 		}
+	};
+
+	const handleCaisseWindowAction = async (action: CaisseWindowAction) => {
+		if (windowActionPending) return;
+		setWindowActionPending(action);
+		await requestCaisseWindowAction(action);
+		setWindowActionPending(null);
 	};
 
 	const pathname = usePathname();
@@ -604,6 +620,37 @@ const NavigationBar = (props: Props) => {
 												</MenuItem>
 											</Menu>
 										</TabletAndMobile>
+										{caisseDeviceConfigured && (
+											<Stack direction="row" spacing={0}>
+												<Tooltip describeChild title={t.magasin.minimizeCaisse}>
+													<IconButton
+														color="inherit"
+														aria-label={t.magasin.minimizeCaisse}
+														disabled={windowActionPending !== null}
+														onClick={() => void handleCaisseWindowAction('minimize')}
+														sx={{ width: 48, height: 44, borderRadius: 0 }}
+													>
+														<MinimizeIcon />
+													</IconButton>
+												</Tooltip>
+												<Tooltip describeChild title={t.magasin.closeCaisse}>
+													<IconButton
+														color="inherit"
+														aria-label={t.magasin.closeCaisse}
+														disabled={windowActionPending !== null}
+														onClick={() => void handleCaisseWindowAction('close')}
+														sx={{
+															width: 48,
+															height: 44,
+															borderRadius: 0,
+															'&:hover': { backgroundColor: 'error.main' },
+														}}
+													>
+														<CloseIcon />
+													</IconButton>
+												</Tooltip>
+											</Stack>
+										)}
 									</>
 								)}
 							</Stack>

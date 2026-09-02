@@ -95,6 +95,8 @@ export const fr: TranslationDictionary = {
     newStore: 'Nouveau magasin',
     installPosPrinter: "Installer l'imprimante caisse",
     installPosPrinterHelp: "À utiliser une seule fois sur la caisse Windows, après l'installation du pilote POS-80 et de Google Chrome.",
+    minimizeCaisse: 'Réduire la caisse',
+    closeCaisse: 'Fermer la caisse',
     editStore: 'Modifier le magasin',
     storeDetails: 'Détails du magasin',
     backToStores: 'Retour aux magasins',

@@ -50,6 +50,7 @@ import {
 	useSyncOfflineSalesMutation,
 } from '@/store/services/magasin';
 import { fetchFileBlob } from '@/utils/apiHelpers';
+import { openCashDrawer } from '@/utils/customerDisplay';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
 import { extractApiErrorMessage, setFormikAutoErrors } from '@/utils/helpers';
 import { posScanSchema } from '@/utils/formValidationSchemas';
@@ -197,6 +198,7 @@ const PosClient = ({ session }: SessionProps) => {
 		[paymentModeOptions],
 	);
 	const effectivePaymentModeId = selectedPaymentModeId || (defaultPaymentMode ? String(defaultPaymentMode.id) : '');
+	const effectivePaymentMode = paymentModeOptions.find((mode) => String(mode.id) === effectivePaymentModeId);
 	const selectedStoreMembership = memberships.find((membership) => membership.store.id === storeId);
 	const isSelectedStoreVendeur = selectedStoreMembership?.role.code === 'vendeur';
 	const canPrintReceipt = permissions.can_print || isSelectedStoreVendeur;
@@ -440,6 +442,9 @@ const PosClient = ({ session }: SessionProps) => {
 			onSuccess(t.magasin.saleConfirmed);
 			if (canPrintReceipt && printer.autoPrint) {
 				await printTicket(sale, receiptStore, true);
+			}
+			if (effectivePaymentMode?.code === 'cash') {
+				void openCashDrawer(sale.id);
 			}
 		} catch (error) {
 			setLastWholesaleSaleId(null);

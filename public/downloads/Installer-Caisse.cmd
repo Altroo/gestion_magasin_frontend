@@ -17,7 +17,7 @@ $launcherUri = 'https://gestion-magasin.elbouazzatiholding.ma/downloads/launch-c
 $launcherSha256 = '17656c8f767699e621035508295b781e106b0108d5882e6cd0f2771936070c33'
 $displayBridgePath = Join-Path $caisseRoot 'customer-display.ps1'
 $displayBridgeUri = 'https://gestion-magasin.elbouazzatiholding.ma/downloads/customer-display.ps1'
-$displayBridgeSha256 = '45243e08341fcb23337257944c915ab55c0dd5a8e4ffac03d86e37166fe3850e'
+$displayBridgeSha256 = 'f14eba5ca7f489d4b4fff852d1e7b27f1965eaa86ca747fb26290634cb2f4c6e'
 $printerPattern = 'WDLink|WD8260|POSPrinter|POS[- ]?80'
 $temporaryPaths = [System.Collections.Generic.List[string]]::new()
 
@@ -132,7 +132,7 @@ try {
     Install-FileAtomically -Source $shortcutTemporaryPath -Destination $shortcutPath
     $temporaryPaths.Remove($shortcutTemporaryPath) | Out-Null
 
-    Show-CaisseMessage -Message "Installation terminee.`n`nImprimante : $($printer.Name)`nEcran client : COM2`nLe raccourci 'Caisse' a ete ajoute au Bureau.`n`nLa caisse va maintenant s'ouvrir. Si Chrome demande l'acces aux appareils locaux, cliquez sur 'Autoriser' une seule fois. Utilisez toujours ce raccourci et non l'ancienne application Chrome."
+    Show-CaisseMessage -Message "Installation terminee.`n`nImprimante : $($printer.Name)`nEcran client : COM2`nTiroir-caisse : ouverture automatique pour les paiements en especes`nLe raccourci 'Caisse' a ete ajoute au Bureau.`n`nLa caisse va maintenant s'ouvrir. Si Chrome demande l'acces aux appareils locaux, cliquez sur 'Autoriser' une seule fois. Utilisez toujours ce raccourci et non l'ancienne application Chrome."
     Start-Process -FilePath $powerShellPath -ArgumentList $launcherArguments
     exit 0
 } catch {

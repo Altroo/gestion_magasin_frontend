@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import NavigationBar from './navigationBar';
 import '@testing-library/jest-dom';
 import React from 'react';
+import { CUSTOMER_DISPLAY_COOKIE, CUSTOMER_DISPLAY_COOKIE_VALUE } from '@/utils/customerDisplay';
 
 jest.mock('@/utils/clientHelpers', () => ({
 	Desktop: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
@@ -81,6 +82,7 @@ describe('NavigationBar', () => {
 
 	beforeEach(() => {
 		jest.clearAllMocks();
+		document.cookie = `${CUSTOMER_DISPLAY_COOKIE}=; Max-Age=0; Path=/`;
 		mockPathname = '/dashboard';
 		mockProfile = {
 			avatar_cropped: undefined,
@@ -95,6 +97,19 @@ describe('NavigationBar', () => {
 		mockUseSession.mockImplementation(() => ({ data: {}, status: 'authenticated' }));
 		mockUseGetMyStoresQuery.mockReturnValue({ data: [], isSuccess: true });
 		mockIsMobile = false;
+	});
+
+	it('shows tactile window controls only in the installed caisse profile', () => {
+		document.cookie = `${CUSTOMER_DISPLAY_COOKIE}=${CUSTOMER_DISPLAY_COOKIE_VALUE}; Path=/`;
+
+		render(
+			<NavigationBar title="Caisse">
+				<div />
+			</NavigationBar>,
+		);
+
+		expect(screen.getByRole('button', { name: 'Réduire la caisse' })).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Fermer la caisse' })).toBeInTheDocument();
 	});
 
 	it('renders the title passed as prop', () => {

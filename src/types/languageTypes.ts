@@ -95,6 +95,8 @@ export type TranslationDictionary = {
     newStore: string;
     installPosPrinter: string;
     installPosPrinterHelp: string;
+    minimizeCaisse: string;
+    closeCaisse: string;
     editStore: string;
     storeDetails: string;
     backToStores: string;
