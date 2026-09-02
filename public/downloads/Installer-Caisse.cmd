@@ -32,7 +32,14 @@ function Show-CaisseMessage {
 function Install-FileAtomically {
     param([Parameter(Mandatory = $true)][string] $Source, [Parameter(Mandatory = $true)][string] $Destination)
     if ([System.IO.File]::Exists($Destination)) {
-        [System.IO.File]::Replace($Source, $Destination, $null)
+        $backupPath = "$Destination.$([guid]::NewGuid().ToString('N')).backup"
+        try {
+            [System.IO.File]::Replace($Source, $Destination, $backupPath)
+        } finally {
+            try {
+                if ([System.IO.File]::Exists($backupPath)) { [System.IO.File]::Delete($backupPath) }
+            } catch {}
+        }
     } else {
         [System.IO.File]::Move($Source, $Destination)
     }
