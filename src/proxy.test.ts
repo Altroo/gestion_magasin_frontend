@@ -57,7 +57,13 @@ beforeEach(() => {
 });
 
 describe('auth middleware handler', () => {
-	it.each(['/login', '/downloads/Installer-Caisse.cmd', '/downloads/launch-caisse.ps1'])(
+	it.each([
+		'/login',
+		'/downloads/Installer-Caisse.cmd',
+		'/downloads/customer-display.ps1',
+		'/downloads/launch-caisse.ps1',
+		'/caisse/setup',
+	])(
 		'allows public path %s without redirect',
 		(pathname) => {
 			const req: ReqLike = { nextUrl: { pathname }, url: `https://example.com${pathname}`, auth: null };

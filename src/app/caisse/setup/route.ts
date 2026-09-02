@@ -1,0 +1,18 @@
+import { NextResponse } from 'next/server';
+import { CUSTOMER_DISPLAY_COOKIE, CUSTOMER_DISPLAY_COOKIE_VALUE } from '@/utils/customerDisplay';
+
+const ONE_YEAR_SECONDS = 365 * 24 * 60 * 60;
+
+export const dynamic = 'force-dynamic';
+
+export function GET(request: Request) {
+	const response = NextResponse.redirect(new URL('/dashboard/caise', request.url));
+	response.cookies.set(CUSTOMER_DISPLAY_COOKIE, CUSTOMER_DISPLAY_COOKIE_VALUE, {
+		path: '/',
+		maxAge: ONE_YEAR_SECONDS,
+		httpOnly: false,
+		secure: process.env.NODE_ENV === 'production',
+		sameSite: 'lax',
+	});
+	return response;
+}

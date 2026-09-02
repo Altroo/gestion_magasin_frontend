@@ -14,7 +14,10 @@ $caisseRoot = Join-Path $env:LOCALAPPDATA 'GestionMagasinPOS'
 $printerNamePath = Join-Path $caisseRoot 'printer-name.txt'
 $launcherPath = Join-Path $caisseRoot 'launch-caisse.ps1'
 $launcherUri = 'https://gestion-magasin.elbouazzatiholding.ma/downloads/launch-caisse.ps1'
-$launcherSha256 = '88f345ca12b2e1396583b6370d83afeed8b43f7660cb7e2035216a52d248e943'
+$launcherSha256 = '17656c8f767699e621035508295b781e106b0108d5882e6cd0f2771936070c33'
+$displayBridgePath = Join-Path $caisseRoot 'customer-display.ps1'
+$displayBridgeUri = 'https://gestion-magasin.elbouazzatiholding.ma/downloads/customer-display.ps1'
+$displayBridgeSha256 = '45243e08341fcb23337257944c915ab55c0dd5a8e4ffac03d86e37166fe3850e'
 $printerPattern = 'WDLink|WD8260|POSPrinter|POS[- ]?80'
 $temporaryPaths = [System.Collections.Generic.List[string]]::new()
 
@@ -90,6 +93,15 @@ try {
     Invoke-WebRequest -UseBasicParsing -Uri $launcherUri -OutFile $launcherDownloadPath
     $actualHash = (Get-FileHash -LiteralPath $launcherDownloadPath -Algorithm SHA256).Hash.ToLowerInvariant()
     if ($actualHash -ne $launcherSha256) { throw "Le lanceur telecharge n'est pas authentique (SHA-256 inattendu). Installation annulee." }
+
+    $displayBridgeDownloadPath = Join-Path $caisseRoot ("customer-display.$([guid]::NewGuid().ToString('N')).download")
+    $temporaryPaths.Add($displayBridgeDownloadPath)
+    Invoke-WebRequest -UseBasicParsing -Uri $displayBridgeUri -OutFile $displayBridgeDownloadPath
+    $actualDisplayBridgeHash = (Get-FileHash -LiteralPath $displayBridgeDownloadPath -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($actualDisplayBridgeHash -ne $displayBridgeSha256) { throw "Le programme de l'ecran client telecharge n'est pas authentique (SHA-256 inattendu). Installation annulee." }
+
+    Install-FileAtomically -Source $displayBridgeDownloadPath -Destination $displayBridgePath
+    $temporaryPaths.Remove($displayBridgeDownloadPath) | Out-Null
     Install-FileAtomically -Source $launcherDownloadPath -Destination $launcherPath
     $temporaryPaths.Remove($launcherDownloadPath) | Out-Null
 
@@ -120,7 +132,7 @@ try {
     Install-FileAtomically -Source $shortcutTemporaryPath -Destination $shortcutPath
     $temporaryPaths.Remove($shortcutTemporaryPath) | Out-Null
 
-    Show-CaisseMessage -Message "Installation terminee.`n`nImprimante : $($printer.Name)`nLe raccourci 'Caisse' a ete ajoute au Bureau.`n`nLa caisse va maintenant s'ouvrir. Pour imprimer directement, utilisez toujours ce raccourci et non l'ancienne application Chrome."
+    Show-CaisseMessage -Message "Installation terminee.`n`nImprimante : $($printer.Name)`nEcran client : COM2`nLe raccourci 'Caisse' a ete ajoute au Bureau.`n`nLa caisse va maintenant s'ouvrir. Si Chrome demande l'acces aux appareils locaux, cliquez sur 'Autoriser' une seule fois. Utilisez toujours ce raccourci et non l'ancienne application Chrome."
     Start-Process -FilePath $powerShellPath -ArgumentList $launcherArguments
     exit 0
 } catch {

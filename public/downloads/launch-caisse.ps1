@@ -1,8 +1,9 @@
 $ErrorActionPreference = 'Stop'
 
-$caisseUrl = 'https://gestion-magasin.elbouazzatiholding.ma/dashboard/caise'
+$caisseUrl = 'https://gestion-magasin.elbouazzatiholding.ma/caisse/setup'
 $caisseRoot = Join-Path $env:LOCALAPPDATA 'GestionMagasinPOS'
 $printerNamePath = Join-Path $caisseRoot 'printer-name.txt'
+$displayBridgePath = Join-Path $caisseRoot 'customer-display.ps1'
 $profileDirectory = Join-Path $caisseRoot 'ChromeProfile'
 
 function Show-CaisseError {
@@ -40,6 +41,16 @@ function Get-CaisseChromeProcesses {
     )
 }
 
+function Get-CustomerDisplayProcesses {
+    @(
+        Get-CimInstance -ClassName Win32_Process -Filter "Name = 'powershell.exe'" |
+            Where-Object {
+                $_.CommandLine -and
+                $_.CommandLine.IndexOf($displayBridgePath, [System.StringComparison]::OrdinalIgnoreCase) -ge 0
+            }
+    )
+}
+
 try {
     if (-not $env:LOCALAPPDATA) { throw 'Le dossier LOCALAPPDATA de cet utilisateur est introuvable.' }
     if (-not [System.IO.File]::Exists($printerNamePath)) {
@@ -65,7 +76,12 @@ try {
 
     [System.IO.Directory]::CreateDirectory($profileDirectory) | Out-Null
 
-    $staleCaisseProcesses = @(Get-CaisseChromeProcesses | Where-Object { $_.CommandLine -notmatch '(?i)(?:^|\s)--kiosk-printing(?:\s|$)' })
+    $staleCaisseProcesses = @(
+        Get-CaisseChromeProcesses | Where-Object {
+            $_.CommandLine -notmatch '(?i)(?:^|\s)--kiosk-printing(?:\s|$)' -or
+            $_.CommandLine.IndexOf('/caisse/setup', [System.StringComparison]::OrdinalIgnoreCase) -lt 0
+        }
+    )
     foreach ($process in $staleCaisseProcesses) {
         Stop-Process -Id $process.ProcessId -Force
     }
@@ -77,6 +93,23 @@ try {
         if ((Get-CaisseChromeProcesses).Count -gt 0) {
             throw "L'ancienne fenetre Caisse n'a pas pu etre fermee. Fermez-la manuellement, puis relancez le raccourci Caisse."
         }
+    }
+
+    try {
+        $powerShellPath = Join-Path $PSHOME 'powershell.exe'
+        if ([System.IO.File]::Exists($powerShellPath) -and [System.IO.File]::Exists($displayBridgePath)) {
+            foreach ($process in @(Get-CustomerDisplayProcesses)) {
+                Stop-Process -Id $process.ProcessId -Force -ErrorAction SilentlyContinue
+            }
+            for ($attempt = 0; $attempt -lt 20; $attempt += 1) {
+                if ((Get-CustomerDisplayProcesses).Count -eq 0) { break }
+                Start-Sleep -Milliseconds 50
+            }
+            $displayBridgeArguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$displayBridgePath`""
+            Start-Process -FilePath $powerShellPath -ArgumentList $displayBridgeArguments -WindowStyle Hidden
+        }
+    } catch {
+        # The optional customer display must never prevent the cashier from opening.
     }
 
     $chromeArguments = "--user-data-dir=`"$profileDirectory`" --kiosk --kiosk-printing --use-system-default-printer --no-first-run --app=`"$caisseUrl`""

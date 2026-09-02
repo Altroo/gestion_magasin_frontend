@@ -41,6 +41,7 @@ import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages
 import StoreTabs, { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import PosCart from '@/components/pages/magasin/pos/pos-cart';
 import { useInitAccessToken } from '@/contexts/InitContext';
+import { useCustomerDisplay } from '@/hooks/useCustomerDisplay';
 import { useReceiptPrinter } from '@/hooks/useReceiptPrinter';
 import {
 	useCreateSaleMutation,
@@ -207,6 +208,7 @@ const PosClient = ({ session }: SessionProps) => {
 	);
 
 	const total = useMemo(() => cart.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0), [cart]);
+	useCustomerDisplay(total);
 
 	const addProduct = useCallback(
 		(product: ProductType) => {

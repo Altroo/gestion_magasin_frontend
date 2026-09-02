@@ -57,7 +57,7 @@ if (isDev && process.env.NEXT_PUBLIC_API_ROOT_URL) {
 
 const wsOrigin = parseUrl(process.env.NEXT_PUBLIC_ROOT_WS_URL)?.origin ?? '';
 const cspImageSources = unique(apiOrigins);
-const cspConnectSources = unique([...apiOrigins, wsOrigin]);
+const cspConnectSources = unique([...apiOrigins, wsOrigin, 'http://127.0.0.1:37821']);
 
 const nextConfig: NextConfig = {
 	reactCompiler: true,
