@@ -43,6 +43,8 @@ export type StorePayload = {
 
 export type StoreFormValues = Omit<StorePayload, 'logo' | 'remove_logo'> & {
 	logo: File | null;
+	logo_source: string | null;
+	logo_cropped: string | null;
 	remove_logo: boolean;
 	managed_by: Array<{ pk: number; role: StoreRoleCode }>;
 	employees: StoreEmployeeType[];

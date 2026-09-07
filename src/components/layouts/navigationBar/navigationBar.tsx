@@ -49,7 +49,7 @@ import {
 	Settings as SettingsIcon,
 	Storefront as StorefrontIcon,
 } from '@mui/icons-material';
-import { useAppDispatch, useAppSelector, useLanguage } from '@/utils/hooks';
+import { useAppDispatch, useAppSelector, useIsClient, useLanguage } from '@/utils/hooks';
 import { getProfilState, getUnreadNotificationCount } from '@/store/selectors';
 import { cookiesDeleter } from '@/utils/apiHelpers';
 import LanguageSwitcher, { LanguageFlag } from '@/components/shared/languageSwitcher/languageSwitcher';
@@ -300,27 +300,24 @@ const NavigationBar = (props: Props) => {
 	const [fetchNotifications] = useLazyGetNotificationsQuery();
 	const [markRead] = useMarkNotificationsReadMutation();
 	const [notifAnchor, setNotifAnchor] = useState<HTMLElement | null>(null);
-	const [allNotifications, setAllNotifications] = useState<NotificationType[]>([]);
-	const [notifPage, setNotifPage] = useState(1);
-	const [hasMore, setHasMore] = useState(false);
+	const [pagination, setPagination] = useState<{
+		firstPage: typeof firstPage;
+		results: NotificationType[];
+		page: number;
+		hasMore: boolean;
+	} | null>(null);
+	// A refreshed first page invalidates previously loaded pages.
+	const currentPagination = pagination?.firstPage === firstPage ? pagination : null;
+	const allNotifications = [...(firstPage?.results ?? []), ...(currentPagination?.results ?? [])];
+	const notifPage = currentPagination?.page ?? 1;
+	const hasMore = currentPagination?.hasMore ?? Boolean(firstPage?.next);
 	const [loadingMore, setLoadingMore] = useState(false);
-	const [caisseDeviceConfigured, setCaisseDeviceConfigured] = useState(false);
+	const isClient = useIsClient();
+	const caisseDeviceConfigured = isClient && isCaisseDeviceConfigured();
 	const [windowActionPending, setWindowActionPending] = useState<CaisseWindowAction | null>(null);
 	const [closeConfirmationOpen, setCloseConfirmationOpen] = useState(false);
 
 	const loading = status === 'loading';
-
-	useEffect(() => {
-		setCaisseDeviceConfigured(isCaisseDeviceConfigured());
-	}, []);
-
-	useEffect(() => {
-		if (firstPage) {
-			setAllNotifications(firstPage.results);
-			setHasMore(firstPage.next !== null);
-			setNotifPage(1);
-		}
-	}, [firstPage]);
 
 	useEffect(() => {
 		if (unreadCountData?.count !== undefined) {
@@ -358,13 +355,16 @@ const NavigationBar = (props: Props) => {
 		setLoadingMore(true);
 		try {
 			const result = await fetchNotifications({ page: nextPage }).unwrap();
-			setAllNotifications((current) => [...current, ...result.results]);
-			setHasMore(result.next !== null);
-			setNotifPage(nextPage);
+			setPagination((current) => ({
+				firstPage,
+				results: [...(current && current.firstPage === firstPage ? current.results : []), ...result.results],
+				page: nextPage,
+				hasMore: result.next !== null,
+			}));
 		} finally {
 			setLoadingMore(false);
 		}
-	}, [fetchNotifications, notifPage]);
+	}, [fetchNotifications, firstPage, notifPage]);
 
 	const logOutHandler = async () => {
 		await cookiesDeleter('/api/cookies', {

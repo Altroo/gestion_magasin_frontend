@@ -1,8 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import NavigationBar from './navigationBar';
 import '@testing-library/jest-dom';
 import React from 'react';
+import type { NotificationType } from '@/types/gestionMagasinTypes';
 import { CUSTOMER_DISPLAY_COOKIE, CUSTOMER_DISPLAY_COOKIE_VALUE } from '@/utils/customerDisplay';
 
 jest.mock('@/utils/clientHelpers', () => ({
@@ -47,12 +48,20 @@ jest.mock('@/utils/hooks', () => ({
 	useLanguage: () => ({ t: jest.requireActual('@/translations/fr').fr, language: 'fr', setLanguage: jest.fn() }),
 }));
 
-const mockFetchNotifications = jest.fn(() => ({
-	unwrap: jest.fn().mockResolvedValue({ results: [], next: null }),
-}));
+type NotificationPage = { results: NotificationType[]; next: string | null };
+const notification = (id: number): NotificationType => ({
+	id,
+	title: `Notification ${id}`,
+	message: `Message ${id}`,
+	notification_type: 'low_stock',
+	object_id: null,
+	is_read: false,
+	date_created: '2026-09-07T10:00:00Z',
+});
+const mockFetchNotifications = jest.fn<{ unwrap: () => Promise<NotificationPage> }, [{ page: number }]>();
 const mockMarkNotificationsRead = jest.fn().mockResolvedValue({});
 const mockUnreadCountResult = { data: { count: 0 } };
-const mockNotificationsResult = { data: { results: [], next: null } };
+const mockNotificationsResult: { data?: NotificationPage } = { data: { results: [], next: null } };
 jest.mock('@/store/services/notification', () => ({
 	useGetUnreadNotificationCountQuery: () => mockUnreadCountResult,
 	useGetNotificationsQuery: () => mockNotificationsResult,
@@ -83,6 +92,10 @@ describe('NavigationBar', () => {
 
 	beforeEach(() => {
 		jest.clearAllMocks();
+		mockUseIsClient.mockReturnValue(true);
+		mockNotificationsResult.data = { results: [], next: null };
+		mockFetchNotifications.mockReset();
+		mockFetchNotifications.mockReturnValue({ unwrap: async () => ({ results: [], next: null }) });
 		mockFetch.mockResolvedValue({ ok: true });
 		Object.defineProperty(global, 'fetch', { configurable: true, writable: true, value: mockFetch });
 		document.cookie = `${CUSTOMER_DISPLAY_COOKIE}=; Max-Age=0; Path=/`;
@@ -100,6 +113,70 @@ describe('NavigationBar', () => {
 		mockUseSession.mockImplementation(() => ({ data: {}, status: 'authenticated' }));
 		mockUseGetMyStoresQuery.mockReturnValue({ data: [], isSuccess: true });
 		mockIsMobile = false;
+	});
+
+	it('loads notification pages and resets pagination when the first page refreshes', async () => {
+		mockNotificationsResult.data = undefined;
+		const { rerender } = render(<NavigationBar title="Dashboard"><div /></NavigationBar>);
+		await userEvent.click(screen.getByRole('button', { name: 'Notifications' }));
+
+		mockNotificationsResult.data = { results: [notification(1)], next: '?page=2' };
+		rerender(<NavigationBar title="Dashboard"><div /></NavigationBar>);
+		expect(screen.getByText('Notification 1')).toBeInTheDocument();
+
+		mockFetchNotifications.mockReturnValueOnce({
+			unwrap: async () => ({ results: [notification(2)], next: '?page=3' }),
+		});
+		await userEvent.click(screen.getByRole('button', { name: 'Afficher' }));
+		expect(mockFetchNotifications).toHaveBeenLastCalledWith({ page: 2 });
+		expect(await screen.findByText('Notification 2')).toBeInTheDocument();
+		expect(screen.getByText('Notification 1')).toBeInTheDocument();
+
+		mockFetchNotifications.mockReturnValueOnce({
+			unwrap: async () => ({ results: [notification(3)], next: null }),
+		});
+		await userEvent.click(screen.getByRole('button', { name: 'Afficher' }));
+		expect(mockFetchNotifications).toHaveBeenLastCalledWith({ page: 3 });
+		expect(await screen.findByText('Notification 3')).toBeInTheDocument();
+		expect(screen.getByText('Notification 2')).toBeInTheDocument();
+		expect(screen.queryByRole('button', { name: 'Afficher' })).not.toBeInTheDocument();
+
+		mockNotificationsResult.data = { results: [notification(4)], next: '?page=2' };
+		rerender(<NavigationBar title="Dashboard"><div /></NavigationBar>);
+		expect(screen.getByText('Notification 4')).toBeInTheDocument();
+		expect(screen.queryByText('Notification 1')).not.toBeInTheDocument();
+		expect(screen.queryByText('Notification 2')).not.toBeInTheDocument();
+		expect(screen.queryByText('Notification 3')).not.toBeInTheDocument();
+		await userEvent.click(screen.getByRole('button', { name: 'Afficher' }));
+		expect(mockFetchNotifications).toHaveBeenLastCalledWith({ page: 2 });
+	});
+
+	it('ignores a pending older page after the first page refreshes', async () => {
+		mockNotificationsResult.data = { results: [notification(1)], next: '?page=2' };
+		let resolvePage!: (page: NotificationPage) => void;
+		const pendingPage = new Promise<NotificationPage>((resolve) => { resolvePage = resolve; });
+		mockFetchNotifications.mockReturnValueOnce({ unwrap: () => pendingPage });
+		const { rerender } = render(<NavigationBar title="Dashboard"><div /></NavigationBar>);
+		await userEvent.click(screen.getByRole('button', { name: 'Notifications' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Afficher' }));
+		expect(screen.getByRole('button', { name: 'Chargement…' })).toBeDisabled();
+
+		mockNotificationsResult.data = { results: [notification(4)], next: '?page=2' };
+		rerender(<NavigationBar title="Dashboard"><div /></NavigationBar>);
+		await act(async () => { resolvePage({ results: [notification(2)], next: null }); });
+		expect(screen.getByText('Notification 4')).toBeInTheDocument();
+		expect(screen.queryByText('Notification 2')).not.toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Afficher' })).toBeEnabled();
+	});
+
+	it('keeps caisse controls hidden until the client is ready', () => {
+		document.cookie = `${CUSTOMER_DISPLAY_COOKIE}=${CUSTOMER_DISPLAY_COOKIE_VALUE}; Path=/`;
+		mockUseIsClient.mockReturnValue(false);
+		const { rerender } = render(<NavigationBar title="Caisse"><div /></NavigationBar>);
+		expect(screen.queryByRole('button', { name: 'Fermer la caisse' })).not.toBeInTheDocument();
+		mockUseIsClient.mockReturnValue(true);
+		rerender(<NavigationBar title="Caisse"><div /></NavigationBar>);
+		expect(screen.getByRole('button', { name: 'Fermer la caisse' })).toBeInTheDocument();
 	});
 
 	it('shows tactile window controls and confirms before closing the installed caisse', async () => {

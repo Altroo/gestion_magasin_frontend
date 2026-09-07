@@ -57,13 +57,9 @@ jest.mock('react-cropper', () => {
 		) {
 			// Store callbacks for manual triggering via global
 			const mockCallbacksRef = (global as unknown as { __mockCallbacks: MockCallbacks }).__mockCallbacks;
-			// eslint-disable-next-line react-hooks/immutability
 			mockCallbacksRef.readyCallback = props.ready || null;
-			// eslint-disable-next-line react-hooks/immutability
 			mockCallbacksRef.cropendCallback = props.cropend || null;
-
 			// Create mock cropper ref
-			// eslint-disable-next-line react-hooks/immutability
 			mockCallbacksRef.cropperRef = {
 				cropper: {
 					getCroppedCanvas: () => {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
@@ -41,7 +41,6 @@ import {
 	Security as SecurityIcon,
 	Storefront as StorefrontIcon,
 	Tag as TagIcon,
-	Upload as UploadIcon,
 	Warning as WarningIcon,
 } from '@mui/icons-material';
 import { useFormik } from 'formik';
@@ -49,6 +48,7 @@ import { toFormikValidationSchema } from 'zod-formik-adapter';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import ApiProgress from '@/components/formikElements/apiLoading/apiProgress/apiProgress';
 import CustomTextInput from '@/components/formikElements/customTextInput/customTextInput';
+import CustomSquareImageUploading from '@/components/formikElements/customSquareImageUploading/customSquareImageUploading';
 import RoundedAutocomplete from '@/components/formikElements/roundedAutocomplete/roundedAutocomplete';
 import PrimaryLoadingButton from '@/components/htmlElements/buttons/primaryLoadingButton/primaryLoadingButton';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
@@ -112,6 +112,13 @@ const resolveLogoUrl = (logo?: string | null) => {
 	}
 };
 
+const logoDataUrlToFile = (dataUrl: string): File => {
+	const [header, data] = dataUrl.split(',');
+	const type = header.match(/^data:([^;]+);/)?.[1] ?? 'image/png';
+	const bytes = Uint8Array.from(atob(data), (character) => character.charCodeAt(0));
+	return new File([bytes], `store-logo.${type.split('/')[1]}`, { type });
+};
+
 const StoresFormClient = ({ session, id }: Props) => {
 	const token = useInitAccessToken(session);
 	const router = useRouter();
@@ -125,8 +132,6 @@ const StoresFormClient = ({ session, id }: Props) => {
 	const [employeeFirstName, setEmployeeFirstName] = useState('');
 	const [employeeLastName, setEmployeeLastName] = useState('');
 	const [employeeInputError, setEmployeeInputError] = useState('');
-	const [selectedLogoPreview, setSelectedLogoPreview] = useState<string | null>(null);
-	const logoInputRef = useRef<HTMLInputElement | null>(null);
 	const profile = useAppSelector(getProfilState);
 
 	const {
@@ -170,6 +175,8 @@ const StoresFormClient = ({ session, id }: Props) => {
 			address: store?.address ?? '',
 			phone: store?.phone ?? '',
 			logo: null,
+			logo_source: resolveLogoUrl(store?.logo),
+			logo_cropped: resolveLogoUrl(store?.logo),
 			remove_logo: false,
 			is_active: store?.is_active ?? true,
 			is_global_stock: store?.is_global_stock ?? false,
@@ -202,31 +209,25 @@ const StoresFormClient = ({ session, id }: Props) => {
 		},
 	});
 
-	useEffect(() => {
-		if (!formik.values.logo) {
-			setSelectedLogoPreview(null);
-			return;
-		}
-		const objectUrl = window.URL.createObjectURL(formik.values.logo);
-		setSelectedLogoPreview(objectUrl);
-		return () => window.URL.revokeObjectURL(objectUrl);
-	}, [formik.values.logo]);
-
-	const currentLogoUrl = resolveLogoUrl(store?.logo);
-	const logoPreview = selectedLogoPreview ?? (!formik.values.remove_logo ? currentLogoUrl : null);
-	const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const file = event.currentTarget.files?.[0];
-		if (!file) return;
-		void formik.setFieldValue('logo', file);
-		void formik.setFieldValue('remove_logo', false);
-		void formik.setFieldTouched('logo', true);
-		event.currentTarget.value = '';
+	const handleLogoChange = (image: string | ArrayBuffer | null) => {
+		const source = typeof image === 'string' ? image : null;
+		void formik.setValues((values) => ({
+			...values,
+			logo_source: source,
+			logo_cropped: null,
+			logo: source ? logoDataUrlToFile(source) : null,
+			remove_logo: !source && Boolean(store?.logo),
+		}));
+		void formik.setFieldTouched('logo', true, false);
 	};
-	const clearLogo = () => {
-		void formik.setFieldValue('logo', null);
-		void formik.setFieldValue('remove_logo', Boolean(store?.logo));
-		void formik.setFieldTouched('logo', true);
-		if (logoInputRef.current) logoInputRef.current.value = '';
+
+	const handleLogoCrop = (cropped: string | null) => {
+		void formik.setFieldValue('logo_cropped', cropped, false);
+		if (cropped) {
+			void formik.setFieldValue('logo', logoDataUrlToFile(cropped));
+			void formik.setFieldValue('remove_logo', false, false);
+		}
+		void formik.setFieldTouched('logo', true, false);
 	};
 
 	const fieldLabels = useMemo<Record<string, string>>(
@@ -380,6 +381,35 @@ const StoresFormClient = ({ session, id }: Props) => {
 									<Stack spacing={3}>
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
+												<Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 2 }}>
+													<ImageIcon color="primary" />
+													<Typography variant="h6" sx={{ fontWeight: 700 }}>
+														{t.magasin.storeLogo}
+													</Typography>
+												</Stack>
+												<Divider sx={{ mb: 3 }} />
+												<Box sx={{ flex: 1 }}>
+													<Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+														{t.magasin.storeLogo}
+													</Typography>
+													<Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+														<CustomSquareImageUploading
+															image={formik.values.logo_source}
+															croppedImage={formik.values.logo_cropped}
+															onChange={handleLogoChange}
+															onCrop={handleLogoCrop}
+														/>
+													</Box>
+													{fieldError('logo') && (
+														<Typography variant="caption" color="error">
+															{fieldError('logo')}
+														</Typography>
+													)}
+												</Box>
+											</CardContent>
+										</Card>
+										<Card elevation={2} sx={{ borderRadius: 2 }}>
+											<CardContent sx={{ p: 3 }}>
 												<Stack
 													direction="row"
 													spacing={2}
@@ -456,66 +486,6 @@ const StoresFormClient = ({ session, id }: Props) => {
 														theme={inputTheme}
 														startIcon={<PhoneIcon fontSize="small" />}
 													/>
-													<Box>
-														<Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-															{t.magasin.storeLogo}
-														</Typography>
-														<Stack
-															direction={{ xs: 'column', sm: 'row' }}
-															spacing={2}
-															sx={{ alignItems: { sm: 'center' } }}
-														>
-															<Box
-																sx={{
-																	width: 180,
-																	height: 120,
-																	border: '1px dashed',
-																	borderColor: fieldError('logo') ? 'error.main' : 'grey.400',
-																	borderRadius: 2,
-																	bgcolor: 'grey.50',
-																	display: 'flex',
-																	alignItems: 'center',
-																	justifyContent: 'center',
-																	overflow: 'hidden',
-																	flexShrink: 0,
-																}}
-															>
-																{logoPreview ? (
-																	<Box
-																		component="img"
-																		src={logoPreview}
-																		alt={t.magasin.storeLogoPreview}
-																		sx={{ width: '100%', height: '100%', objectFit: 'contain', p: 1 }}
-																	/>
-																) : (
-																	<Stack spacing={0.5} sx={{ alignItems: 'center', color: 'text.secondary' }}>
-																		<ImageIcon sx={{ fontSize: 36 }} />
-																		<Typography variant="caption">{t.magasin.storeLogoEmpty}</Typography>
-																	</Stack>
-																)}
-															</Box>
-															<Stack spacing={1} sx={{ alignItems: 'flex-start' }}>
-																<Button component="label" variant="outlined" startIcon={<UploadIcon />}>
-																	{logoPreview ? t.magasin.storeLogoReplace : t.magasin.storeLogoUpload}
-																	<input
-																		ref={logoInputRef}
-																		type="file"
-																		hidden
-																		accept="image/jpeg,image/png,image/webp"
-																		onChange={handleLogoChange}
-																	/>
-																</Button>
-																{logoPreview && (
-																	<Button color="error" startIcon={<DeleteIcon />} onClick={clearLogo}>
-																		{t.magasin.storeLogoRemove}
-																	</Button>
-																)}
-																<Typography variant="caption" color={fieldError('logo') ? 'error' : 'text.secondary'}>
-																	{fieldError('logo') || t.magasin.storeLogoHelp}
-																</Typography>
-															</Stack>
-														</Stack>
-													</Box>
 													<FormControlLabel
 														control={
 															<Checkbox
