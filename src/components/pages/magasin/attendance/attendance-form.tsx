@@ -1,13 +1,33 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { DEFAULT_ATTENDANCE_RESPONSIBLE, shiftStartMinutes } from '@/utils/rawData';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert, Box, Button, Card, CardContent, Divider, InputAdornment, MenuItem, Stack, TextField, ThemeProvider, Typography } from '@mui/material';
 import {
-	Add as AddIcon, ArrowBack as ArrowBackIcon, Badge as BadgeIcon,
-	Edit as EditIcon, Event as EventIcon, Schedule as ScheduleIcon,
-	Subject as RemarkIcon, Warning as WarningIcon }
-	from '@mui/icons-material';
+	Alert,
+	Box,
+	Button,
+	Card,
+	CardContent,
+	Divider,
+	InputAdornment,
+	MenuItem,
+	Stack,
+	TextField,
+	ThemeProvider,
+	Typography,
+} from '@mui/material';
+import {
+	Add as AddIcon,
+	ArrowBack as ArrowBackIcon,
+	Badge as BadgeIcon,
+	Edit as EditIcon,
+	Event as EventIcon,
+	Schedule as ScheduleIcon,
+	Subject as RemarkIcon,
+	Warning as WarningIcon,
+} from '@mui/icons-material';
 import { useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
@@ -20,7 +40,12 @@ import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
-import { useAddAttendanceRecordMutation, useEditAttendanceRecordMutation, useGetAttendanceRecordQuery, useGetEmployeesQuery } from '@/store/services/magasin';
+import {
+	useAddAttendanceRecordMutation,
+	useEditAttendanceRecordMutation,
+	useGetAttendanceRecordQuery,
+	useGetEmployeesQuery,
+} from '@/store/services/magasin';
 import { ATTENDANCE_LIST, ATTENDANCE_VIEW } from '@/utils/routes';
 import { attendanceSchema } from '@/utils/formValidationSchemas';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
@@ -32,12 +57,6 @@ import type { AttendanceFormValues, AttendancePayload, AttendanceShiftType } fro
 
 const inputTheme = textInputTheme();
 const dropdownTheme = customDropdownTheme();
-const DEFAULT_ATTENDANCE_RESPONSIBLE = 'Mehdi Zorgane';
-const shiftStartMinutes: Record<Exclude<AttendanceShiftType, 'off'>, number> = {
-	morning: 9 * 60,
-	afternoon: 15 * 60,
-	evening: 19 * 60,
-};
 
 const parseTimeMinutes = (value?: string | null) => {
 	if (!value) return null;
@@ -46,7 +65,10 @@ const parseTimeMinutes = (value?: string | null) => {
 	return hours * 60 + minutes;
 };
 
-type AttendanceTimeFields = Pick<AttendanceFormValues, 'status' | 'clock_in' | 'break_start' | 'break_end' | 'clock_out'>;
+type AttendanceTimeFields = Pick<
+	AttendanceFormValues,
+	'status' | 'clock_in' | 'break_start' | 'break_end' | 'clock_out'
+>;
 type AttendanceDelayFields = Pick<AttendanceFormValues, 'status' | 'shift' | 'clock_in'>;
 
 const calculateWorkedHours = (values: AttendanceTimeFields) => {
@@ -104,10 +126,11 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [isPending, setIsPending] = useState(false);
 	const autoSelectedEmployeeStoreRef = useRef<number | undefined>(undefined);
-	const { data: attendance, isLoading: isAttendanceLoading, error: attendanceError } = useGetAttendanceRecordQuery(
-		{ id: id! },
-		{ skip: !token || !isEditMode },
-	);
+	const {
+		data: attendance,
+		isLoading: isAttendanceLoading,
+		error: attendanceError,
+	} = useGetAttendanceRecordQuery({ id: id! }, { skip: !token || !isEditMode });
 	const { data: employees, isLoading: areEmployeesLoading } = useGetEmployeesQuery(
 		{ store: storeId, pageSize: 200 },
 		{ skip: !token || !storeId },
@@ -115,7 +138,7 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 	const [addAttendance, addState] = useAddAttendanceRecordMutation();
 	const [editAttendance, editState] = useEditAttendanceRecordMutation();
 	const error = attendanceError || addState.error || editState.error;
-	const axiosError = useMemo(() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined), [error]);
+	const axiosError = error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 
 	const formik = useFormik<AttendanceFormValues>({
 		initialValues: {
@@ -140,44 +163,48 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 			if (!storeId) return;
 			setHasAttemptedSubmit(true);
 			setIsPending(true);
-			try {
-				if (isEditMode) {
-					await editAttendance({ id: id!, data: toPayload(values, storeId) }).unwrap();
-					onSuccess(t.magasin.attendanceUpdated);
-					router.push(ATTENDANCE_VIEW(id!, storeId));
-				} else {
-					await addAttendance(toPayload(values, storeId)).unwrap();
-					onSuccess(t.magasin.attendanceCreated);
-					router.push(ATTENDANCE_LIST);
-				}
-			} catch (e) {
-				onError(extractApiErrorMessage(e, isEditMode ? t.magasin.attendanceUpdateError : t.magasin.attendanceCreateError));
-				setFormikAutoErrors({ e, setFieldError });
-			} finally {
-				setIsPending(false);
-			}
+			await runWithCleanup(
+				async () => {
+					try {
+						if (isEditMode) {
+							await editAttendance({ id: id!, data: toPayload(values, storeId) }).unwrap();
+							onSuccess(t.magasin.attendanceUpdated);
+							router.push(ATTENDANCE_VIEW(id!, storeId));
+						} else {
+							await addAttendance(toPayload(values, storeId)).unwrap();
+							onSuccess(t.magasin.attendanceCreated);
+							router.push(ATTENDANCE_LIST);
+						}
+					} catch (e) {
+						onError(
+							extractApiErrorMessage(e, isEditMode ? t.magasin.attendanceUpdateError : t.magasin.attendanceCreateError),
+						);
+						setFormikAutoErrors({ e, setFieldError });
+					}
+				},
+				() => {
+					setIsPending(false);
+				},
+			);
 		},
 	});
 
-	const fieldLabels = useMemo<Record<string, string>>(
-		() => ({
-			employee: t.magasin.employee,
-			date: t.magasin.date,
-			clock_in: t.magasin.clockIn,
-			break_start: t.magasin.breakStart,
-			break_end: t.magasin.breakEnd,
-			clock_out: t.magasin.clockOut,
-			shift: t.magasin.shift,
-			hours_worked: t.magasin.hours,
-			delay_minutes: t.magasin.delayMinutes,
-			status: t.magasin.status,
-			responsible: t.magasin.responsible,
-			observations: t.magasin.movementNote,
-			globalError: t.errors.globalError,
-		}),
-		[t],
-	);
-	const validationErrors = useMemo(() => {
+	const fieldLabels = {
+		employee: t.magasin.employee,
+		date: t.magasin.date,
+		clock_in: t.magasin.clockIn,
+		break_start: t.magasin.breakStart,
+		break_end: t.magasin.breakEnd,
+		clock_out: t.magasin.clockOut,
+		shift: t.magasin.shift,
+		hours_worked: t.magasin.hours,
+		delay_minutes: t.magasin.delayMinutes,
+		status: t.magasin.status,
+		responsible: t.magasin.responsible,
+		observations: t.magasin.movementNote,
+		globalError: t.errors.globalError,
+	};
+	const validationErrors = (() => {
 		const errors: Record<string, string> = {};
 		if (hasAttemptedSubmit) {
 			Object.entries(formik.errors).forEach(([key, value]) => {
@@ -185,8 +212,13 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 			});
 		}
 		return errors;
-	}, [formik.errors, hasAttemptedSubmit]);
-	const isLoading = isPending || addState.isLoading || editState.isLoading || areEmployeesLoading || (isEditMode && isAttendanceLoading);
+	})();
+	const isLoading =
+		isPending ||
+		addState.isLoading ||
+		editState.isLoading ||
+		areEmployeesLoading ||
+		(isEditMode && isAttendanceLoading);
 	const shouldShowError = (axiosError?.status ?? 0) > 400 && !isLoading;
 	const fieldError = (field: keyof AttendanceFormValues) =>
 		(formik.touched[field] || hasAttemptedSubmit) && typeof formik.errors[field] === 'string'
@@ -216,7 +248,8 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 		if (isEditMode || !storeId || !employees || autoSelectedEmployeeStoreRef.current === storeId) return;
 		autoSelectedEmployeeStoreRef.current = storeId;
 		const defaultEmployee = employees.results.find(
-			(employee) => employee.full_name.localeCompare(DEFAULT_ATTENDANCE_RESPONSIBLE, undefined, { sensitivity: 'base' }) === 0,
+			(employee) =>
+				employee.full_name.localeCompare(DEFAULT_ATTENDANCE_RESPONSIBLE, undefined, { sensitivity: 'base' }) === 0,
 		);
 		if (!formik.values.employee && defaultEmployee) {
 			void setFieldValue('employee', String(defaultEmployee.id), false);
@@ -242,21 +275,11 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 		if (delayMinutes !== nextDelay) {
 			void setFieldValue('delay_minutes', nextDelay, false);
 		}
-	}, [
-		attendanceStatus,
-		breakEnd,
-		breakStart,
-		clockIn,
-		clockOut,
-		delayMinutes,
-		hoursWorked,
-		setFieldValue,
-		shift,
-	]);
+	}, [attendanceStatus, breakEnd, breakStart, clockIn, clockOut, delayMinutes, hoursWorked, setFieldValue, shift]);
 
 	return (
-        <NavigationBar title={isEditMode ? t.magasin.editAttendance : t.magasin.newAttendance}>
-            <Protected permission={isEditMode ? 'can_edit' : 'can_create'}>
+		<NavigationBar title={isEditMode ? t.magasin.editAttendance : t.magasin.newAttendance}>
+			<Protected permission={isEditMode ? 'can_edit' : 'can_create'}>
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={3}>
@@ -270,9 +293,12 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 							</Button>
 							{Object.keys(validationErrors).length > 0 && (
 								<Alert severity="error" icon={<WarningIcon />}>
-									<Typography variant="subtitle2" sx={{
-                                        fontWeight: 600
-                                    }}>
+									<Typography
+										variant="subtitle2"
+										sx={{
+											fontWeight: 600,
+										}}
+									>
 										{t.users.validationErrorsDetected}
 									</Typography>
 									<ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
@@ -299,13 +325,17 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 													direction="row"
 													spacing={2}
 													sx={{
-															alignItems: "center",
-															mb: 2
-													}}>
+														alignItems: 'center',
+														mb: 2,
+													}}
+												>
 													<BadgeIcon color="primary" />
-													<Typography variant="h6" sx={{
-                                                        fontWeight: 700
-                                                    }}>
+													<Typography
+														variant="h6"
+														sx={{
+															fontWeight: 700,
+														}}
+													>
 														{t.magasin.attendanceInformation}
 													</Typography>
 												</Stack>
@@ -393,12 +423,12 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 																helperText={fieldError('shift')}
 																disabled={formik.values.status === 'off'}
 																fullWidth
-																>
-																	<MenuItem value="morning">{t.magasin.morningShift}</MenuItem>
-																	<MenuItem value="afternoon">{t.magasin.afternoonShift}</MenuItem>
-																	<MenuItem value="evening">{t.magasin.eveningShift}</MenuItem>
-																	<MenuItem value="off">repos</MenuItem>
-																</TextField>
+															>
+																<MenuItem value="morning">{t.magasin.morningShift}</MenuItem>
+																<MenuItem value="afternoon">{t.magasin.afternoonShift}</MenuItem>
+																<MenuItem value="evening">{t.magasin.eveningShift}</MenuItem>
+																<MenuItem value="off">repos</MenuItem>
+															</TextField>
 														</ThemeProvider>
 														{(['clock_in', 'break_start', 'break_end', 'clock_out'] as const).map((field) => (
 															<MuiFormikTimePicker
@@ -466,16 +496,20 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 										<Card elevation={2} sx={{ borderRadius: 2 }}>
 											<CardContent sx={{ p: 3 }}>
 												<Stack
-                                                    direction="row"
-                                                    spacing={2}
-                                                    sx={{
-                                                        alignItems: "center",
-                                                        mb: 2
-                                                    }}>
+													direction="row"
+													spacing={2}
+													sx={{
+														alignItems: 'center',
+														mb: 2,
+													}}
+												>
 													<RemarkIcon color="primary" />
-													<Typography variant="h6" sx={{
-                                                        fontWeight: 700
-                                                    }}>
+													<Typography
+														variant="h6"
+														sx={{
+															fontWeight: 700,
+														}}
+													>
 														{t.magasin.movementNote}
 													</Typography>
 												</Stack>
@@ -524,8 +558,8 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 					</Box>
 				</Box>
 			</Protected>
-        </NavigationBar>
-    );
+		</NavigationBar>
+	);
 };
 
 export default AttendanceFormClient;

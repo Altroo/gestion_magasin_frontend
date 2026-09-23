@@ -15,17 +15,12 @@ import {
 	useMediaQuery,
 	useTheme,
 } from '@mui/material';
-import type { ChipProps } from '@mui/material/Chip';
-import type { SvgIconProps } from '@mui/material/SvgIcon';
-import {
-	Cancel as CancelIcon,
-	CheckCircle as CheckCircleIcon,
-	PendingActions as PendingActionsIcon,
-	RadioButtonUnchecked as EmptyStatusIcon,
-} from '@mui/icons-material';
+import { RadioButtonUnchecked as EmptyStatusIcon } from '@mui/icons-material';
 import DarkTooltip from '@/components/htmlElements/tooltip/darkTooltip/darkTooltip';
 import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
 import type { TranslationDictionary } from '@/types/languageTypes';
+import type { StatusVisual } from '@/types/uiTypes';
+import { STATUS_VISUALS } from '@/utils/rawData';
 
 type InfoRowProps = {
 	icon: ReactNode;
@@ -61,33 +56,10 @@ type LineItemsCardProps<T> = {
 	emptyLabel: string;
 };
 
-type StatusVisual = {
-	color: ChipProps['color'];
-	icon: (props: SvgIconProps) => ReactNode;
-};
-
-const STATUS_VISUALS: Record<string, StatusVisual> = {
-	active: { color: 'success', icon: (props) => <CheckCircleIcon {...props} /> },
-	confirmed: { color: 'success', icon: (props) => <CheckCircleIcon {...props} /> },
-	paid: { color: 'success', icon: (props) => <CheckCircleIcon {...props} /> },
-	present: { color: 'success', icon: (props) => <CheckCircleIcon {...props} /> },
-	received: { color: 'success', icon: (props) => <CheckCircleIcon {...props} /> },
-	validated: { color: 'success', icon: (props) => <CheckCircleIcon {...props} /> },
-	absent: { color: 'error', icon: (props) => <CancelIcon {...props} /> },
-	cancelled: { color: 'error', icon: (props) => <CancelIcon {...props} /> },
-	expired: { color: 'error', icon: (props) => <CancelIcon {...props} /> },
-	void: { color: 'error', icon: (props) => <CancelIcon {...props} /> },
-	credit: { color: 'warning', icon: (props) => <PendingActionsIcon {...props} /> },
-	draft: { color: 'warning', icon: (props) => <PendingActionsIcon {...props} /> },
-	in_progress: { color: 'warning', icon: (props) => <PendingActionsIcon {...props} /> },
-	off: { color: 'warning', icon: (props) => <PendingActionsIcon {...props} /> },
-	payable: { color: 'warning', icon: (props) => <PendingActionsIcon {...props} /> },
-};
-
 const getStatusVisual = (status?: string | null): StatusVisual =>
 	STATUS_VISUALS[status ?? ''] ?? {
 		color: 'default',
-		icon: (props) => <EmptyStatusIcon {...props} />,
+		icon: EmptyStatusIcon,
 	};
 
 export const InfoRow = ({ icon, label, value }: InfoRowProps) => {

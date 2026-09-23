@@ -1,6 +1,7 @@
 'use client';
 
-import React, { isValidElement, useMemo, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { isValidElement, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
@@ -53,9 +54,9 @@ type Props = SessionProps & {
 };
 
 type InfoRowProps = {
-	icon: React.ReactNode;
+	icon: ReactNode;
 	label: string;
-	value: React.ReactNode;
+	value: ReactNode;
 };
 
 type StockTrackingGridRow = Omit<ProductStockTrackingItemType, 'id'> & {
@@ -120,10 +121,7 @@ const CatalogViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [stockPaginationModel, setStockPaginationModel] = useDataGridPagination(5, 'stock');
 	const { data: product, isLoading, error } = useGetProductQuery({ id, store: storeId }, { skip: !token || !storeId });
-	const axiosError = useMemo(
-		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
-		[error],
-	);
+	const axiosError = error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 	const [deleteProduct] = useDeleteProductMutation();
 	const stockTrackingRows: StockTrackingGridRow[] = (
 		product?.stock_tracking_items?.length
@@ -142,49 +140,51 @@ const CatalogViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
 		...item,
 		id: item.id ?? index + 1,
 	}));
-	const stockTrackingColumns = useMemo<GridColDef<StockTrackingGridRow>[]>(
-		() => [
-			{
-				field: 'default_stock_alert',
-				headerName: t.magasin.defaultStockAlert,
-				flex: 1,
-				minWidth: 210,
-			},
-			{
-				field: 'expiration_date',
-				headerName: t.magasin.expirationDate,
-				flex: 1,
-				minWidth: 180,
-				renderCell: ({ row }) => formatDateShort(row.expiration_date),
-			},
-			{
-				field: 'requires_expiration_date',
-				headerName: t.magasin.expirationTracking,
-				flex: 1,
-				minWidth: 220,
-				renderCell: ({ row }) => (row.requires_expiration_date ? t.common.yes : t.common.no),
-			},
-			{
-				field: 'shelf_life_days',
-				headerName: t.magasin.shelfLifeDays,
-				flex: 0.8,
-				minWidth: 180,
-				renderCell: ({ row }) => row.shelf_life_days ?? '-',
-			},
-		],
-		[t],
-	);
+	const stockTrackingColumns: GridColDef<StockTrackingGridRow>[] = [
+		{
+			field: 'default_stock_alert',
+			headerName: t.magasin.defaultStockAlert,
+			flex: 1,
+			minWidth: 210,
+		},
+		{
+			field: 'expiration_date',
+			headerName: t.magasin.expirationDate,
+			flex: 1,
+			minWidth: 180,
+			renderCell: ({ row }) => formatDateShort(row.expiration_date),
+		},
+		{
+			field: 'requires_expiration_date',
+			headerName: t.magasin.expirationTracking,
+			flex: 1,
+			minWidth: 220,
+			renderCell: ({ row }) => (row.requires_expiration_date ? t.common.yes : t.common.no),
+		},
+		{
+			field: 'shelf_life_days',
+			headerName: t.magasin.shelfLifeDays,
+			flex: 0.8,
+			minWidth: 180,
+			renderCell: ({ row }) => row.shelf_life_days ?? '-',
+		},
+	];
 
 	const handleDelete = async () => {
-		try {
-			await deleteProduct({ id, store: storeId }).unwrap();
-			onSuccess(t.magasin.productDeleted);
-			router.push(CATALOG_LIST);
-		} catch (deleteError) {
-			onError(extractApiErrorMessage(deleteError, t.magasin.productDeleteError));
-		} finally {
-			setShowDeleteModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await deleteProduct({ id, store: storeId }).unwrap();
+					onSuccess(t.magasin.productDeleted);
+					router.push(CATALOG_LIST);
+				} catch (deleteError) {
+					onError(extractApiErrorMessage(deleteError, t.magasin.productDeleteError));
+				}
+			},
+			() => {
+				setShowDeleteModal(false);
+			},
+		);
 	};
 
 	return (

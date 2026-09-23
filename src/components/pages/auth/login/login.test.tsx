@@ -3,7 +3,7 @@ import LoginClient from './login';
 import '@testing-library/jest-dom';
 import { Provider } from 'react-redux';
 import { store } from '@/store/store';
-import React from 'react';
+import { type ReactNode } from 'react';
 import { DASHBOARD } from '@/utils/routes';
 
 // Minimal AppSession shape used by the component/tests
@@ -56,8 +56,8 @@ jest.mock('@/store/actions/_initActions', () => ({
 }));
 
 jest.mock('@/utils/clientHelpers', () => ({
-	Desktop: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-	TabletAndMobile: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+	Desktop: ({ children }: { children?: ReactNode }) => <>{children}</>,
+	TabletAndMobile: ({ children }: { children?: ReactNode }) => <>{children}</>,
 }));
 
 jest.mock('@/utils/apiHelpers', () => ({

@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, Box, Button, Chip, Divider, Stack } from '@mui/material';
 import {
@@ -34,7 +35,6 @@ import {
 import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useGetSaleQuery, useVoidSaleMutation } from '@/store/services/magasin';
-
 import { fetchFileBlob } from '@/utils/apiHelpers';
 import { extractApiErrorMessage, formatDate, formatNumber } from '@/utils/helpers';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
@@ -53,20 +53,22 @@ const SalesViewClient = ({ session, id }: Props) => {
 	const [showVoidModal, setShowVoidModal] = useState(false);
 	const { data: sale, isLoading, error } = useGetSaleQuery({ id }, { skip: !token });
 	const [voidSale] = useVoidSaleMutation();
-	const axiosError = useMemo(
-		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
-		[error],
-	);
+	const axiosError = error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 
 	const handleVoid = async () => {
-		try {
-			await voidSale({ id }).unwrap();
-			onSuccess(t.magasin.saleVoided);
-		} catch (voidError) {
-			onError(extractApiErrorMessage(voidError, t.magasin.saleVoidError));
-		} finally {
-			setShowVoidModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await voidSale({ id }).unwrap();
+					onSuccess(t.magasin.saleVoided);
+				} catch (voidError) {
+					onError(extractApiErrorMessage(voidError, t.magasin.saleVoidError));
+				}
+			},
+			() => {
+				setShowVoidModal(false);
+			},
+		);
 	};
 
 	const handlePrintFacture = async () => {

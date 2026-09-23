@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Chip, Stack } from '@mui/material';
 import {
@@ -62,10 +63,7 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 	const [selectedIds, setSelectedIds] = useState<number[]>([]);
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 	const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
-	const mergedFilterParams = useMemo(
-		() => ({ ...chipFilterParams, ...customFilterParams }),
-		[chipFilterParams, customFilterParams],
-	);
+	const mergedFilterParams = { ...chipFilterParams, ...customFilterParams };
 	const storeFilterActive = Boolean(chipFilterParams.store_ids);
 	const { data, isLoading, refetch } = useGetExpensesQuery(
 		{
@@ -85,42 +83,39 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 	);
 	const { data: expenseCategories } = useGetExpenseCategoriesQuery({ page: 1, pageSize: 100 }, { skip: !token });
 
-	const chipFilters = useMemo(
-		() => [
-			{
-				key: 'store',
-				label: t.magasin.store,
-				paramName: 'store_ids',
-				options: memberships.map((membership) => ({ id: String(membership.store.id), nom: membership.store.name })),
-			},
-			{
-				key: 'category',
-				label: t.magasin.expenseCategory,
-				paramName: 'category_ids',
-				options: (expenseCategories?.results ?? []).map((category) => ({
-					id: String(category.id),
-					nom: category.name,
-				})),
-			},
-			{
-				key: 'payment_status',
-				label: t.magasin.paymentStatus,
-				paramName: 'payment_status',
-				options: expensePaymentStatusOptions(t),
-			},
-			{
-				key: 'payment_mode',
-				label: t.magasin.paymentMode,
-				paramName: 'payment_mode',
-				options: expensePaymentModeOptions(t, paymentModes?.results),
-			},
-		],
-		[expenseCategories?.results, memberships, paymentModes?.results, t],
-	);
-	const handleChipFilterChange = useCallback((params: Record<string, string>) => {
+	const chipFilters = [
+		{
+			key: 'store',
+			label: t.magasin.store,
+			paramName: 'store_ids',
+			options: memberships.map((membership) => ({ id: String(membership.store.id), nom: membership.store.name })),
+		},
+		{
+			key: 'category',
+			label: t.magasin.expenseCategory,
+			paramName: 'category_ids',
+			options: (expenseCategories?.results ?? []).map((category) => ({
+				id: String(category.id),
+				nom: category.name,
+			})),
+		},
+		{
+			key: 'payment_status',
+			label: t.magasin.paymentStatus,
+			paramName: 'payment_status',
+			options: expensePaymentStatusOptions(t),
+		},
+		{
+			key: 'payment_mode',
+			label: t.magasin.paymentMode,
+			paramName: 'payment_mode',
+			options: expensePaymentModeOptions(t, paymentModes?.results),
+		},
+	];
+	const handleChipFilterChange = (params: Record<string, string>) => {
 		setChipFilterParams(params);
 		setPaginationModel((current) => ({ ...current, page: 0 }));
-	}, [setPaginationModel]);
+	};
 
 	const renderPaymentStatusChip = (status?: string | null) => {
 		const label = magasinStatusLabel(t, status);
@@ -161,29 +156,39 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 
 	const handleDelete = async () => {
 		if (!deleteTarget) return;
-		try {
-			await deleteExpense({ id: deleteTarget }).unwrap();
-			onSuccess(t.magasin.expenseDeleted);
-			setSelectedIds((current) => current.filter((id) => id !== deleteTarget));
-			refetch();
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.expenseDeleteError));
-		} finally {
-			setDeleteTarget(null);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await deleteExpense({ id: deleteTarget }).unwrap();
+					onSuccess(t.magasin.expenseDeleted);
+					setSelectedIds((current) => current.filter((id) => id !== deleteTarget));
+					refetch();
+				} catch (error) {
+					onError(extractApiErrorMessage(error, t.magasin.expenseDeleteError));
+				}
+			},
+			() => {
+				setDeleteTarget(null);
+			},
+		);
 	};
 
 	const handleBulkDelete = async () => {
-		try {
-			await bulkDeleteExpenses({ ids: selectedIds }).unwrap();
-			onSuccess(t.magasin.expenseDeleted);
-			setSelectedIds([]);
-			refetch();
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.expenseDeleteError));
-		} finally {
-			setShowBulkDeleteModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await bulkDeleteExpenses({ ids: selectedIds }).unwrap();
+					onSuccess(t.magasin.expenseDeleted);
+					setSelectedIds([]);
+					refetch();
+				} catch (error) {
+					onError(extractApiErrorMessage(error, t.magasin.expenseDeleteError));
+				}
+			},
+			() => {
+				setShowBulkDeleteModal(false);
+			},
+		);
 	};
 
 	const columns: GridColDef[] = [

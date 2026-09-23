@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { Box, Typography, Button, Paper, Stack } from '@mui/material';
 import { SentimentDissatisfied as SadIcon, Home as HomeIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';

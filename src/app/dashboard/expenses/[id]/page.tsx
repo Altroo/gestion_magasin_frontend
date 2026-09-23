@@ -1,3 +1,4 @@
+import type { NumericIdPageProps } from '@/types/routeTypes';
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
@@ -5,16 +6,12 @@ import ExpensesViewClient from '@/components/pages/magasin/expenses/expenses-vie
 import { AUTH_LOGIN, EXPENSES_LIST } from '@/utils/routes';
 import { getServerTranslations } from '@/utils/serverTranslations';
 
-type Props = {
-	params: Promise<{ id: string }>;
-};
-
 export async function generateMetadata(): Promise<Metadata> {
 	const t = await getServerTranslations();
 	return { title: t.metadata.expenseDetailsTitle, description: t.metadata.expenseDetailsDescription };
 }
 
-const ExpenseViewPage = async ({ params }: Props) => {
+const ExpenseViewPage = async ({ params }: NumericIdPageProps) => {
 	const session = await auth();
 	const { id } = await params;
 	if (!session) redirect(AUTH_LOGIN);

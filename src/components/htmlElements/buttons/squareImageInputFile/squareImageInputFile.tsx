@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import { type FC, type ReactNode } from 'react';
 import Styles from './squareImageInputFile.module.sass';
 import { Button, Stack, ThemeProvider } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
@@ -11,10 +11,10 @@ const defaultTheme = getDefaultTheme();
 
 type Props = {
 	onImageUpload: () => void;
-	children?: React.ReactNode;
+	children?: ReactNode;
 };
 
-const SquareImageInputFile: React.FC<Props> = ({ onImageUpload }) => {
+const SquareImageInputFile: FC<Props> = ({ onImageUpload }) => {
 	const { t } = useLanguage();
 	return (
 		<ThemeProvider theme={defaultTheme}>

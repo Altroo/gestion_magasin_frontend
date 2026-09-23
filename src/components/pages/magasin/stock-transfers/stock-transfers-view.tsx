@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, Box, Button, Chip, Divider, Stack } from '@mui/material';
 import {
@@ -54,33 +55,40 @@ const StockTransfersViewClient = ({ session, id }: Props) => {
 	const { data: transfer, isLoading, error, refetch } = useGetStockTransferQuery({ id }, { skip: !token });
 	const [deleteTransfer] = useDeleteStockTransferMutation();
 	const [validateTransfer] = useValidateStockTransferMutation();
-	const axiosError = useMemo(
-		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
-		[error],
-	);
+	const axiosError = error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 
 	const handleDelete = async () => {
-		try {
-			await deleteTransfer({ id }).unwrap();
-			onSuccess(t.magasin.transferDeleted);
-			router.push(STOCK_TRANSFERS_LIST);
-		} catch (deleteError) {
-			onError(extractApiErrorMessage(deleteError, t.magasin.transferDeleteError));
-		} finally {
-			setShowDeleteModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await deleteTransfer({ id }).unwrap();
+					onSuccess(t.magasin.transferDeleted);
+					router.push(STOCK_TRANSFERS_LIST);
+				} catch (deleteError) {
+					onError(extractApiErrorMessage(deleteError, t.magasin.transferDeleteError));
+				}
+			},
+			() => {
+				setShowDeleteModal(false);
+			},
+		);
 	};
 
 	const handleValidate = async () => {
-		try {
-			await validateTransfer({ id }).unwrap();
-			onSuccess(t.magasin.transferValidated);
-			refetch();
-		} catch (validateError) {
-			onError(extractApiErrorMessage(validateError, t.magasin.transferValidateError));
-		} finally {
-			setShowValidateModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await validateTransfer({ id }).unwrap();
+					onSuccess(t.magasin.transferValidated);
+					refetch();
+				} catch (validateError) {
+					onError(extractApiErrorMessage(validateError, t.magasin.transferValidateError));
+				}
+			},
+			() => {
+				setShowValidateModal(false);
+			},
+		);
 	};
 
 	return (
@@ -96,11 +104,7 @@ const StockTransfersViewClient = ({ session, id }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button
-									variant="outlined"
-									startIcon={<ArrowBackIcon />}
-									onClick={() => router.back()}
-								>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
 									{t.magasin.backToTransfers}
 								</Button>
 								{transfer && (

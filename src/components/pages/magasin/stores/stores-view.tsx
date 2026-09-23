@@ -1,6 +1,7 @@
 'use client';
 
-import React, { isValidElement, useMemo, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { isValidElement, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
@@ -46,9 +47,9 @@ type Props = SessionProps & {
 };
 
 type InfoRowProps = {
-	icon: React.ReactNode;
+	icon: ReactNode;
 	label: string;
-	value: React.ReactNode;
+	value: ReactNode;
 };
 
 const InfoRow = ({ icon, label, value }: InfoRowProps) => {
@@ -106,21 +107,23 @@ const StoresViewClient = ({ session, id }: Props) => {
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const { data: store, isLoading, error } = useGetStoreQuery({ id }, { skip: !token });
 	const [deleteStore] = useDeleteStoreMutation();
-	const axiosError = useMemo(
-		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
-		[error],
-	);
+	const axiosError = error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 
 	const handleDelete = async () => {
-		try {
-			await deleteStore({ id }).unwrap();
-			onSuccess(t.magasin.storeDeleted);
-			router.push(STORES_LIST);
-		} catch (deleteError) {
-			onError(extractApiErrorMessage(deleteError, t.magasin.storeDeleteError));
-		} finally {
-			setShowDeleteModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await deleteStore({ id }).unwrap();
+					onSuccess(t.magasin.storeDeleted);
+					router.push(STORES_LIST);
+				} catch (deleteError) {
+					onError(extractApiErrorMessage(deleteError, t.magasin.storeDeleteError));
+				}
+			},
+			() => {
+				setShowDeleteModal(false);
+			},
+		);
 	};
 
 	return (

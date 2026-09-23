@@ -1,6 +1,6 @@
-import React from 'react';
+import { type ReactNode } from 'react';
 
-const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+const DashboardLayout = ({ children }: { children: ReactNode }) => {
 	return <section>{children}</section>;
 };
 

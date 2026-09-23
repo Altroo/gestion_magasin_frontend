@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import { EMPTY_STOCK_TRANSFER_LINE as emptyLine } from '@/utils/rawData';
+import { useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
@@ -64,7 +65,6 @@ import type { ProductType, StockTransferPayload } from '@/types/gestionMagasinTy
 
 const inputTheme = textInputTheme();
 const dropdownTheme = customDropdownTheme();
-const emptyLine = { product: '', quantity: '1' };
 
 type TransferFormValues = {
 	target_store: string;
@@ -105,10 +105,7 @@ const StockTransfersFormClient = ({ session, id }: Props) => {
 		{ store: mbrStore?.id, page: 1, pageSize: 200 },
 		{ skip: !token || !mbrStore?.id },
 	);
-	const axiosError = useMemo(
-		() => (transferError ? (transferError as ResponseDataInterface<ApiErrorResponseType>) : undefined),
-		[transferError],
-	);
+	const axiosError = transferError ? (transferError as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 
 	const toPayload = (values: TransferFormValues): StockTransferPayload => ({
 		store: mbrStore?.id ?? 0,
@@ -154,19 +151,16 @@ const StockTransfersFormClient = ({ session, id }: Props) => {
 		},
 	});
 
-	const fieldLabels = useMemo<Record<string, string>>(
-		() => ({
-			target_store: t.magasin.targetStore,
-			reference: t.magasin.transferReference,
-			transfer_date: t.magasin.transferDate,
-			status: t.magasin.status,
-			note: t.magasin.note,
-			lines: t.magasin.stockTransferLines,
-			globalError: t.errors.globalError,
-		}),
-		[t],
-	);
-	const validationErrors = useMemo(() => {
+	const fieldLabels = {
+		target_store: t.magasin.targetStore,
+		reference: t.magasin.transferReference,
+		transfer_date: t.magasin.transferDate,
+		status: t.magasin.status,
+		note: t.magasin.note,
+		lines: t.magasin.stockTransferLines,
+		globalError: t.errors.globalError,
+	};
+	const validationErrors = (() => {
 		const errors: Record<string, string> = {};
 		if (hasAttemptedSubmit) {
 			Object.entries(formik.errors).forEach(([key, value]) => {
@@ -175,7 +169,7 @@ const StockTransfersFormClient = ({ session, id }: Props) => {
 			});
 		}
 		return errors;
-	}, [formik.errors, hasAttemptedSubmit, t.validation.required]);
+	})();
 
 	const addLine = () => void formik.setFieldValue('lines', [...formik.values.lines, { ...emptyLine }]);
 	const removeLine = (index: number) => {
@@ -595,7 +589,7 @@ const StockTransfersFormClient = ({ session, id }: Props) => {
 												active={!addState.isLoading && !editState.isLoading}
 												loading={addState.isLoading || editState.isLoading}
 												startIcon={isEditMode ? <EditIcon /> : <AddIcon />}
-												onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+												onClick={(event: MouseEvent<HTMLButtonElement>) => {
 													setHasAttemptedSubmit(true);
 													if (!formik.isValid) {
 														event.preventDefault();

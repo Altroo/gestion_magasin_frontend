@@ -1,6 +1,7 @@
 'use client';
 
-import React, { ChangeEvent, useMemo, useRef, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { ChangeEvent, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Chip, CircularProgress, IconButton, Stack, Typography } from '@mui/material';
 import {
@@ -118,29 +119,39 @@ const CatalogClient = ({ session }: SessionProps) => {
 
 	const deleteHandler = async () => {
 		if (!deleteTarget) return;
-		try {
-			await deleteProduct({ id: deleteTarget, store: storeId }).unwrap();
-			onSuccess(t.magasin.productDeleted);
-			setSelectedIds((current) => current.filter((id) => id !== deleteTarget));
-			refetch();
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.productDeleteError));
-		} finally {
-			setDeleteTarget(null);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await deleteProduct({ id: deleteTarget, store: storeId }).unwrap();
+					onSuccess(t.magasin.productDeleted);
+					setSelectedIds((current) => current.filter((id) => id !== deleteTarget));
+					refetch();
+				} catch (error) {
+					onError(extractApiErrorMessage(error, t.magasin.productDeleteError));
+				}
+			},
+			() => {
+				setDeleteTarget(null);
+			},
+		);
 	};
 
 	const bulkDeleteHandler = async () => {
-		try {
-			await bulkDeleteProducts({ ids: selectedIds, store: storeId }).unwrap();
-			onSuccess(t.magasin.bulkProductsDeleted(selectedIds.length));
-			resetSelection();
-			refetch();
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.productDeleteError));
-		} finally {
-			setShowBulkDeleteModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await bulkDeleteProducts({ ids: selectedIds, store: storeId }).unwrap();
+					onSuccess(t.magasin.bulkProductsDeleted(selectedIds.length));
+					resetSelection();
+					refetch();
+				} catch (error) {
+					onError(extractApiErrorMessage(error, t.magasin.productDeleteError));
+				}
+			},
+			() => {
+				setShowBulkDeleteModal(false);
+			},
+		);
 	};
 
 	const booleanFilterOptions = [
@@ -148,32 +159,29 @@ const CatalogClient = ({ session }: SessionProps) => {
 		{ value: 'false', label: t.common.no },
 	];
 
-	const chipFilters = useMemo(
-		() => [
-			{
-				key: 'category',
-				label: t.magasin.category,
-				paramName: 'category_ids',
-				options: (categories?.results ?? []).map((category) => ({ id: String(category.id), nom: category.name })),
-			},
-			{
-				key: 'unit',
-				label: t.magasin.unit,
-				paramName: 'unit_ids',
-				options: (productUnits?.results ?? []).map((unit) => ({ id: String(unit.id), nom: unit.name })),
-			},
-			{
-				key: 'active',
-				label: t.users.active,
-				paramName: 'is_active',
-				options: [
-					{ id: 'true', nom: t.users.active },
-					{ id: 'false', nom: t.users.inactive },
-				],
-			},
-		],
-		[categories?.results, productUnits?.results, t.magasin.category, t.magasin.unit, t.users.active, t.users.inactive],
-	);
+	const chipFilters = [
+		{
+			key: 'category',
+			label: t.magasin.category,
+			paramName: 'category_ids',
+			options: (categories?.results ?? []).map((category) => ({ id: String(category.id), nom: category.name })),
+		},
+		{
+			key: 'unit',
+			label: t.magasin.unit,
+			paramName: 'unit_ids',
+			options: (productUnits?.results ?? []).map((unit) => ({ id: String(unit.id), nom: unit.name })),
+		},
+		{
+			key: 'active',
+			label: t.users.active,
+			paramName: 'is_active',
+			options: [
+				{ id: 'true', nom: t.users.active },
+				{ id: 'false', nom: t.users.inactive },
+			],
+		},
+	];
 
 	const columns: GridColDef[] = [
 		{

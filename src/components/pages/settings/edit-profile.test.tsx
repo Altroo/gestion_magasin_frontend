@@ -1,4 +1,4 @@
-import React from 'react';
+import { type ReactElement, type ReactNode } from 'react';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Provider } from 'react-redux';
@@ -38,7 +38,7 @@ jest.mock('@/contexts/InitContext', () => ({
 // Mock NavigationBar
 jest.mock('@/components/layouts/navigationBar/navigationBar', () => ({
 	__esModule: true,
-	default: ({ children, title }: { children: React.ReactNode; title: string }) => (
+	default: ({ children, title }: { children: ReactNode; title: string }) => (
 		<div data-testid="navigation-bar">
 			<h1 data-testid="nav-title">{title}</h1>
 			{children}
@@ -74,10 +74,24 @@ jest.mock('@/components/formikElements/customTextInput/customTextInput', () => (
 
 jest.mock('@/components/formikElements/customDropDownSelect/customDropDownSelect', () => ({
 	__esModule: true,
-	default: ({ id, label, onChange, value }: { id: string; label: string; onChange?: (e: { target: { value: string } }) => void; value?: string }) => (
+	default: ({
+		id,
+		label,
+		onChange,
+		value,
+	}: {
+		id: string;
+		label: string;
+		onChange?: (e: { target: { value: string } }) => void;
+		value?: string;
+	}) => (
 		<div data-testid={`select-${id}`}>
 			<label>{label}</label>
-			<select data-testid={`dropdown-${id}`} value={value ?? ''} onChange={(e) => onChange?.({ target: { value: e.target.value } })}>
+			<select
+				data-testid={`dropdown-${id}`}
+				value={value ?? ''}
+				onChange={(e) => onChange?.({ target: { value: e.target.value } })}
+			>
 				<option value="Homme">Homme</option>
 				<option value="Femme">Femme</option>
 			</select>
@@ -87,12 +101,26 @@ jest.mock('@/components/formikElements/customDropDownSelect/customDropDownSelect
 
 jest.mock('@/components/formikElements/customSquareImageUploading/customSquareImageUploading', () => ({
 	__esModule: true,
-	default: ({ onChange, onCrop, image, croppedImage }: { onChange: (img: string) => void; onCrop: (cropped: string) => void; image: string; croppedImage: string }) => (
+	default: ({
+		onChange,
+		onCrop,
+		image,
+		croppedImage,
+	}: {
+		onChange: (img: string) => void;
+		onCrop: (cropped: string) => void;
+		image: string;
+		croppedImage: string;
+	}) => (
 		<div data-testid="avatar-upload">
 			<span data-testid="avatar-image">{image}</span>
 			<span data-testid="avatar-cropped">{croppedImage}</span>
-			<button data-testid="avatar-change" onClick={() => onChange('data:image/png;base64,new')}>Change</button>
-			<button data-testid="avatar-crop" onClick={() => onCrop('data:image/png;base64,cropped')}>Crop</button>
+			<button data-testid="avatar-change" onClick={() => onChange('data:image/png;base64,new')}>
+				Change
+			</button>
+			<button data-testid="avatar-crop" onClick={() => onCrop('data:image/png;base64,cropped')}>
+				Crop
+			</button>
 		</div>
 	),
 }));
@@ -100,7 +128,9 @@ jest.mock('@/components/formikElements/customSquareImageUploading/customSquareIm
 jest.mock('@/components/htmlElements/buttons/primaryLoadingButton/primaryLoadingButton', () => ({
 	__esModule: true,
 	default: ({ buttonText, onClick }: { buttonText: string; onClick?: () => void }) => (
-		<button data-testid="submit-button" onClick={onClick}>{buttonText}</button>
+		<button data-testid="submit-button" onClick={onClick}>
+			{buttonText}
+		</button>
 	),
 }));
 
@@ -167,7 +197,7 @@ const mockSession: AppSession = {
 	},
 };
 
-const renderWithProviders = (ui: React.ReactElement) => render(<Provider store={mockStore}>{ui}</Provider>);
+const renderWithProviders = (ui: ReactElement) => render(<Provider store={mockStore}>{ui}</Provider>);
 
 describe('EditProfileClient', () => {
 	beforeEach(() => {

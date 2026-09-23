@@ -3,7 +3,7 @@ import ResetPasswordClient from './resetPassword';
 import '@testing-library/jest-dom';
 import { Provider } from 'react-redux';
 import { store } from '@/store/store';
-import React from 'react';
+import { type ReactNode } from 'react';
 
 // Dynamic mock for search params
 let searchParamsMock = new URLSearchParams();
@@ -36,8 +36,8 @@ jest.mock('@/utils/routes', () => ({
 }));
 
 jest.mock('@/utils/clientHelpers', () => ({
-	Desktop: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-	TabletAndMobile: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	Desktop: ({ children }: { children: ReactNode }) => <>{children}</>,
+	TabletAndMobile: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
 // Define mockTrigger at module level for access in tests

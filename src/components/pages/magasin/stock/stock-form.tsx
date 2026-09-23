@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import { runAsyncWithErrorHandler } from '@/utils/runWithCleanup';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
@@ -90,10 +92,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 	const [updateThreshold, thresholdState] = useUpdateStockThresholdMutation();
 
 	const error = stockError || adjustState.error || thresholdState.error || requestState.error;
-	const axiosError = useMemo(
-		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
-		[error],
-	);
+	const axiosError = error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 
 	const formik = useFormik<StockAdjustmentFormValues>({
 		initialValues: {
@@ -110,84 +109,89 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 		onSubmit: async (values, { setFieldError }) => {
 			setHasAttemptedSubmit(true);
 			setIsPending(true);
-			try {
-				if (isEditMode) {
-					await updateThreshold({ id: id!, min_stock: values.min_stock ?? '0' }).unwrap();
-					if (values.quantity && Number(values.quantity) !== 0) {
-						if (canAdjustDirectly) {
-							await adjustStock({
-								store: stockBalance?.store ?? storeId!,
-								product: Number(values.product),
-								quantity: values.quantity,
-								movement_type: 'adjustment',
-								unit_cost: values.unit_cost,
-								note: values.note,
-							}).unwrap();
-						} else {
-							await createStockAddRequest({
-								store: stockBalance?.store ?? storeId!,
-								product: Number(values.product),
-								quantity: values.quantity,
-								unit_cost: values.unit_cost,
-								note: values.note,
-							}).unwrap();
-						}
-					}
-					onSuccess(canAdjustDirectly ? t.magasin.stockUpdated : t.magasin.stockRequestSent);
-					router.push(STOCK_VIEW(id!, storeId));
-				} else {
-					if (canAdjustDirectly) {
-						await adjustStock({
-							store: storeId!,
-							product: Number(values.product),
-							quantity: values.quantity,
-							movement_type: 'adjustment',
-							unit_cost: values.unit_cost,
-							note: values.note,
-						}).unwrap();
-					} else {
-						await createStockAddRequest({
-							store: storeId!,
-							product: Number(values.product),
-							quantity: values.quantity,
-							unit_cost: values.unit_cost,
-							note: values.note,
-						}).unwrap();
-					}
-					onSuccess(canAdjustDirectly ? t.magasin.stockAdjusted : t.magasin.stockRequestSent);
-					router.push(STOCK_LIST);
-				}
-			} catch (e) {
-				onError(
-					extractApiErrorMessage(
-						e,
-						canAdjustDirectly
-							? isEditMode
-								? t.magasin.stockUpdateError
-								: t.magasin.stockCreateError
-							: t.magasin.stockRequestCreateError,
-					),
-				);
-				setFormikAutoErrors({ e, setFieldError });
-			} finally {
-				setIsPending(false);
-			}
+			await runWithCleanup(
+				async () => {
+					await runAsyncWithErrorHandler(
+						async () => {
+							if (isEditMode) {
+								await updateThreshold({ id: id!, min_stock: values.min_stock ?? '0' }).unwrap();
+								if (values.quantity && Number(values.quantity) !== 0) {
+									if (canAdjustDirectly) {
+										await adjustStock({
+											store: stockBalance?.store ?? storeId!,
+											product: Number(values.product),
+											quantity: values.quantity,
+											movement_type: 'adjustment',
+											unit_cost: values.unit_cost,
+											note: values.note,
+										}).unwrap();
+									} else {
+										await createStockAddRequest({
+											store: stockBalance?.store ?? storeId!,
+											product: Number(values.product),
+											quantity: values.quantity,
+											unit_cost: values.unit_cost,
+											note: values.note,
+										}).unwrap();
+									}
+								}
+								onSuccess(canAdjustDirectly ? t.magasin.stockUpdated : t.magasin.stockRequestSent);
+								router.push(STOCK_VIEW(id!, storeId));
+							} else {
+								if (canAdjustDirectly) {
+									await adjustStock({
+										store: storeId!,
+										product: Number(values.product),
+										quantity: values.quantity,
+										movement_type: 'adjustment',
+										unit_cost: values.unit_cost,
+										note: values.note,
+									}).unwrap();
+								} else {
+									await createStockAddRequest({
+										store: storeId!,
+										product: Number(values.product),
+										quantity: values.quantity,
+										unit_cost: values.unit_cost,
+										note: values.note,
+									}).unwrap();
+								}
+								onSuccess(canAdjustDirectly ? t.magasin.stockAdjusted : t.magasin.stockRequestSent);
+								router.push(STOCK_LIST);
+							}
+						},
+						async (e) => {
+							onError(
+								extractApiErrorMessage(
+									e,
+									canAdjustDirectly
+										? isEditMode
+											? t.magasin.stockUpdateError
+											: t.magasin.stockCreateError
+										: t.magasin.stockRequestCreateError,
+								),
+							);
+							setFormikAutoErrors({ e, setFieldError });
+						},
+					);
+				},
+				() => {
+					setIsPending(false);
+				},
+			);
 		},
 	});
 
-	const fieldLabels = useMemo<Record<string, string>>(
-		() => ({
-			product: t.magasin.product,
-			quantity: t.magasin.adjustmentQuantity,
-			unit_cost: t.magasin.purchasePrice,
-			min_stock: t.magasin.minimumStock,
-			note: t.magasin.movementNote,
-			globalError: t.errors.globalError,
-		}),
-		[t],
-	);
+	const fieldLabels = {
+		product: t.magasin.product,
+		quantity: t.magasin.adjustmentQuantity,
+		unit_cost: t.magasin.purchasePrice,
+		min_stock: t.magasin.minimumStock,
+		note: t.magasin.movementNote,
+		globalError: t.errors.globalError,
+	};
 
-	const validationErrors = useMemo(() => {
+	const validationErrors = (() => {
 		const errors: Record<string, string> = {};
 		if (hasAttemptedSubmit) {
 			Object.entries(formik.errors).forEach(([key, value]) => {
@@ -197,7 +201,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 			});
 		}
 		return errors;
-	}, [formik.errors, hasAttemptedSubmit]);
+	})();
 
 	const isLoading =
 		isPending ||
@@ -207,14 +211,10 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 		areProductsLoading ||
 		(isEditMode && isStockLoading);
 	const shouldShowError = (axiosError?.status ?? 0) > 400 && !isLoading;
-	const productItems = useMemo(
-		() =>
-			(products?.results ?? []).map((product) => ({
-				code: String(product.id),
-				value: `${product.reference ?? product.barcode ?? product.id} - ${product.name}`,
-			})),
-		[products?.results],
-	);
+	const productItems = (products?.results ?? []).map((product) => ({
+		code: String(product.id),
+		value: `${product.reference ?? product.barcode ?? product.id} - ${product.name}`,
+	}));
 	const selectedProduct = productItems.find((product) => product.code === formik.values.product) ?? null;
 	const fieldError = (field: keyof StockAdjustmentFormValues) =>
 		(formik.touched[field] || hasAttemptedSubmit) && typeof formik.errors[field] === 'string'
@@ -435,7 +435,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 												active={!isPending}
 												loading={isPending}
 												startIcon={isEditMode ? <EditIcon /> : <AddIcon />}
-												onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+												onClick={(event: MouseEvent<HTMLButtonElement>) => {
 													setHasAttemptedSubmit(true);
 													if (!formik.isValid) {
 														event.preventDefault();

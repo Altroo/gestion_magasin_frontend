@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import { EMPTY_INVENTORY_LINE as emptyLine } from '@/utils/rawData';
+import { useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
@@ -63,7 +64,6 @@ import type { InventoryPayload } from '@/types/gestionMagasinTypes';
 
 const inputTheme = textInputTheme();
 const dropdownTheme = customDropdownTheme();
-const emptyLine = { product: '', expected_quantity: '0', counted_quantity: '0', note: '' };
 
 type InventoryFormValues = {
 	code: string;
@@ -103,10 +103,7 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 		{ store: storeId, page: 1, pageSize: 200 },
 		{ skip: !token || !storeId },
 	);
-	const axiosError = useMemo(
-		() => (inventoryError ? (inventoryError as ResponseDataInterface<ApiErrorResponseType>) : undefined),
-		[inventoryError],
-	);
+	const axiosError = inventoryError ? (inventoryError as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 
 	const toPayload = (values: InventoryFormValues): InventoryPayload => ({
 		store: storeId ?? inventory?.store ?? 0,
@@ -164,19 +161,16 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 		},
 	});
 
-	const fieldLabels = useMemo<Record<string, string>>(
-		() => ({
-			code: t.magasin.inventoryCode,
-			title: t.magasin.inventoryTitle,
-			inventory_date: t.magasin.inventoryCountDate,
-			status: t.magasin.status,
-			note: t.magasin.note,
-			lines: t.magasin.inventoryLines,
-			globalError: t.errors.globalError,
-		}),
-		[t],
-	);
-	const validationErrors = useMemo(() => {
+	const fieldLabels = {
+		code: t.magasin.inventoryCode,
+		title: t.magasin.inventoryTitle,
+		inventory_date: t.magasin.inventoryCountDate,
+		status: t.magasin.status,
+		note: t.magasin.note,
+		lines: t.magasin.inventoryLines,
+		globalError: t.errors.globalError,
+	};
+	const validationErrors = (() => {
 		const errors: Record<string, string> = {};
 		if (hasAttemptedSubmit) {
 			Object.entries(formik.errors).forEach(([key, value]) => {
@@ -185,7 +179,7 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 			});
 		}
 		return errors;
-	}, [formik.errors, hasAttemptedSubmit, t.validation.required]);
+	})();
 
 	const addLine = () => void formik.setFieldValue('lines', [...formik.values.lines, { ...emptyLine }]);
 	const removeLine = (index: number) => {
@@ -608,7 +602,7 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 												active={!addState.isLoading && !editState.isLoading}
 												loading={addState.isLoading || editState.isLoading}
 												startIcon={isEditMode ? <EditIcon /> : <AddIcon />}
-												onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+												onClick={(event: MouseEvent<HTMLButtonElement>) => {
 													setHasAttemptedSubmit(true);
 													if (!formik.isValid) {
 														event.preventDefault();

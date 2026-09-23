@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import { type ChangeEvent, type ComponentType, type FC, useRef } from 'react';
 import { Box, Button, FormControl, IconButton, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
 import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
 import type { GridColDef } from '@mui/x-data-grid';
@@ -41,7 +41,7 @@ interface FilterValueFieldProps {
 interface OperatorInfo {
 	value: string;
 	label: string;
-	InputComponent?: React.ComponentType<FilterValueFieldProps>;
+	InputComponent?: ComponentType<FilterValueFieldProps>;
 }
 
 /** Operators that don't require a value input */
@@ -69,9 +69,9 @@ export function filterHasValue(item: CustomFilterItem): boolean {
 }
 
 // Simple text input for text-based filters
-const TextFilterInput: React.FC<FilterValueFieldProps> = ({ item, applyValue }) => {
+const TextFilterInput: FC<FilterValueFieldProps> = ({ item, applyValue }) => {
 	const { t } = useLanguage();
-	const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
 		applyValue({ ...item, value: event.target.value });
 	};
 
@@ -98,18 +98,18 @@ function extractOperators(col: GridColDef, t: TranslationDictionary): OperatorIn
 		return col.filterOperators.map((op) => ({
 			value: op.value,
 			label: op.label ?? op.value,
-			InputComponent: op.InputComponent as React.ComponentType<FilterValueFieldProps> | undefined,
+			InputComponent: op.InputComponent as ComponentType<FilterValueFieldProps> | undefined,
 		}));
 	}
 	return getDefaultTextOperators(t);
 }
 
-const CustomFilterPanel: React.FC<CustomFilterPanelProps> = ({ columns, filterModel, onChange }) => {
+const CustomFilterPanel: FC<CustomFilterPanelProps> = ({ columns, filterModel, onChange }) => {
 	const { t } = useLanguage();
 	const filterableColumns = columns.filter((col) => col.field !== 'actions' && col.filterable !== false);
 
 	// Use a ref to track the filter counter for generating IDs
-	const filterCounterRef = React.useRef(0);
+	const filterCounterRef = useRef(0);
 
 	const handleAddFilter = () => {
 		const firstColumn = filterableColumns[0];

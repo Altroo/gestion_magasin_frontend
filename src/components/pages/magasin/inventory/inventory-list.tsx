@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Stack } from '@mui/material';
 import {
@@ -55,10 +56,7 @@ const InventoryListClient = ({ session }: SessionProps) => {
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 	const [validateTarget, setValidateTarget] = useState<number | null>(null);
 	const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
-	const mergedFilterParams = useMemo(
-		() => ({ ...chipFilterParams, ...customFilterParams }),
-		[chipFilterParams, customFilterParams],
-	);
+	const mergedFilterParams = { ...chipFilterParams, ...customFilterParams };
 	const { data, isLoading, refetch } = useGetInventorySessionsQuery(
 		{
 			store: storeId,
@@ -73,53 +71,67 @@ const InventoryListClient = ({ session }: SessionProps) => {
 	const [bulkDeleteInventory] = useBulkDeleteInventorySessionsMutation();
 	const [validateInventory] = useValidateInventorySessionMutation();
 
-	const chipFilters = useMemo(
-		() => [{ key: 'status', label: t.magasin.status, paramName: 'status', options: stockWorkflowStatusOptions(t) }],
-		[t],
-	);
-	const handleChipFilterChange = useCallback((params: Record<string, string>) => {
+	const chipFilters = [
+		{ key: 'status', label: t.magasin.status, paramName: 'status', options: stockWorkflowStatusOptions(t) },
+	];
+	const handleChipFilterChange = (params: Record<string, string>) => {
 		setChipFilterParams(params);
 		setPaginationModel((current) => ({ ...current, page: 0 }));
-	}, [setPaginationModel]);
+	};
 
 	const handleDelete = async () => {
 		if (!deleteTarget) return;
-		try {
-			await deleteInventory({ id: deleteTarget }).unwrap();
-			onSuccess(t.magasin.inventoryDeleted);
-			setSelectedIds((current) => current.filter((id) => id !== deleteTarget));
-			refetch();
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.inventoryDeleteError));
-		} finally {
-			setDeleteTarget(null);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await deleteInventory({ id: deleteTarget }).unwrap();
+					onSuccess(t.magasin.inventoryDeleted);
+					setSelectedIds((current) => current.filter((id) => id !== deleteTarget));
+					refetch();
+				} catch (error) {
+					onError(extractApiErrorMessage(error, t.magasin.inventoryDeleteError));
+				}
+			},
+			() => {
+				setDeleteTarget(null);
+			},
+		);
 	};
 
 	const handleBulkDelete = async () => {
-		try {
-			await bulkDeleteInventory({ ids: selectedIds }).unwrap();
-			onSuccess(t.magasin.inventoryDeleted);
-			setSelectedIds([]);
-			refetch();
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.inventoryDeleteError));
-		} finally {
-			setShowBulkDeleteModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await bulkDeleteInventory({ ids: selectedIds }).unwrap();
+					onSuccess(t.magasin.inventoryDeleted);
+					setSelectedIds([]);
+					refetch();
+				} catch (error) {
+					onError(extractApiErrorMessage(error, t.magasin.inventoryDeleteError));
+				}
+			},
+			() => {
+				setShowBulkDeleteModal(false);
+			},
+		);
 	};
 
 	const handleValidate = async () => {
 		if (!validateTarget) return;
-		try {
-			await validateInventory({ id: validateTarget }).unwrap();
-			onSuccess(t.magasin.inventoryValidated);
-			refetch();
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.inventoryValidateError));
-		} finally {
-			setValidateTarget(null);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await validateInventory({ id: validateTarget }).unwrap();
+					onSuccess(t.magasin.inventoryValidated);
+					refetch();
+				} catch (error) {
+					onError(extractApiErrorMessage(error, t.magasin.inventoryValidateError));
+				}
+			},
+			() => {
+				setValidateTarget(null);
+			},
+		);
 	};
 
 	const columns: GridColDef[] = [

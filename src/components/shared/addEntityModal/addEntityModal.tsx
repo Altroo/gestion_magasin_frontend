@@ -1,7 +1,8 @@
 'use client';
 
+import { runAsyncWithErrorHandler } from '@/utils/runWithCleanup';
 import { useState } from 'react';
-import type React from 'react';
+import { type ReactNode } from 'react';
 import { Box, Button, Modal, Stack, Typography } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import CustomTextInput from '@/components/formikElements/customTextInput/customTextInput';
@@ -18,7 +19,7 @@ type AddEntityModalProps<T> = {
 	open: boolean;
 	setOpen: (open: boolean) => void;
 	label: string;
-	icon: React.ReactNode;
+	icon: ReactNode;
 	inputTheme: Theme;
 	mutationFn: (data: EntityPayload) => Promise<T>;
 	onSuccess?: (entity: T) => void;
@@ -72,17 +73,20 @@ const AddEntityModal = <T extends { id?: number }>({
 			setError(t.validation.required);
 			return;
 		}
-		try {
-			const entity = await mutationFn({
-				code: normalizeCode(cleanedName) || String(Date.now()),
-				name: cleanedName,
-				is_active: true,
-			});
-			onSuccess?.(entity);
-			close();
-		} catch (mutationError) {
-			setError(getMutationErrorMessage(mutationError, t.errors.genericError));
-		}
+		await runAsyncWithErrorHandler(
+			async () => {
+				const entity = await mutationFn({
+					code: normalizeCode(cleanedName) || String(Date.now()),
+					name: cleanedName,
+					is_active: true,
+				});
+				onSuccess?.(entity);
+				close();
+			},
+			async (mutationError) => {
+				setError(getMutationErrorMessage(mutationError, t.errors.genericError));
+			},
+		);
 	};
 
 	return (

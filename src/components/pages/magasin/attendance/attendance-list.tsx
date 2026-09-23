@@ -1,6 +1,8 @@
 'use client';
 
-import { ChangeEvent, useMemo, useState } from 'react';
+import { runAsyncWithErrorHandler } from '@/utils/runWithCleanup';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { ChangeEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Chip, CircularProgress, IconButton, Stack, Typography } from '@mui/material';
 import {
@@ -101,49 +103,36 @@ const AttendanceClient = ({ session }: SessionProps) => {
 		{ value: 'evening', label: t.magasin.eveningShift },
 		{ value: 'off', label: t.magasin.off },
 	];
-	const chipFilters = useMemo(
-		() => [
-			...(isMbrSouth
-				? [
-						{
-							key: 'store',
-							label: t.magasin.store,
-							paramName: 'store_ids',
-							options: memberships
-								.filter((membership) => membership.store.code !== 'mbr-south')
-								.map((membership) => ({ id: String(membership.store.id), nom: membership.store.name })),
-						},
-					]
-				: []),
-			{
-				key: 'employee',
-				label: t.magasin.employee,
-				paramName: 'employee_ids',
-				options: (employees?.results ?? []).map((employee) => ({ id: String(employee.id), nom: employee.full_name })),
-			},
-			{
-				key: 'status',
-				label: t.magasin.status,
-				paramName: 'status',
-				options: [
-					{ id: 'present', nom: t.magasin.present },
-					{ id: 'off', nom: t.magasin.off },
-					{ id: 'absent', nom: t.magasin.absent },
-				],
-			},
-		],
-		[
-			employees?.results,
-			isMbrSouth,
-			memberships,
-			t.magasin.absent,
-			t.magasin.employee,
-			t.magasin.off,
-			t.magasin.present,
-			t.magasin.status,
-			t.magasin.store,
-		],
-	);
+	const chipFilters = [
+		...(isMbrSouth
+			? [
+					{
+						key: 'store',
+						label: t.magasin.store,
+						paramName: 'store_ids',
+						options: memberships
+							.filter((membership) => membership.store.code !== 'mbr-south')
+							.map((membership) => ({ id: String(membership.store.id), nom: membership.store.name })),
+					},
+				]
+			: []),
+		{
+			key: 'employee',
+			label: t.magasin.employee,
+			paramName: 'employee_ids',
+			options: (employees?.results ?? []).map((employee) => ({ id: String(employee.id), nom: employee.full_name })),
+		},
+		{
+			key: 'status',
+			label: t.magasin.status,
+			paramName: 'status',
+			options: [
+				{ id: 'present', nom: t.magasin.present },
+				{ id: 'off', nom: t.magasin.off },
+				{ id: 'absent', nom: t.magasin.absent },
+			],
+		},
+	];
 	const handleChipFilterChange = (params: Record<string, string>) => {
 		setChipFilterParams(params);
 		setPaginationModel((current) => ({ ...current, page: 0 }));
@@ -236,61 +225,81 @@ const AttendanceClient = ({ session }: SessionProps) => {
 			return;
 		}
 		setIsExporting(true);
-		try {
-			const url = new URL(`${process.env.NEXT_PUBLIC_ATTENDANCE_ROOT}export-workbook/`);
-			if (!storeFilterActive && storeId) {
-				url.searchParams.set('store', String(storeId));
-			}
-			if (searchTerm) {
-				url.searchParams.set('search', searchTerm);
-			}
-			Object.entries({ ...customFilterParams, ...chipFilterParams }).forEach(([key, value]) => {
-				if (value) {
-					url.searchParams.set(key, value);
-				}
-			});
-			const blob = await fetchFileBlob(url.toString(), token);
-			const xlsxBlob = new Blob([blob], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-			const blobUrl = window.URL.createObjectURL(xlsxBlob);
-			const link = document.createElement('a');
-			link.href = blobUrl;
-			link.download = 'pointage.xlsx';
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
-			window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60_000);
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.exportPointageXlsxError));
-		} finally {
-			setIsExporting(false);
-		}
+		await runWithCleanup(
+			async () => {
+				await runAsyncWithErrorHandler(
+					async () => {
+						const url = new URL(`${process.env.NEXT_PUBLIC_ATTENDANCE_ROOT}export-workbook/`);
+						if (!storeFilterActive && storeId) {
+							url.searchParams.set('store', String(storeId));
+						}
+						if (searchTerm) {
+							url.searchParams.set('search', searchTerm);
+						}
+						Object.entries({ ...customFilterParams, ...chipFilterParams }).forEach(([key, value]) => {
+							if (value) {
+								url.searchParams.set(key, value);
+							}
+						});
+						const blob = await fetchFileBlob(url.toString(), token);
+						const xlsxBlob = new Blob([blob], {
+							type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+						});
+						const blobUrl = window.URL.createObjectURL(xlsxBlob);
+						const link = document.createElement('a');
+						link.href = blobUrl;
+						link.download = 'pointage.xlsx';
+						document.body.appendChild(link);
+						link.click();
+						document.body.removeChild(link);
+						window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60_000);
+					},
+					async (error) => {
+						onError(extractApiErrorMessage(error, t.magasin.exportPointageXlsxError));
+					},
+				);
+			},
+			() => {
+				setIsExporting(false);
+			},
+		);
 	};
 
 	const deleteHandler = async () => {
 		if (!deleteTarget) return;
-		try {
-			await deleteAttendanceRecord({ id: deleteTarget }).unwrap();
-			onSuccess(t.magasin.attendanceDeleted);
-			setSelectedIds((current) => current.filter((id) => id !== deleteTarget));
-			refetch();
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.attendanceDeleteError));
-		} finally {
-			setDeleteTarget(null);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await deleteAttendanceRecord({ id: deleteTarget }).unwrap();
+					onSuccess(t.magasin.attendanceDeleted);
+					setSelectedIds((current) => current.filter((id) => id !== deleteTarget));
+					refetch();
+				} catch (error) {
+					onError(extractApiErrorMessage(error, t.magasin.attendanceDeleteError));
+				}
+			},
+			() => {
+				setDeleteTarget(null);
+			},
+		);
 	};
 
 	const bulkDeleteHandler = async () => {
-		try {
-			await bulkDeleteAttendanceRecords({ ids: selectedIds }).unwrap();
-			onSuccess(t.magasin.attendancesDeleted(selectedIds.length));
-			setSelectedIds([]);
-			refetch();
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.attendanceDeleteError));
-		} finally {
-			setShowBulkDeleteModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await bulkDeleteAttendanceRecords({ ids: selectedIds }).unwrap();
+					onSuccess(t.magasin.attendancesDeleted(selectedIds.length));
+					setSelectedIds([]);
+					refetch();
+				} catch (error) {
+					onError(extractApiErrorMessage(error, t.magasin.attendanceDeleteError));
+				}
+			},
+			() => {
+				setShowBulkDeleteModal(false);
+			},
+		);
 	};
 
 	const columns: GridColDef[] = [

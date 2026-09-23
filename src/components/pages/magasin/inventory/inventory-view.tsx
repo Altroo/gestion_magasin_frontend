@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, Box, Button, Chip, Divider, Stack } from '@mui/material';
 import {
@@ -54,33 +55,40 @@ const InventoryViewClient = ({ session, id }: Props) => {
 	const { data: inventory, isLoading, error, refetch } = useGetInventorySessionQuery({ id }, { skip: !token });
 	const [deleteInventory] = useDeleteInventorySessionMutation();
 	const [validateInventory] = useValidateInventorySessionMutation();
-	const axiosError = useMemo(
-		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
-		[error],
-	);
+	const axiosError = error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 
 	const handleDelete = async () => {
-		try {
-			await deleteInventory({ id }).unwrap();
-			onSuccess(t.magasin.inventoryDeleted);
-			router.push(INVENTORY_LIST);
-		} catch (deleteError) {
-			onError(extractApiErrorMessage(deleteError, t.magasin.inventoryDeleteError));
-		} finally {
-			setShowDeleteModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await deleteInventory({ id }).unwrap();
+					onSuccess(t.magasin.inventoryDeleted);
+					router.push(INVENTORY_LIST);
+				} catch (deleteError) {
+					onError(extractApiErrorMessage(deleteError, t.magasin.inventoryDeleteError));
+				}
+			},
+			() => {
+				setShowDeleteModal(false);
+			},
+		);
 	};
 
 	const handleValidate = async () => {
-		try {
-			await validateInventory({ id }).unwrap();
-			onSuccess(t.magasin.inventoryValidated);
-			refetch();
-		} catch (validateError) {
-			onError(extractApiErrorMessage(validateError, t.magasin.inventoryValidateError));
-		} finally {
-			setShowValidateModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await validateInventory({ id }).unwrap();
+					onSuccess(t.magasin.inventoryValidated);
+					refetch();
+				} catch (validateError) {
+					onError(extractApiErrorMessage(validateError, t.magasin.inventoryValidateError));
+				}
+			},
+			() => {
+				setShowValidateModal(false);
+			},
+		);
 	};
 
 	return (

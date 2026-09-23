@@ -1,4 +1,4 @@
-import React from 'react';
+import { type FC } from 'react';
 import { Select, MenuItem, Chip, SelectChangeEvent } from '@mui/material';
 import { GridFilterInputValueProps, GridFilterItem, GridFilterOperator } from '@mui/x-data-grid';
 import { useLanguage } from '@/utils/hooks';
@@ -15,7 +15,7 @@ interface DropdownFilterProps extends GridFilterInputValueProps {
 	showChips?: boolean;
 }
 
-const DropdownFilter: React.FC<DropdownFilterProps> = (props) => {
+const DropdownFilter: FC<DropdownFilterProps> = (props) => {
 	const { t } = useLanguage();
 	const { item, applyValue, options, placeholder, showChips = false } = props;
 	const displayPlaceholder = placeholder ?? t.common.all;

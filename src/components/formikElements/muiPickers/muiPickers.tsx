@@ -1,4 +1,4 @@
-import React from 'react';
+import { type FocusEventHandler, type ReactNode } from 'react';
 import { InputAdornment } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -15,12 +15,12 @@ type PickerFieldProps = {
 	label: string;
 	value: string;
 	onChange: (value: string) => void;
-	onBlur?: React.FocusEventHandler<HTMLDivElement>;
+	onBlur?: FocusEventHandler<HTMLDivElement>;
 	error?: boolean;
-	helperText?: React.ReactNode;
+	helperText?: ReactNode;
 	fullWidth?: boolean;
 	size?: 'small' | 'medium';
-	startIcon?: React.ReactNode;
+	startIcon?: ReactNode;
 	variant?: 'outlined' | 'grid';
 };
 
@@ -158,9 +158,7 @@ const textFieldSlotProps = ({
 			input:
 				startIcon || isGrid
 					? {
-							...(startIcon
-								? { startAdornment: <InputAdornment position="start">{startIcon}</InputAdornment> }
-								: {}),
+							...(startIcon ? { startAdornment: <InputAdornment position="start">{startIcon}</InputAdornment> } : {}),
 							...(isGrid ? { disableUnderline: true } : {}),
 						}
 					: undefined,

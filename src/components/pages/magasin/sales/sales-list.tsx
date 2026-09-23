@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Chip, Stack, Typography } from '@mui/material';
 import {
@@ -76,36 +76,33 @@ const SalesClient = ({ session }: SessionProps) => {
 		{ value: 'in_progress', label: t.magasin.inProgress },
 		{ value: 'cancelled', label: t.magasin.cancelled },
 	];
-	const chipFilters = useMemo(
-		() => [
-			{
-				key: 'status',
-				label: t.magasin.status,
-				paramName: 'status',
-				options: [
-					{ id: 'confirmed', nom: magasinStatusLabel(t, 'confirmed') },
-					{ id: 'void', nom: magasinStatusLabel(t, 'void') },
-				],
-			},
-			{
-				key: 'payment_status',
-				label: t.magasin.paymentStatus,
-				paramName: 'payment_status',
-				options: [
-					{ id: 'paid', nom: magasinStatusLabel(t, 'paid') },
-					{ id: 'in_progress', nom: magasinStatusLabel(t, 'in_progress') },
-					{ id: 'cancelled', nom: magasinStatusLabel(t, 'cancelled') },
-				],
-			},
-			{
-				key: 'payment_mode',
-				label: t.magasin.paymentMode,
-				paramName: 'payment_mode',
-				options: (paymentModes?.results ?? []).map((mode) => ({ id: String(mode.id), nom: mode.name })),
-			},
-		],
-		[paymentModes?.results, t],
-	);
+	const chipFilters = [
+		{
+			key: 'status',
+			label: t.magasin.status,
+			paramName: 'status',
+			options: [
+				{ id: 'confirmed', nom: magasinStatusLabel(t, 'confirmed') },
+				{ id: 'void', nom: magasinStatusLabel(t, 'void') },
+			],
+		},
+		{
+			key: 'payment_status',
+			label: t.magasin.paymentStatus,
+			paramName: 'payment_status',
+			options: [
+				{ id: 'paid', nom: magasinStatusLabel(t, 'paid') },
+				{ id: 'in_progress', nom: magasinStatusLabel(t, 'in_progress') },
+				{ id: 'cancelled', nom: magasinStatusLabel(t, 'cancelled') },
+			],
+		},
+		{
+			key: 'payment_mode',
+			label: t.magasin.paymentMode,
+			paramName: 'payment_mode',
+			options: (paymentModes?.results ?? []).map((mode) => ({ id: String(mode.id), nom: mode.name })),
+		},
+	];
 
 	const renderStatusChip = (status?: string | null) => {
 		const label = magasinStatusLabel(t, status);

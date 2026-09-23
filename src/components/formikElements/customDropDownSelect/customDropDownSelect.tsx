@@ -1,4 +1,5 @@
-import React from 'react';
+import { ITEM_HEIGHT, selectMenuProps } from '@/utils/rawData';
+import { type FC, type FocusEvent, type ReactNode } from 'react';
 import Styles from './customDropDownSelect.module.sass';
 import Select, { type SelectChangeEvent } from '@mui/material/Select';
 import {
@@ -11,24 +12,10 @@ import {
 	FormHelperText,
 	InputAdornment,
 } from '@mui/material';
-import type { MenuProps as MuiMenuProps } from '@mui/material/Menu';
 import type { Theme } from '@mui/material/styles';
 import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import { DropDownType } from '@/types/accountTypes';
 import { useLanguage } from '@/utils/hooks';
-
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const selectMenuProps: Partial<MuiMenuProps> = {
-	slotProps: {
-		paper: {
-			style: {
-				maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-				width: 250,
-			},
-		},
-	},
-};
 
 type Props = {
 	id: string;
@@ -38,17 +25,17 @@ type Props = {
 	value: string | null;
 	size?: 'small' | 'medium';
 	onChange?: (event: SelectChangeEvent) => void;
-	onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+	onBlur?: (e: FocusEvent<HTMLInputElement>) => void;
 	helperText?: string;
 	error?: boolean;
 	disabled?: boolean;
 	cssClass?: string;
-	startIcon?: React.ReactNode;
-	endIcon?: React.ReactNode;
-	children?: React.ReactNode;
+	startIcon?: ReactNode;
+	endIcon?: ReactNode;
+	children?: ReactNode;
 };
 
-const CustomDropDownSelect: React.FC<Props> = (props: Props) => {
+const CustomDropDownSelect: FC<Props> = (props: Props) => {
 	const { t } = useLanguage();
 	return (
 		<ThemeProvider theme={props.theme}>

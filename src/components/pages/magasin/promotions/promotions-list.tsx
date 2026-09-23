@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Chip, Stack } from '@mui/material';
 import {
@@ -50,10 +51,7 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 	const [selectedIds, setSelectedIds] = useState<number[]>([]);
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 	const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
-	const mergedFilterParams = useMemo(
-		() => ({ ...chipFilterParams, ...customFilterParams }),
-		[chipFilterParams, customFilterParams],
-	);
+	const mergedFilterParams = { ...chipFilterParams, ...customFilterParams };
 	const { data, isLoading, refetch } = useGetPromotionsQuery(
 		{ search: searchTerm, page: paginationModel.page + 1, pageSize: paginationModel.pageSize, ...mergedFilterParams },
 		{ skip: !token },
@@ -62,60 +60,67 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 	const [deletePromotion] = useDeletePromotionMutation();
 	const [bulkDeletePromotions] = useBulkDeletePromotionsMutation();
 
-	const chipFilters = useMemo(
-		() => [
-			{
-				key: 'status',
-				label: t.magasin.status,
-				paramName: 'status',
-				options: [
-					{ id: 'active', nom: t.magasin.activePromotion },
-					{ id: 'expired', nom: t.magasin.expiredPromotion },
-				],
-			},
-			{
-				key: 'store',
-				label: t.magasin.store,
-				paramName: 'store',
-				options: (storesData?.results ?? []).map((store) => ({
-					id: String(store.id),
-					nom: store.name,
-				})),
-			},
-		],
-		[storesData?.results, t],
-	);
+	const chipFilters = [
+		{
+			key: 'status',
+			label: t.magasin.status,
+			paramName: 'status',
+			options: [
+				{ id: 'active', nom: t.magasin.activePromotion },
+				{ id: 'expired', nom: t.magasin.expiredPromotion },
+			],
+		},
+		{
+			key: 'store',
+			label: t.magasin.store,
+			paramName: 'store',
+			options: (storesData?.results ?? []).map((store) => ({
+				id: String(store.id),
+				nom: store.name,
+			})),
+		},
+	];
 
-	const handleChipFilterChange = useCallback((params: Record<string, string>) => {
+	const handleChipFilterChange = (params: Record<string, string>) => {
 		setChipFilterParams(params);
 		setPaginationModel((current) => ({ ...current, page: 0 }));
-	}, [setPaginationModel]);
+	};
 
 	const handleDelete = async () => {
 		if (!deleteTarget) return;
-		try {
-			await deletePromotion({ id: deleteTarget }).unwrap();
-			onSuccess(t.magasin.promotionDeleted);
-			setSelectedIds((current) => current.filter((id) => id !== deleteTarget));
-			refetch();
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.promotionDeleteError));
-		} finally {
-			setDeleteTarget(null);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await deletePromotion({ id: deleteTarget }).unwrap();
+					onSuccess(t.magasin.promotionDeleted);
+					setSelectedIds((current) => current.filter((id) => id !== deleteTarget));
+					refetch();
+				} catch (error) {
+					onError(extractApiErrorMessage(error, t.magasin.promotionDeleteError));
+				}
+			},
+			() => {
+				setDeleteTarget(null);
+			},
+		);
 	};
 
 	const handleBulkDelete = async () => {
-		try {
-			await bulkDeletePromotions({ ids: selectedIds }).unwrap();
-			onSuccess(t.magasin.promotionsDeleted(selectedIds.length));
-			setSelectedIds([]);
-			refetch();
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.promotionDeleteError));
-		} finally {
-			setShowBulkDeleteModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await bulkDeletePromotions({ ids: selectedIds }).unwrap();
+					onSuccess(t.magasin.promotionsDeleted(selectedIds.length));
+					setSelectedIds([]);
+					refetch();
+				} catch (error) {
+					onError(extractApiErrorMessage(error, t.magasin.promotionDeleteError));
+				}
+			},
+			() => {
+				setShowBulkDeleteModal(false);
+			},
+		);
 	};
 
 	const renderStatusChip = (status?: string | null) => {

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Card, CardContent, Chip, Divider, Stack, Typography } from '@mui/material';
 import {
@@ -112,29 +113,39 @@ const StockClient = ({ session }: SessionProps) => {
 
 	const deleteHandler = async () => {
 		if (!deleteTarget) return;
-		try {
-			await deleteStockBalance({ id: deleteTarget }).unwrap();
-			onSuccess(t.magasin.stockDeleted);
-			setSelectedIds((current) => current.filter((id) => id !== deleteTarget));
-			refetch();
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.stockDeleteError));
-		} finally {
-			setDeleteTarget(null);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await deleteStockBalance({ id: deleteTarget }).unwrap();
+					onSuccess(t.magasin.stockDeleted);
+					setSelectedIds((current) => current.filter((id) => id !== deleteTarget));
+					refetch();
+				} catch (error) {
+					onError(extractApiErrorMessage(error, t.magasin.stockDeleteError));
+				}
+			},
+			() => {
+				setDeleteTarget(null);
+			},
+		);
 	};
 
 	const bulkDeleteHandler = async () => {
-		try {
-			await bulkDeleteStockBalances({ ids: selectedIds }).unwrap();
-			onSuccess(t.magasin.bulkStocksDeleted(selectedIds.length));
-			resetSelection();
-			refetch();
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.stockDeleteError));
-		} finally {
-			setShowBulkDeleteModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await bulkDeleteStockBalances({ ids: selectedIds }).unwrap();
+					onSuccess(t.magasin.bulkStocksDeleted(selectedIds.length));
+					resetSelection();
+					refetch();
+				} catch (error) {
+					onError(extractApiErrorMessage(error, t.magasin.stockDeleteError));
+				}
+			},
+			() => {
+				setShowBulkDeleteModal(false);
+			},
+		);
 	};
 
 	const approveRequestHandler = async (requestId: number) => {
@@ -158,48 +169,34 @@ const StockClient = ({ session }: SessionProps) => {
 		}
 	};
 
-	const booleanFilterOptions = useMemo(
-		() => [
-			{ value: 'true', label: t.magasin.lowStockReached },
-			{ value: 'false', label: t.magasin.stockSufficient },
-		],
-		[t.magasin.lowStockReached, t.magasin.stockSufficient],
-	);
+	const booleanFilterOptions = [
+		{ value: 'true', label: t.magasin.lowStockReached },
+		{ value: 'false', label: t.magasin.stockSufficient },
+	];
 
-	const chipFilters = useMemo(
-		() => [
-			{
-				key: 'category',
-				label: t.magasin.category,
-				paramName: 'category_ids',
-				options: (categories?.results ?? []).map((category) => ({ id: String(category.id), nom: category.name })),
-			},
-			{
-				key: 'unit',
-				label: t.magasin.unit,
-				paramName: 'unit_ids',
-				options: (productUnits?.results ?? []).map((unit) => ({ id: String(unit.id), nom: unit.name })),
-			},
-			{
-				key: 'stock',
-				label: t.magasin.lowStockStatus,
-				paramName: 'low',
-				options: [
-					{ id: 'true', nom: t.magasin.lowStockReached },
-					{ id: 'false', nom: t.magasin.stockSufficient },
-				],
-			},
-		],
-		[
-			categories?.results,
-			productUnits?.results,
-			t.magasin.category,
-			t.magasin.lowStockReached,
-			t.magasin.lowStockStatus,
-			t.magasin.stockSufficient,
-			t.magasin.unit,
-		],
-	);
+	const chipFilters = [
+		{
+			key: 'category',
+			label: t.magasin.category,
+			paramName: 'category_ids',
+			options: (categories?.results ?? []).map((category) => ({ id: String(category.id), nom: category.name })),
+		},
+		{
+			key: 'unit',
+			label: t.magasin.unit,
+			paramName: 'unit_ids',
+			options: (productUnits?.results ?? []).map((unit) => ({ id: String(unit.id), nom: unit.name })),
+		},
+		{
+			key: 'stock',
+			label: t.magasin.lowStockStatus,
+			paramName: 'low',
+			options: [
+				{ id: 'true', nom: t.magasin.lowStockReached },
+				{ id: 'false', nom: t.magasin.stockSufficient },
+			],
+		},
+	];
 
 	const columns: GridColDef[] = [
 		{

@@ -3,7 +3,7 @@ import SetPasswordCompleteClient from './setPasswordComplete';
 import '@testing-library/jest-dom';
 import { Provider } from 'react-redux';
 import { store } from '@/store/store';
-import React from 'react';
+import { type ReactNode } from 'react';
 
 // Mocks
 jest.mock('next-auth/react', () => ({
@@ -15,8 +15,8 @@ jest.mock('next/navigation', () => ({
 }));
 
 jest.mock('@/utils/clientHelpers', () => ({
-	Desktop: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-	TabletAndMobile: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	Desktop: ({ children }: { children: ReactNode }) => <>{children}</>,
+	TabletAndMobile: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
 describe('SetPasswordCompleteClient', () => {

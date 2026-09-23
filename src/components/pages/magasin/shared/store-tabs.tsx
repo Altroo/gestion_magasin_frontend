@@ -1,7 +1,7 @@
 'use client';
 
 import { Alert, Box, Tab, Tabs } from '@mui/material';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useGetMyStoresQuery } from '@/store/services/magasin';
 import { useLanguage } from '@/utils/hooks';
 import type { StoreMembershipType } from '@/types/gestionMagasinTypes';
@@ -37,10 +37,7 @@ const setPersistedStoreId = (storeId: number) => {
 export const useSelectedStore = (token?: string, includeMbrSouth = false) => {
 	const { data = [], isLoading } = useGetMyStoresQuery(undefined, { skip: !token });
 	const [persistedStoreId] = useState<number | undefined>(() => getPersistedStoreId());
-	const visibleMemberships = useMemo(
-		() => data.filter((membership) => isStoreTabVisible(membership, includeMbrSouth)),
-		[data, includeMbrSouth],
-	);
+	const visibleMemberships = data.filter((membership) => isStoreTabVisible(membership, includeMbrSouth));
 	const persistedStore = visibleMemberships.find((membership) => membership.store.id === persistedStoreId)?.store;
 	const defaultStore = persistedStore ?? visibleMemberships[0]?.store;
 	const globalStore = data.find(
@@ -58,11 +55,9 @@ const StoreTabs = ({ selectedStoreId, onChange, token, includeMbrSouth = false, 
 	const { t } = useLanguage();
 	const { data = [] } = useGetMyStoresQuery(undefined, { skip: !token });
 
-	const stores = useMemo(
-		() =>
-			data.filter((membership) => isStoreTabVisible(membership, includeMbrSouth)).map((membership) => membership.store),
-		[data, includeMbrSouth],
-	);
+	const stores = data
+		.filter((membership) => isStoreTabVisible(membership, includeMbrSouth))
+		.map((membership) => membership.store);
 	const visibleActiveStoreId = selectedStoreId ?? stores[0]?.id;
 
 	if (!stores.length) {

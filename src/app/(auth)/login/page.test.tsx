@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
 import { renderToStaticMarkup } from 'react-dom/server';
-import React from 'react';
+import { type ReactElement } from 'react';
 
 type SessionUser = { pk: number; email: string };
 type Session = { user: SessionUser } | null;
@@ -25,8 +25,8 @@ jest.mock('@/components/pages/auth/login/login', () => ({
 	__esModule: true,
 	default: () => {
 		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		const React = require('react');
-		return React.createElement('div', null, 'LOGIN_CLIENT_MARKER');
+		const { createElement } = require('react');
+		return createElement('div', null, 'LOGIN_CLIENT_MARKER');
 	},
 }));
 
@@ -61,7 +61,7 @@ describe('LoginPage server component', () => {
 		const Page = mod.default as () => Promise<unknown>;
 
 		const result = await Page();
-		const html = renderToStaticMarkup(result as unknown as React.ReactElement);
+		const html = renderToStaticMarkup(result as unknown as ReactElement);
 		expect(html).toContain('LOGIN_CLIENT_MARKER');
 		expect(mockRedirect).not.toHaveBeenCalled();
 	});

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { Typography } from '@mui/material';
 import type { TypographyProps } from '@mui/material/Typography';
 import type { SxProps, Theme } from '@mui/material/styles';
@@ -7,8 +7,8 @@ import DarkTooltip from '@/components/htmlElements/tooltip/darkTooltip/darkToolt
 type TooltipTextCellProps = TypographyProps & {
 	children: ReactNode;
 	title?: ReactNode;
-	fontWeight?: React.CSSProperties['fontWeight'];
-	textAlign?: React.CSSProperties['textAlign'];
+	fontWeight?: CSSProperties['fontWeight'];
+	textAlign?: CSSProperties['textAlign'];
 };
 
 const TooltipTextCell = ({

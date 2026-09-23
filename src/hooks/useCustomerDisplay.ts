@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { isCaisseDeviceConfigured, postCaisseDeviceCommand } from '@/utils/customerDisplay';
+import { runWithCleanup } from '@/utils/runWithCleanup';
 
 const UPDATE_DELAY_MS = 80;
 
@@ -12,20 +13,23 @@ export const useCustomerDisplay = (total: number) => {
 	const latestTotalRef = useRef(total);
 	const isFlushingRef = useRef(false);
 
-	const flushLatestTotal = useCallback(async () => {
+	const flushLatestTotal = useEffectEvent(async () => {
 		if (!enabled || isFlushingRef.current) return;
 
 		isFlushingRef.current = true;
-		try {
-			let sentTotal: number | undefined;
-			do {
-				sentTotal = latestTotalRef.current;
-				await sendTotal(sentTotal);
-			} while (latestTotalRef.current !== sentTotal);
-		} finally {
-			isFlushingRef.current = false;
-		}
-	}, [enabled]);
+		await runWithCleanup(
+			async () => {
+				let sentTotal: number | undefined;
+				do {
+					sentTotal = latestTotalRef.current;
+					await sendTotal(sentTotal);
+				} while (latestTotalRef.current !== sentTotal);
+			},
+			() => {
+				isFlushingRef.current = false;
+			},
+		);
+	});
 
 	useEffect(() => {
 		if (!enabled || !Number.isFinite(total)) return;
@@ -36,7 +40,7 @@ export const useCustomerDisplay = (total: number) => {
 		}, UPDATE_DELAY_MS);
 
 		return () => window.clearTimeout(timeout);
-	}, [enabled, flushLatestTotal, total]);
+	}, [enabled, total]);
 
 	useEffect(
 		() => () => {
@@ -45,6 +49,6 @@ export const useCustomerDisplay = (total: number) => {
 				void flushLatestTotal();
 			}
 		},
-		[enabled, flushLatestTotal],
+		[enabled],
 	);
 };

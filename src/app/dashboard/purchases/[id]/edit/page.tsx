@@ -1,3 +1,4 @@
+import type { NumericIdPageProps } from '@/types/routeTypes';
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
@@ -5,16 +6,12 @@ import PurchasesFormClient from '@/components/pages/magasin/purchases/purchases-
 import { AUTH_LOGIN, PURCHASES_LIST } from '@/utils/routes';
 import { getServerTranslations } from '@/utils/serverTranslations';
 
-type Props = {
-	params: Promise<{ id: string }>;
-};
-
 export async function generateMetadata(): Promise<Metadata> {
 	const t = await getServerTranslations();
 	return { title: t.metadata.editPurchaseTitle, description: t.metadata.editPurchaseDescription };
 }
 
-const PurchaseEditPage = async ({ params }: Props) => {
+const PurchaseEditPage = async ({ params }: NumericIdPageProps) => {
 	const session = await auth();
 	const { id } = await params;
 	if (!session) redirect(AUTH_LOGIN);

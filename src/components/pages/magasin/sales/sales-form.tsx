@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import { EMPTY_SALE_LINE as emptyLine } from '@/utils/rawData';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
@@ -66,8 +68,6 @@ const dropdownTheme = customDropdownTheme();
 type Props = SessionProps & {
 	storeId?: number;
 };
-
-const emptyLine = { type: 'product' as const, product: '', promotion: '', quantity: '1', unit_price: '0' };
 
 type SaleLineGridRow = SaleFormLineValues & {
 	id: number;
@@ -159,16 +159,21 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 						unit_price: line.unit_price,
 					})),
 			};
-			try {
-				const created = await createSale(payload).unwrap();
-				onSuccess(t.magasin.saleCreated);
-				router.push(SALES_VIEW(created.id, selectedStoreId));
-			} catch (e) {
-				onError(extractApiErrorMessage(e, t.magasin.saleCreateError));
-				setFormikAutoErrors({ e, setFieldError });
-			} finally {
-				setIsPending(false);
-			}
+			await runWithCleanup(
+				async () => {
+					try {
+						const created = await createSale(payload).unwrap();
+						onSuccess(t.magasin.saleCreated);
+						router.push(SALES_VIEW(created.id, selectedStoreId));
+					} catch (e) {
+						onError(extractApiErrorMessage(e, t.magasin.saleCreateError));
+						setFormikAutoErrors({ e, setFieldError });
+					}
+				},
+				() => {
+					setIsPending(false);
+				},
+			);
 		},
 	});
 	const activeStoreId = Number(formik.values.store || initialActiveStoreId || 0);
@@ -183,27 +188,24 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 	const productOptions = products?.results ?? [];
 	const promotionOptions = promotions?.results ?? [];
 
-	const subtotal = useMemo(
-		() => formik.values.lines.reduce((sum, line) => sum + Number(line.quantity || 0) * Number(line.unit_price || 0), 0),
-		[formik.values.lines],
+	const subtotal = formik.values.lines.reduce(
+		(sum, line) => sum + Number(line.quantity || 0) * Number(line.unit_price || 0),
+		0,
 	);
 	const total = Math.max(0, subtotal - Number(formik.values.discount_amount || 0));
 
-	const fieldLabels = useMemo<Record<string, string>>(
-		() => ({
-			store: t.magasin.store,
-			payment_status: t.magasin.paymentStatus,
-			payment_mode: t.magasin.paymentMode,
-			paid_amount: t.magasin.paidAmount,
-			discount_amount: t.magasin.discountAmount,
-			note: t.magasin.movementNote,
-			lines: t.magasin.saleLines,
-			globalError: t.errors.globalError,
-		}),
-		[t],
-	);
+	const fieldLabels = {
+		store: t.magasin.store,
+		payment_status: t.magasin.paymentStatus,
+		payment_mode: t.magasin.paymentMode,
+		paid_amount: t.magasin.paidAmount,
+		discount_amount: t.magasin.discountAmount,
+		note: t.magasin.movementNote,
+		lines: t.magasin.saleLines,
+		globalError: t.errors.globalError,
+	};
 
-	const validationErrors = useMemo(() => {
+	const validationErrors = (() => {
 		const errors: Record<string, string> = {};
 		if (hasAttemptedSubmit) {
 			Object.entries(formik.errors).forEach(([key, value]) => {
@@ -214,7 +216,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 			});
 		}
 		return errors;
-	}, [formik.errors, hasAttemptedSubmit]);
+	})();
 
 	const getLineFieldError = (index: number, field: 'type' | 'product' | 'promotion' | 'quantity' | 'unit_price') => {
 		const error = getIn(formik.errors, `lines.${index}.${field}`);
@@ -847,7 +849,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 												active={!isPending}
 												loading={isPending}
 												startIcon={<AddIcon />}
-												onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+												onClick={(event: MouseEvent<HTMLButtonElement>) => {
 													setHasAttemptedSubmit(true);
 													if (!formik.isValid) {
 														event.preventDefault();

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { ForwardedRef, forwardRef } from 'react';
+import { type ReactNode, type Ref } from 'react';
 import Styles from './authLayout.module.sass';
 import { Box, Stack } from '@mui/material';
 import Image from 'next/image';
@@ -10,10 +10,10 @@ import StorefrontSVG from '../../../../public/assets/images/auth_illu/storefront
 import { useLanguage } from '@/utils/hooks';
 
 type Props = {
-	children?: React.ReactNode;
+	children?: ReactNode;
 };
 
-const AuthLayout = forwardRef<HTMLAnchorElement, Props>((props: Props, ref: ForwardedRef<HTMLAnchorElement>) => {
+const AuthLayout = ({ ref, ...props }: Props & { ref?: Ref<HTMLAnchorElement> }) => {
 	const { t } = useLanguage();
 
 	return (
@@ -73,7 +73,7 @@ const AuthLayout = forwardRef<HTMLAnchorElement, Props>((props: Props, ref: Forw
 			</Stack>
 		</main>
 	);
-});
+};
 AuthLayout.displayName = 'AuthLayout';
 
 export default AuthLayout;

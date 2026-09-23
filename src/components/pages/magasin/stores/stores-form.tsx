@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
@@ -119,6 +120,13 @@ const logoDataUrlToFile = (dataUrl: string): File => {
 	return new File([bytes], `store-logo.${type.split('/')[1]}`, { type });
 };
 
+const getDisplayName = (
+	firstName: string | null | undefined,
+	lastName: string | null | undefined,
+	email: string | null | undefined,
+	fallback = '',
+) => `${firstName ?? ''} ${lastName ?? ''}`.trim() || email || fallback;
+
 const StoresFormClient = ({ session, id }: Props) => {
 	const token = useInitAccessToken(session);
 	const router = useRouter();
@@ -145,14 +153,11 @@ const StoresFormClient = ({ session, id }: Props) => {
 	const [editStore, editState] = useEditStoreMutation();
 
 	const error = storeError || addState.error || editState.error;
-	const axiosError = useMemo(
-		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
-		[error],
-	);
+	const axiosError = error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 	const rolesData = rolesRaw?.results ?? [];
 	const directionRole = rolesData.find((role) => role.code === 'direction');
 	const currentUserId = Number(profile?.id);
-	const defaultManagedBy = useMemo(() => {
+	const defaultManagedBy = (() => {
 		if (isEditMode) {
 			return store?.managed_by ?? [];
 		}
@@ -166,7 +171,7 @@ const StoresFormClient = ({ session, id }: Props) => {
 				role_name: directionRole.name,
 			},
 		];
-	}, [currentUserId, directionRole, isEditMode, store?.managed_by]);
+	})();
 
 	const formik = useFormik<StoreFormValues>({
 		initialValues: {
@@ -190,22 +195,27 @@ const StoresFormClient = ({ session, id }: Props) => {
 		onSubmit: async (values, { setFieldError }) => {
 			setHasAttemptedSubmit(true);
 			setIsPending(true);
-			try {
-				if (isEditMode) {
-					await editStore({ id: id!, data: toPayload(values) }).unwrap();
-					onSuccess(t.magasin.storeUpdated);
-					router.push(STORES_VIEW(id!));
-				} else {
-					const created = await addStore(toPayload(values)).unwrap();
-					onSuccess(t.magasin.storeCreated);
-					router.push(STORES_VIEW(created.id));
-				}
-			} catch (e) {
-				onError(extractApiErrorMessage(e, isEditMode ? t.magasin.storeUpdateError : t.magasin.storeCreateError));
-				setFormikAutoErrors({ e, setFieldError });
-			} finally {
-				setIsPending(false);
-			}
+			await runWithCleanup(
+				async () => {
+					try {
+						if (isEditMode) {
+							await editStore({ id: id!, data: toPayload(values) }).unwrap();
+							onSuccess(t.magasin.storeUpdated);
+							router.push(STORES_VIEW(id!));
+						} else {
+							const created = await addStore(toPayload(values)).unwrap();
+							onSuccess(t.magasin.storeCreated);
+							router.push(STORES_VIEW(created.id));
+						}
+					} catch (e) {
+						onError(extractApiErrorMessage(e, isEditMode ? t.magasin.storeUpdateError : t.magasin.storeCreateError));
+						setFormikAutoErrors({ e, setFieldError });
+					}
+				},
+				() => {
+					setIsPending(false);
+				},
+			);
 		},
 	});
 
@@ -230,20 +240,17 @@ const StoresFormClient = ({ session, id }: Props) => {
 		void formik.setFieldTouched('logo', true, false);
 	};
 
-	const fieldLabels = useMemo<Record<string, string>>(
-		() => ({
-			name: t.magasin.store,
-			code: t.magasin.storeCode,
-			address: t.magasin.storeAddress,
-			phone: t.magasin.storePhone,
-			logo: t.magasin.storeLogo,
-			is_active: t.magasin.activeStore,
-			managed_by: t.users.storeAccess,
-			employees: t.magasin.pointageEmployees,
-			globalError: t.errors.globalError,
-		}),
-		[t],
-	);
+	const fieldLabels = {
+		name: t.magasin.store,
+		code: t.magasin.storeCode,
+		address: t.magasin.storeAddress,
+		phone: t.magasin.storePhone,
+		logo: t.magasin.storeLogo,
+		is_active: t.magasin.activeStore,
+		managed_by: t.users.storeAccess,
+		employees: t.magasin.pointageEmployees,
+		globalError: t.errors.globalError,
+	};
 	const usersData = (usersRaw as PaginationResponseType<UserClass> | undefined)?.results ?? [];
 	const assignedUserIds = formik.values.managed_by.map((item) => item.pk);
 	const availableUsers = usersData.filter((user) => user.is_active && !assignedUserIds.includes(user.id));
@@ -253,10 +260,10 @@ const StoresFormClient = ({ session, id }: Props) => {
 	const getManagedUserLabel = (userId: number) => {
 		const user = usersData.find((candidate) => candidate.id === userId);
 		if (user) {
-			return `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.email;
+			return getDisplayName(user.first_name, user.last_name, user.email);
 		}
 		if (userId === currentUserId) {
-			return `${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || profile?.email || String(userId);
+			return getDisplayName(profile?.first_name, profile?.last_name, profile?.email, String(userId));
 		}
 		return String(userId);
 	};
@@ -313,7 +320,7 @@ const StoresFormClient = ({ session, id }: Props) => {
 		void formik.setFieldTouched('employees', true);
 	};
 
-	const validationErrors = useMemo(() => {
+	const validationErrors = (() => {
 		const errors: Record<string, string> = {};
 		if (hasAttemptedSubmit) {
 			Object.entries(formik.errors).forEach(([key, value]) => {
@@ -323,7 +330,7 @@ const StoresFormClient = ({ session, id }: Props) => {
 			});
 		}
 		return errors;
-	}, [formik.errors, hasAttemptedSubmit]);
+	})();
 
 	const isLoading = isPending || addState.isLoading || editState.isLoading || (isEditMode && isStoreLoading);
 	const shouldShowError = (axiosError?.status ?? 0) > 400 && !isLoading;
@@ -686,9 +693,7 @@ const StoresFormClient = ({ session, id }: Props) => {
 																	options={availableUsers}
 																	value={selectedUser}
 																	onChange={(_, nextUser) => setSelectedUserId(nextUser ? String(nextUser.id) : '')}
-																	getOptionLabel={(user) =>
-																		`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.email
-																	}
+																	getOptionLabel={(user) => getDisplayName(user.first_name, user.last_name, user.email)}
 																	isOptionEqualToValue={(option, value) => option.id === value.id}
 																	noOptionsText={t.common.noOptions}
 																	fullWidth
@@ -859,7 +864,7 @@ const StoresFormClient = ({ session, id }: Props) => {
 												active={!isPending}
 												loading={isPending}
 												startIcon={isEditMode ? <EditIcon /> : <AddIcon />}
-												onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+												onClick={(event: MouseEvent<HTMLButtonElement>) => {
 													setHasAttemptedSubmit(true);
 													if (!formik.isValid) {
 														event.preventDefault();

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState, type FC, type MouseEvent, type ReactNode } from 'react';
 import { IconButton, Menu, MenuItem, ListItemIcon, ListItemText, useTheme, useMediaQuery, Box } from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import DarkTooltip from '@/components/htmlElements/tooltip/darkTooltip/darkTooltip';
@@ -8,8 +8,8 @@ import { useLanguage } from '@/utils/hooks';
 
 export type ActionItem = {
 	label: string;
-	icon: React.ReactNode;
-	onClick: (event?: React.MouseEvent<HTMLElement>) => void;
+	icon: ReactNode;
+	onClick: (event?: MouseEvent<HTMLElement>) => void;
 	color?: 'inherit' | 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
 	show?: boolean;
 	disabled?: boolean;
@@ -19,29 +19,29 @@ type MobileActionsMenuProps = {
 	actions: ActionItem[];
 };
 
-const MobileActionsMenu: React.FC<MobileActionsMenuProps> = ({ actions }) => {
+const MobileActionsMenu: FC<MobileActionsMenuProps> = ({ actions }) => {
 	const theme = useTheme();
 	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const open = Boolean(anchorEl);
 	const { t } = useLanguage();
 
-	const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+	const handleClick = (event: MouseEvent<HTMLElement>) => {
 		event.stopPropagation();
 		setAnchorEl(event.currentTarget);
 	};
 
-	const handleClose = (event?: React.MouseEvent) => {
+	const handleClose = (event?: MouseEvent) => {
 		if (event) {
 			event.stopPropagation();
 		}
 		setAnchorEl(null);
 	};
 
-	const handleMenuItemClick = (event: React.MouseEvent, action: ActionItem) => {
+	const handleMenuItemClick = (event: MouseEvent, action: ActionItem) => {
 		event.stopPropagation();
 		handleClose();
-		action.onClick(event as React.MouseEvent<HTMLElement>);
+		action.onClick(event as MouseEvent<HTMLElement>);
 	};
 
 	// Filter actions based on show property (default to true if not specified)

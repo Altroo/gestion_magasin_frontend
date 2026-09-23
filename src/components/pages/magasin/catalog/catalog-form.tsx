@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import { EMPTY_STOCK_TRACKING_ITEM as emptyStockTrackingItem } from '@/utils/rawData';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
@@ -75,12 +77,6 @@ import type { ProductFormValues, ProductPayload } from '@/types/gestionMagasinTy
 
 const inputTheme = textInputTheme();
 const dropdownTheme = customDropdownTheme();
-const emptyStockTrackingItem = {
-	default_stock_alert: '',
-	expiration_date: '',
-	requires_expiration_date: false,
-	shelf_life_days: '',
-};
 
 type StockTrackingGridRow = typeof emptyStockTrackingItem & {
 	id: number;
@@ -142,10 +138,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 	const [editProduct, editState] = useEditProductMutation();
 
 	const error = productError || addState.error || editState.error;
-	const axiosError = useMemo(
-		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
-		[error],
-	);
+	const axiosError = error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 
 	const formik = useFormik<ProductFormValues>({
 		initialValues: {
@@ -184,44 +177,48 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 		onSubmit: async (values, { setFieldError }) => {
 			setHasAttemptedSubmit(true);
 			setIsPending(true);
-			try {
-				if (isEditMode) {
-					await editProduct({ id: id!, store: storeId, data: toPayload(values) }).unwrap();
-					onSuccess(t.magasin.productUpdated);
-					router.push(CATALOG_VIEW(id!, storeId));
-				} else {
-					await addProduct({ store: storeId, data: toPayload(values) }).unwrap();
-					onSuccess(t.magasin.productCreated);
-					router.push(CATALOG_LIST);
-				}
-			} catch (e) {
-				onError(extractApiErrorMessage(e, isEditMode ? t.magasin.productUpdateError : t.magasin.productCreateError));
-				setFormikAutoErrors({ e, setFieldError });
-			} finally {
-				setIsPending(false);
-			}
+			await runWithCleanup(
+				async () => {
+					try {
+						if (isEditMode) {
+							await editProduct({ id: id!, store: storeId, data: toPayload(values) }).unwrap();
+							onSuccess(t.magasin.productUpdated);
+							router.push(CATALOG_VIEW(id!, storeId));
+						} else {
+							await addProduct({ store: storeId, data: toPayload(values) }).unwrap();
+							onSuccess(t.magasin.productCreated);
+							router.push(CATALOG_LIST);
+						}
+					} catch (e) {
+						onError(
+							extractApiErrorMessage(e, isEditMode ? t.magasin.productUpdateError : t.magasin.productCreateError),
+						);
+						setFormikAutoErrors({ e, setFieldError });
+					}
+				},
+				() => {
+					setIsPending(false);
+				},
+			);
 		},
 	});
 
-	const fieldLabels = useMemo<Record<string, string>>(
-		() => ({
-			reference: t.magasin.reference,
-			barcode: t.magasin.barcodeValue,
-			name: t.magasin.product,
-			category: t.magasin.category,
-			unit: t.magasin.unit,
-			purchase_price: t.magasin.purchasePrice,
-			wholesale_price: t.magasin.wholesalePrice,
-			detail_price: t.magasin.detailPrice,
-			counter_price: t.magasin.counterPrice,
-			stock_tracking_items: t.magasin.stockSettings,
-			is_active: t.magasin.activeProduct,
-			globalError: t.errors.globalError,
-		}),
-		[t],
-	);
+	const fieldLabels = {
+		reference: t.magasin.reference,
+		barcode: t.magasin.barcodeValue,
+		name: t.magasin.product,
+		category: t.magasin.category,
+		unit: t.magasin.unit,
+		purchase_price: t.magasin.purchasePrice,
+		wholesale_price: t.magasin.wholesalePrice,
+		detail_price: t.magasin.detailPrice,
+		counter_price: t.magasin.counterPrice,
+		stock_tracking_items: t.magasin.stockSettings,
+		is_active: t.magasin.activeProduct,
+		globalError: t.errors.globalError,
+	};
 
-	const validationErrors = useMemo(() => {
+	const validationErrors = (() => {
 		const errors: Record<string, string> = {};
 		if (hasAttemptedSubmit) {
 			Object.entries(formik.errors).forEach(([key, value]) => {
@@ -234,20 +231,14 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 			});
 		}
 		return errors;
-	}, [formik.errors, hasAttemptedSubmit, t.magasin.fixValidationErrors]);
+	})();
 
 	const isLoading = isPending || addState.isLoading || editState.isLoading || (isEditMode && isProductLoading);
 	const shouldShowError = (axiosError?.status ?? 0) > 400 && !isLoading;
-	const categoryOptions = useMemo(() => categories?.results ?? [], [categories?.results]);
-	const unitOptions = useMemo(() => units?.results ?? [], [units?.results]);
-	const categoryItems = useMemo(
-		() => categoryOptions.map((category) => ({ code: String(category.id), value: category.name })),
-		[categoryOptions],
-	);
-	const unitItems = useMemo(
-		() => unitOptions.map((unit) => ({ code: String(unit.id), value: unit.name })),
-		[unitOptions],
-	);
+	const categoryOptions = categories?.results ?? [];
+	const unitOptions = units?.results ?? [];
+	const categoryItems = categoryOptions.map((category) => ({ code: String(category.id), value: category.name }));
+	const unitItems = unitOptions.map((unit) => ({ code: String(unit.id), value: unit.name }));
 	const selectedCategory = categoryItems.find((category) => category.code === formik.values.category) ?? null;
 	const selectedUnit = unitItems.find((unit) => unit.code === formik.values.unit) ?? null;
 	const fieldError = (field: keyof ProductFormValues) =>
@@ -342,11 +333,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 			renderCell: (params: GridRenderCellParams<StockTrackingGridRow>) => (
 				<MuiFormikDatePicker
 					id={`stock_tracking_items.${params.row.index}.expiration_date`}
-					label={
-						params.row.requires_expiration_date
-							? `${t.magasin.expirationDate} *`
-							: t.magasin.expirationDate
-					}
+					label={params.row.requires_expiration_date ? `${t.magasin.expirationDate} *` : t.magasin.expirationDate}
 					value={params.row.expiration_date}
 					onChange={(value) =>
 						void formik.setFieldValue(`stock_tracking_items.${params.row.index}.expiration_date`, value)
@@ -763,7 +750,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 												active={!isPending}
 												loading={isPending}
 												startIcon={isEditMode ? <EditIcon /> : <AddIcon />}
-												onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+												onClick={(event: MouseEvent<HTMLButtonElement>) => {
 													setHasAttemptedSubmit(true);
 													if (!formik.isValid) {
 														event.preventDefault();

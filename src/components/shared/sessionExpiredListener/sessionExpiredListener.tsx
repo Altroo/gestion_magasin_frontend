@@ -1,6 +1,6 @@
 'use client';
 
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useEffectEvent } from 'react';
 import { ToastContext } from '@/contexts/toastContext';
 import { useLanguage } from '@/utils/hooks';
 
@@ -9,17 +9,16 @@ import { useLanguage } from '@/utils/hooks';
  * a toast notification when the session expires.
  * Must be mounted inside ToastContextProvider.
  */
-const SessionExpiredListener: React.FC = () => {
+const SessionExpiredListener = () => {
 	const toast = useContext(ToastContext);
 	const { t } = useLanguage();
+	const showExpiredMessage = useEffectEvent(() => toast?.onError(t.errors.sessionExpired));
 
 	useEffect(() => {
-		const handler = () => {
-			toast?.onError(t.errors.sessionExpired);
-		};
+		const handler = () => showExpiredMessage();
 		window.addEventListener('session-expired', handler);
 		return () => window.removeEventListener('session-expired', handler);
-	}, [toast, t]);
+	}, []);
 
 	return null;
 };

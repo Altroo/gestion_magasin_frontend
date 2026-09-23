@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState, useEffect, type FC } from 'react';
 import Styles from '@/styles/auth/auth.module.sass';
 import { setFormikAutoErrors } from '@/utils/helpers';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
@@ -39,15 +40,20 @@ const ResetPasswordPageContent = () => {
 		validationSchema: toFormikValidationSchema(emailSchema),
 		onSubmit: async (values, { setFieldError }) => {
 			setIsPending(true);
-			try {
-				await reSendPasswordResetCode({ email: values.email }).unwrap();
-				await cookiesPoster('/api/cookies', { new_email: values.email });
-				router.push(AUTH_RESET_PASSWORD_ENTER_CODE);
-			} catch (e) {
-				setFormikAutoErrors({ e, setFieldError });
-			} finally {
-				setIsPending(false);
-			}
+			await runWithCleanup(
+				async () => {
+					try {
+						await reSendPasswordResetCode({ email: values.email }).unwrap();
+						await cookiesPoster('/api/cookies', { new_email: values.email });
+						router.push(AUTH_RESET_PASSWORD_ENTER_CODE);
+					} catch (e) {
+						setFormikAutoErrors({ e, setFieldError });
+					}
+				},
+				() => {
+					setIsPending(false);
+				},
+			);
 		},
 	});
 
@@ -108,7 +114,7 @@ const ResetPasswordPageContent = () => {
 	);
 };
 
-const ResetPasswordClient: React.FC = () => {
+const ResetPasswordClient: FC = () => {
 	const { data: session, status } = useSession();
 	const loading = status === 'loading';
 	const router = useRouter();

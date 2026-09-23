@@ -1,4 +1,4 @@
-import React, { type Key } from 'react';
+import { type Key, type FC, type FocusEvent, type HTMLAttributes, type ReactNode, type SyntheticEvent } from 'react';
 import type { TextFieldProps } from '@mui/material/TextField';
 import type { Theme } from '@mui/material/styles';
 import type { DropDownType } from '@/types/accountTypes';
@@ -14,18 +14,18 @@ type Props = {
 	noOptionsText: string;
 	size?: 'small' | 'medium';
 	fullWidth?: boolean;
-	onChange?: (event: React.SyntheticEvent, newValue: DropDownType | null) => void;
-	onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+	onChange?: (event: SyntheticEvent, newValue: DropDownType | null) => void;
+	onBlur?: (e: FocusEvent<HTMLInputElement>) => void;
 	helperText?: string;
 	error?: boolean;
 	disabled?: boolean;
-	startIcon?: React.ReactNode;
-	endIcon?: React.ReactNode;
+	startIcon?: ReactNode;
+	endIcon?: ReactNode;
 	slotProps?: TextFieldProps['slotProps'];
-	renderOption?: (props: React.HTMLAttributes<HTMLLIElement> & { key: Key }, option: DropDownType) => React.ReactNode;
+	renderOption?: (props: HTMLAttributes<HTMLLIElement> & { key: Key }, option: DropDownType) => ReactNode;
 };
 
-const CustomAutoCompleteSelect: React.FC<Props> = ({
+const CustomAutoCompleteSelect: FC<Props> = ({
 	id,
 	label,
 	items,
@@ -44,7 +44,7 @@ const CustomAutoCompleteSelect: React.FC<Props> = ({
 	helperText,
 	renderOption: renderOptionProp,
 }) => {
-	const defaultRenderOption = (props: React.HTMLAttributes<HTMLLIElement> & { key: Key }, option: DropDownType) => {
+	const defaultRenderOption = (props: HTMLAttributes<HTMLLIElement> & { key: Key }, option: DropDownType) => {
 		const { key, ...rest } = props;
 		return (
 			<Box component="li" key={key} {...rest}>
@@ -73,7 +73,7 @@ const CustomAutoCompleteSelect: React.FC<Props> = ({
 			isOptionEqualToValue={(option, val) => option.code === val.code}
 			onBlur={onBlur}
 			renderOption={(props, option) =>
-				(renderOptionProp || defaultRenderOption)(props as React.HTMLAttributes<HTMLLIElement> & { key: Key }, option)
+				(renderOptionProp || defaultRenderOption)(props as HTMLAttributes<HTMLLIElement> & { key: Key }, option)
 			}
 			label={label}
 			error={error}

@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Stack } from '@mui/material';
 import {
@@ -46,10 +47,7 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 	const [chipFilterParams, setChipFilterParams] = useState<Record<string, string>>({});
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 	const [receiveTarget, setReceiveTarget] = useState<number | null>(null);
-	const mergedFilterParams = useMemo(
-		() => ({ ...chipFilterParams, ...customFilterParams }),
-		[chipFilterParams, customFilterParams],
-	);
+	const mergedFilterParams = { ...chipFilterParams, ...customFilterParams };
 	const { data, isLoading, refetch } = useGetPurchasesQuery(
 		{ search: searchTerm, page: paginationModel.page + 1, pageSize: paginationModel.pageSize, ...mergedFilterParams },
 		{ skip: !token },
@@ -58,7 +56,7 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 	const [deletePurchase] = useDeletePurchaseMutation();
 	const [receivePurchase] = useReceivePurchaseMutation();
 
-	const supplierOptions = useMemo(() => {
+	const supplierOptions = (() => {
 		const suppliers = new Set<string>();
 		(filterPurchases?.results ?? []).forEach((purchase) => {
 			const supplier = purchase.supplier_name.trim();
@@ -67,66 +65,73 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 		return Array.from(suppliers)
 			.sort((a, b) => a.localeCompare(b))
 			.map((supplier) => ({ id: supplier, nom: supplier }));
-	}, [filterPurchases?.results]);
+	})();
 
-	const storeOptions = useMemo(
-		() => memberships.map((membership) => ({ id: String(membership.store.id), nom: membership.store.name })),
-		[memberships],
-	);
+	const storeOptions = memberships.map((membership) => ({
+		id: String(membership.store.id),
+		nom: membership.store.name,
+	}));
 
-	const chipFilters = useMemo(
-		() => [
-			{
-				key: 'status',
-				label: t.magasin.status,
-				paramName: 'status',
-				options: purchaseStatusOptions(t),
-			},
-			{
-				key: 'supplier',
-				label: t.magasin.supplier,
-				paramName: 'supplier_names',
-				options: supplierOptions,
-			},
-			{
-				key: 'store',
-				label: t.magasin.store,
-				paramName: 'store_ids',
-				options: storeOptions,
-			},
-		],
-		[storeOptions, supplierOptions, t],
-	);
+	const chipFilters = [
+		{
+			key: 'status',
+			label: t.magasin.status,
+			paramName: 'status',
+			options: purchaseStatusOptions(t),
+		},
+		{
+			key: 'supplier',
+			label: t.magasin.supplier,
+			paramName: 'supplier_names',
+			options: supplierOptions,
+		},
+		{
+			key: 'store',
+			label: t.magasin.store,
+			paramName: 'store_ids',
+			options: storeOptions,
+		},
+	];
 
-	const handleChipFilterChange = useCallback((params: Record<string, string>) => {
+	const handleChipFilterChange = (params: Record<string, string>) => {
 		setChipFilterParams(params);
 		setPaginationModel((current) => ({ ...current, page: 0 }));
-	}, [setPaginationModel]);
+	};
 
 	const handleDelete = async () => {
 		if (!deleteTarget) return;
-		try {
-			await deletePurchase({ id: deleteTarget }).unwrap();
-			onSuccess(t.magasin.purchaseDeleted);
-			refetch();
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.purchaseDeleteError));
-		} finally {
-			setDeleteTarget(null);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await deletePurchase({ id: deleteTarget }).unwrap();
+					onSuccess(t.magasin.purchaseDeleted);
+					refetch();
+				} catch (error) {
+					onError(extractApiErrorMessage(error, t.magasin.purchaseDeleteError));
+				}
+			},
+			() => {
+				setDeleteTarget(null);
+			},
+		);
 	};
 
 	const handleReceive = async () => {
 		if (!receiveTarget) return;
-		try {
-			await receivePurchase({ id: receiveTarget }).unwrap();
-			onSuccess(t.magasin.purchaseReceived);
-			refetch();
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.purchaseReceiveError));
-		} finally {
-			setReceiveTarget(null);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await receivePurchase({ id: receiveTarget }).unwrap();
+					onSuccess(t.magasin.purchaseReceived);
+					refetch();
+				} catch (error) {
+					onError(extractApiErrorMessage(error, t.magasin.purchaseReceiveError));
+				}
+			},
+			() => {
+				setReceiveTarget(null);
+			},
+		);
 	};
 
 	const columns: GridColDef[] = [

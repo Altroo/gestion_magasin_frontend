@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Stack, Typography } from '@mui/material';
 import {
@@ -63,29 +64,39 @@ const StoresListClient = ({ session }: SessionProps) => {
 
 	const deleteHandler = async () => {
 		if (!deleteTarget) return;
-		try {
-			await deleteStore({ id: deleteTarget }).unwrap();
-			onSuccess(t.magasin.storeDeleted);
-			setSelectedIds((current) => current.filter((id) => id !== deleteTarget));
-			refetch();
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.storeDeleteError));
-		} finally {
-			setDeleteTarget(null);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await deleteStore({ id: deleteTarget }).unwrap();
+					onSuccess(t.magasin.storeDeleted);
+					setSelectedIds((current) => current.filter((id) => id !== deleteTarget));
+					refetch();
+				} catch (error) {
+					onError(extractApiErrorMessage(error, t.magasin.storeDeleteError));
+				}
+			},
+			() => {
+				setDeleteTarget(null);
+			},
+		);
 	};
 
 	const bulkDeleteHandler = async () => {
-		try {
-			await bulkDeleteStores({ ids: selectedIds }).unwrap();
-			onSuccess(t.magasin.bulkStoresDeleted(selectedIds.length));
-			resetSelection();
-			refetch();
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.storeDeleteError));
-		} finally {
-			setShowBulkDeleteModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await bulkDeleteStores({ ids: selectedIds }).unwrap();
+					onSuccess(t.magasin.bulkStoresDeleted(selectedIds.length));
+					resetSelection();
+					refetch();
+				} catch (error) {
+					onError(extractApiErrorMessage(error, t.magasin.storeDeleteError));
+				}
+			},
+			() => {
+				setShowBulkDeleteModal(false);
+			},
+		);
 	};
 
 	const booleanFilterOptions = [
@@ -93,20 +104,17 @@ const StoresListClient = ({ session }: SessionProps) => {
 		{ value: 'false', label: t.common.no },
 	];
 
-	const chipFilters = useMemo(
-		() => [
-			{
-				key: 'active',
-				label: t.magasin.activeStore,
-				paramName: 'is_active',
-				options: [
-					{ id: 'true', nom: t.users.active },
-					{ id: 'false', nom: t.users.inactive },
-				],
-			},
-		],
-		[t.magasin.activeStore, t.users.active, t.users.inactive],
-	);
+	const chipFilters = [
+		{
+			key: 'active',
+			label: t.magasin.activeStore,
+			paramName: 'is_active',
+			options: [
+				{ id: 'true', nom: t.users.active },
+				{ id: 'false', nom: t.users.inactive },
+			],
+		},
+	];
 
 	const columns: GridColDef[] = [
 		{

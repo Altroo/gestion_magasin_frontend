@@ -1,4 +1,4 @@
-import React from 'react';
+import { type ReactNode } from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import LanguageSwitcher from './languageSwitcher';
@@ -7,8 +7,8 @@ import type { LanguageContextType } from '@/contexts/languageContext';
 import { translations } from '@/translations';
 
 jest.mock('@/utils/clientHelpers', () => ({
-	Desktop: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-	TabletAndMobile: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	Desktop: ({ children }: { children: ReactNode }) => <>{children}</>,
+	TabletAndMobile: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
 const renderWithLanguage = (lang: 'fr' | 'en', setLanguage = jest.fn()) => {

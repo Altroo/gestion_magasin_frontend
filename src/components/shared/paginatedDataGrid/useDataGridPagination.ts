@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useSyncExternalStore } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { GridPaginationModel } from '@mui/x-data-grid';
 
@@ -44,28 +44,31 @@ export const useDataGridPagination = (
 		getDataGridPaginationSnapshot,
 		getDataGridPaginationServerSnapshot,
 	);
-	const paginationModel = useMemo(() => parseDataGridPagination(search, defaultPageSize, gridKey), [defaultPageSize, gridKey, search]);
+	const paginationModel = parseDataGridPagination(search, defaultPageSize, gridKey);
 
-	const setPaginationModel = useCallback<Dispatch<SetStateAction<GridPaginationModel>>>(
-		(value) => {
-			const currentPaginationModel = parseDataGridPagination(window.location.search, defaultPageSize, gridKey);
-			const nextPaginationModel = typeof value === 'function' ? value(currentPaginationModel) : value;
+	const setPaginationModel: Dispatch<SetStateAction<GridPaginationModel>> = (value) => {
+		const currentPaginationModel = parseDataGridPagination(window.location.search, defaultPageSize, gridKey);
+		const nextPaginationModel = typeof value === 'function' ? value(currentPaginationModel) : value;
 
-			if (
-				nextPaginationModel.page === currentPaginationModel.page &&
-				nextPaginationModel.pageSize === currentPaginationModel.pageSize
-			) {
-				return;
-			}
+		if (
+			nextPaginationModel.page === currentPaginationModel.page &&
+			nextPaginationModel.pageSize === currentPaginationModel.pageSize
+		) {
+			return;
+		}
 
-			const url = new URL(window.location.href);
-			url.searchParams.set(gridKey ? `${gridKey}_${DATA_GRID_PAGE_PARAM}` : DATA_GRID_PAGE_PARAM, String(nextPaginationModel.page + 1));
-			url.searchParams.set(gridKey ? `${gridKey}_${DATA_GRID_PAGE_SIZE_PARAM}` : DATA_GRID_PAGE_SIZE_PARAM, String(nextPaginationModel.pageSize));
-			window.history.replaceState(window.history.state, '', url);
-			window.dispatchEvent(new Event(DATA_GRID_PAGINATION_EVENT));
-		},
-		[defaultPageSize, gridKey],
-	);
+		const url = new URL(window.location.href);
+		url.searchParams.set(
+			gridKey ? `${gridKey}_${DATA_GRID_PAGE_PARAM}` : DATA_GRID_PAGE_PARAM,
+			String(nextPaginationModel.page + 1),
+		);
+		url.searchParams.set(
+			gridKey ? `${gridKey}_${DATA_GRID_PAGE_SIZE_PARAM}` : DATA_GRID_PAGE_SIZE_PARAM,
+			String(nextPaginationModel.pageSize),
+		);
+		window.history.replaceState(window.history.state, '', url);
+		window.dispatchEvent(new Event(DATA_GRID_PAGINATION_EVENT));
+	};
 
 	return [paginationModel, setPaginationModel];
 };

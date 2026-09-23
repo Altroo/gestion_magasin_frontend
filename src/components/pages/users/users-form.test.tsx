@@ -1,4 +1,4 @@
-import React from 'react';
+import { type ReactElement, type ReactNode } from 'react';
 import { render, screen, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Provider } from 'react-redux';
@@ -11,8 +11,7 @@ const mockStore = configureStore({
 		_init: () => ({}),
 		account: () => ({}),
 	},
-	middleware: (getDefaultMiddleware) =>
-		getDefaultMiddleware({ serializableCheck: false }),
+	middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }),
 });
 
 // Mock next/navigation
@@ -50,8 +49,7 @@ const mockCheckEmailMutation = jest.fn();
 
 jest.mock('@/store/services/account', () => ({
 	__esModule: true,
-	useGetUserQuery: (params: { id: number }, options: { skip: boolean }) =>
-		mockUseGetUserQuery(params, options),
+	useGetUserQuery: (params: { id: number }, options: { skip: boolean }) => mockUseGetUserQuery(params, options),
 	useAddUserMutation: () => [mockAddUserMutation, { isLoading: false, error: undefined }],
 	useCheckEmailMutation: () => [mockCheckEmailMutation, { isLoading: false, error: undefined }],
 	useEditUserMutation: () => [mockEditUserMutation, { isLoading: false, error: undefined }],
@@ -61,9 +59,7 @@ jest.mock('@/store/services/magasin', () => ({
 	__esModule: true,
 	useGetStoresQuery: () => ({
 		data: {
-			results: [
-				{ id: 1, name: 'MBR SOUTH', code: 'MBR', address: '', phone: '', is_active: true },
-			],
+			results: [{ id: 1, name: 'MBR SOUTH', code: 'MBR', address: '', phone: '', is_active: true }],
 		},
 		isLoading: false,
 	}),
@@ -81,12 +77,12 @@ jest.mock('@/store/services/magasin', () => ({
 
 // Mock Protected
 jest.mock('@/components/layouts/protected/protected', () => ({
-	Protected: ({ children }: { children: React.ReactNode }) => <div data-testid="protected">{children}</div>,
+	Protected: ({ children }: { children: ReactNode }) => <div data-testid="protected">{children}</div>,
 }));
 
 // Mock NavigationBar
 jest.mock('@/components/layouts/navigationBar/navigationBar', () => {
-	const Mock = ({ children }: { children: React.ReactNode }) => <div data-testid="navigation-bar">{children}</div>;
+	const Mock = ({ children }: { children: ReactNode }) => <div data-testid="navigation-bar">{children}</div>;
 	Mock.displayName = 'NavigationBar';
 	return { __esModule: true, default: Mock };
 });
@@ -150,7 +146,10 @@ jest.mock('@/utils/helpers', () => ({
 }));
 
 jest.mock('@/utils/rawData', () => ({
-	genderItemsList: jest.fn(() => [{ value: 'H', label: 'Homme' }, { value: 'F', label: 'Femme' }]),
+	genderItemsList: jest.fn(() => [
+		{ value: 'H', label: 'Homme' },
+		{ value: 'F', label: 'Femme' },
+	]),
 }));
 
 jest.mock('@/utils/formValidationSchemas', () => ({
@@ -186,7 +185,7 @@ const mockSession: AppSession = {
 	},
 };
 
-const renderWithProviders = (ui: React.ReactElement) => {
+const renderWithProviders = (ui: ReactElement) => {
 	return render(<Provider store={mockStore}>{ui}</Provider>);
 };
 

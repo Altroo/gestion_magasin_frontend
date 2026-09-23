@@ -1,4 +1,4 @@
-import React from 'react';
+import { type ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Provider } from 'react-redux';
@@ -18,7 +18,14 @@ jest.mock('@/utils/hooks', () => {
 	return {
 		useToast: () => ({ onSuccess: jest.fn(), onError: jest.fn() }),
 		useAppSelector: jest.fn(),
-		usePermission: () => ({ is_staff: true, can_view: true, can_print: true, can_create: true, can_edit: true, can_delete: true }),
+		usePermission: () => ({
+			is_staff: true,
+			can_view: true,
+			can_print: true,
+			can_create: true,
+			can_edit: true,
+			can_delete: true,
+		}),
 		useLanguage: () => ({ t: translations.fr }),
 	};
 });
@@ -41,13 +48,13 @@ jest.mock('@/components/formikElements/apiLoading/apiProgress/apiProgress', () =
 });
 
 jest.mock('@/components/layouts/navigationBar/navigationBar', () => {
-	const Mock = ({ children }: { children: React.ReactNode }) => <div data-testid="navigation-bar">{children}</div>;
+	const Mock = ({ children }: { children: ReactNode }) => <div data-testid="navigation-bar">{children}</div>;
 	Mock.displayName = 'NavigationBar';
 	return { __esModule: true, default: Mock };
 });
 
 jest.mock('@/components/layouts/protected/protected', () => ({
-	Protected: ({ children }: { children: React.ReactNode }) => <div data-testid="protected">{children}</div>,
+	Protected: ({ children }: { children: ReactNode }) => <div data-testid="protected">{children}</div>,
 }));
 
 describe('UsersViewClient', () => {

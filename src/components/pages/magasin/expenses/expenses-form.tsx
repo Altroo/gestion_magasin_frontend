@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
@@ -109,19 +109,13 @@ const ExpensesFormClient = ({ session, id, storeId: initialStoreId }: Props) => 
 		{ page: 1, pageSize: 100, is_active: 'true' },
 		{ skip: !token },
 	);
-	const axiosError = useMemo(
-		() => (expenseError ? (expenseError as ResponseDataInterface<ApiErrorResponseType>) : undefined),
-		[expenseError],
-	);
-	const paymentModeOptions = useMemo(
-		() => expensePaymentModeOptions(t, paymentModes?.results),
-		[paymentModes?.results, t],
-	);
+	const axiosError = expenseError ? (expenseError as ResponseDataInterface<ApiErrorResponseType>) : undefined;
+	const paymentModeOptions = expensePaymentModeOptions(t, paymentModes?.results);
 	const defaultPaymentMode = paymentModeOptions.find((mode) => mode.id === 'cash') ?? paymentModeOptions[0];
-	const categoryItems = useMemo(
-		() => (categories?.results ?? []).map((category) => ({ code: String(category.id), value: category.name })),
-		[categories?.results],
-	);
+	const categoryItems = (categories?.results ?? []).map((category) => ({
+		code: String(category.id),
+		value: category.name,
+	}));
 
 	const toPayload = (values: ExpenseFormValues): ExpensePayload => ({
 		store: storeId ?? expense?.store ?? 0,
@@ -170,28 +164,25 @@ const ExpensesFormClient = ({ session, id, storeId: initialStoreId }: Props) => 
 		},
 	});
 
-	const fieldLabels = useMemo<Record<string, string>>(
-		() => ({
-			category: t.magasin.expenseCategory,
-			label: t.magasin.expenseLabel,
-			amount: t.magasin.expenseAmount,
-			payment_status: t.magasin.paymentStatus,
-			payment_mode: t.magasin.paymentMode,
-			expense_date: t.magasin.date,
-			invoice_file: t.magasin.invoice,
-			note: t.magasin.movementNote,
-			globalError: t.errors.globalError,
-		}),
-		[t],
-	);
-	const validationErrors = useMemo(() => {
+	const fieldLabels = {
+		category: t.magasin.expenseCategory,
+		label: t.magasin.expenseLabel,
+		amount: t.magasin.expenseAmount,
+		payment_status: t.magasin.paymentStatus,
+		payment_mode: t.magasin.paymentMode,
+		expense_date: t.magasin.date,
+		invoice_file: t.magasin.invoice,
+		note: t.magasin.movementNote,
+		globalError: t.errors.globalError,
+	};
+	const validationErrors = (() => {
 		const errors: Record<string, string> = {};
 		if (hasAttemptedSubmit)
 			Object.entries(formik.errors).forEach(([key, value]) => {
 				if (key !== 'globalError' && typeof value === 'string') errors[key] = value;
 			});
 		return errors;
-	}, [formik.errors, hasAttemptedSubmit]);
+	})();
 	const fieldError = (field: keyof ExpenseFormValues) =>
 		(formik.touched[field] || hasAttemptedSubmit) && typeof formik.errors[field] === 'string'
 			? (formik.errors[field] as string)
@@ -466,7 +457,7 @@ const ExpensesFormClient = ({ session, id, storeId: initialStoreId }: Props) => 
 												active={!addState.isLoading && !editState.isLoading}
 												loading={addState.isLoading || editState.isLoading}
 												startIcon={isEditMode ? <EditIcon /> : <AddIcon />}
-												onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+												onClick={(event: MouseEvent<HTMLButtonElement>) => {
 													setHasAttemptedSubmit(true);
 													if (!formik.isValid) {
 														event.preventDefault();

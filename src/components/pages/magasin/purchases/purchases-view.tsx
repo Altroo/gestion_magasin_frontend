@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, Box, Button, Chip, Divider, Stack } from '@mui/material';
 import {
@@ -52,33 +53,40 @@ const PurchasesViewClient = ({ session, id }: Props) => {
 	const { data: purchase, isLoading, error, refetch } = useGetPurchaseQuery({ id }, { skip: !token });
 	const [deletePurchase] = useDeletePurchaseMutation();
 	const [receivePurchase] = useReceivePurchaseMutation();
-	const axiosError = useMemo(
-		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
-		[error],
-	);
+	const axiosError = error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 
 	const handleDelete = async () => {
-		try {
-			await deletePurchase({ id }).unwrap();
-			onSuccess(t.magasin.purchaseDeleted);
-			router.push(PURCHASES_LIST);
-		} catch (deleteError) {
-			onError(extractApiErrorMessage(deleteError, t.magasin.purchaseDeleteError));
-		} finally {
-			setShowDeleteModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await deletePurchase({ id }).unwrap();
+					onSuccess(t.magasin.purchaseDeleted);
+					router.push(PURCHASES_LIST);
+				} catch (deleteError) {
+					onError(extractApiErrorMessage(deleteError, t.magasin.purchaseDeleteError));
+				}
+			},
+			() => {
+				setShowDeleteModal(false);
+			},
+		);
 	};
 
 	const handleReceive = async () => {
-		try {
-			await receivePurchase({ id }).unwrap();
-			onSuccess(t.magasin.purchaseReceived);
-			refetch();
-		} catch (receiveError) {
-			onError(extractApiErrorMessage(receiveError, t.magasin.purchaseReceiveError));
-		} finally {
-			setShowReceiveModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await receivePurchase({ id }).unwrap();
+					onSuccess(t.magasin.purchaseReceived);
+					refetch();
+				} catch (receiveError) {
+					onError(extractApiErrorMessage(receiveError, t.magasin.purchaseReceiveError));
+				}
+			},
+			() => {
+				setShowReceiveModal(false);
+			},
+		);
 	};
 
 	return (

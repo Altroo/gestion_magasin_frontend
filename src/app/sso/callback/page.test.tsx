@@ -1,5 +1,5 @@
 import { render, waitFor } from '@testing-library/react';
-import type React from 'react';
+import { type ComponentType } from 'react';
 
 const mockSignIn = jest.fn();
 jest.mock('next-auth/react', () => ({
@@ -35,7 +35,7 @@ describe('SSOCallbackPage', () => {
 	it('exchanges code and redirects to dashboard', async () => {
 		mockSignIn.mockResolvedValueOnce({});
 		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		const Page = require('./page').default as React.ComponentType;
+		const Page = require('./page').default as ComponentType;
 
 		render(<Page />);
 
@@ -46,7 +46,7 @@ describe('SSOCallbackPage', () => {
 	it('redirects to login when code is missing', async () => {
 		mockSearchParams = new URLSearchParams();
 		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		const Page = require('./page').default as React.ComponentType;
+		const Page = require('./page').default as ComponentType;
 
 		render(<Page />);
 

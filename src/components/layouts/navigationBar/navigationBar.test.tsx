@@ -2,13 +2,13 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import NavigationBar from './navigationBar';
 import '@testing-library/jest-dom';
-import React from 'react';
+import { type ReactNode } from 'react';
 import type { NotificationType } from '@/types/gestionMagasinTypes';
 import { CUSTOMER_DISPLAY_COOKIE, CUSTOMER_DISPLAY_COOKIE_VALUE } from '@/utils/customerDisplay';
 
 jest.mock('@/utils/clientHelpers', () => ({
-	Desktop: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-	TabletAndMobile: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+	Desktop: ({ children }: { children?: ReactNode }) => <>{children}</>,
+	TabletAndMobile: ({ children }: { children?: ReactNode }) => <>{children}</>,
 }));
 
 let mockPathname = '/dashboard';
@@ -107,9 +107,9 @@ describe('NavigationBar', () => {
 			gender: 'Homme',
 			is_staff: false,
 		};
-		mockUseAppSelector.mockImplementation((selector: { name?: string }) => (
-			selector.name === 'getUnreadNotificationCount' ? 0 : mockProfile
-		));
+		mockUseAppSelector.mockImplementation((selector: { name?: string }) =>
+			selector.name === 'getUnreadNotificationCount' ? 0 : mockProfile,
+		);
 		mockUseSession.mockImplementation(() => ({ data: {}, status: 'authenticated' }));
 		mockUseGetMyStoresQuery.mockReturnValue({ data: [], isSuccess: true });
 		mockIsMobile = false;
@@ -117,11 +117,19 @@ describe('NavigationBar', () => {
 
 	it('loads notification pages and resets pagination when the first page refreshes', async () => {
 		mockNotificationsResult.data = undefined;
-		const { rerender } = render(<NavigationBar title="Dashboard"><div /></NavigationBar>);
+		const { rerender } = render(
+			<NavigationBar title="Dashboard">
+				<div />
+			</NavigationBar>,
+		);
 		await userEvent.click(screen.getByRole('button', { name: 'Notifications' }));
 
 		mockNotificationsResult.data = { results: [notification(1)], next: '?page=2' };
-		rerender(<NavigationBar title="Dashboard"><div /></NavigationBar>);
+		rerender(
+			<NavigationBar title="Dashboard">
+				<div />
+			</NavigationBar>,
+		);
 		expect(screen.getByText('Notification 1')).toBeInTheDocument();
 
 		mockFetchNotifications.mockReturnValueOnce({
@@ -142,7 +150,11 @@ describe('NavigationBar', () => {
 		expect(screen.queryByRole('button', { name: 'Afficher' })).not.toBeInTheDocument();
 
 		mockNotificationsResult.data = { results: [notification(4)], next: '?page=2' };
-		rerender(<NavigationBar title="Dashboard"><div /></NavigationBar>);
+		rerender(
+			<NavigationBar title="Dashboard">
+				<div />
+			</NavigationBar>,
+		);
 		expect(screen.getByText('Notification 4')).toBeInTheDocument();
 		expect(screen.queryByText('Notification 1')).not.toBeInTheDocument();
 		expect(screen.queryByText('Notification 2')).not.toBeInTheDocument();
@@ -154,16 +166,28 @@ describe('NavigationBar', () => {
 	it('ignores a pending older page after the first page refreshes', async () => {
 		mockNotificationsResult.data = { results: [notification(1)], next: '?page=2' };
 		let resolvePage!: (page: NotificationPage) => void;
-		const pendingPage = new Promise<NotificationPage>((resolve) => { resolvePage = resolve; });
+		const pendingPage = new Promise<NotificationPage>((resolve) => {
+			resolvePage = resolve;
+		});
 		mockFetchNotifications.mockReturnValueOnce({ unwrap: () => pendingPage });
-		const { rerender } = render(<NavigationBar title="Dashboard"><div /></NavigationBar>);
+		const { rerender } = render(
+			<NavigationBar title="Dashboard">
+				<div />
+			</NavigationBar>,
+		);
 		await userEvent.click(screen.getByRole('button', { name: 'Notifications' }));
 		await userEvent.click(screen.getByRole('button', { name: 'Afficher' }));
 		expect(screen.getByRole('button', { name: 'Chargement…' })).toBeDisabled();
 
 		mockNotificationsResult.data = { results: [notification(4)], next: '?page=2' };
-		rerender(<NavigationBar title="Dashboard"><div /></NavigationBar>);
-		await act(async () => { resolvePage({ results: [notification(2)], next: null }); });
+		rerender(
+			<NavigationBar title="Dashboard">
+				<div />
+			</NavigationBar>,
+		);
+		await act(async () => {
+			resolvePage({ results: [notification(2)], next: null });
+		});
 		expect(screen.getByText('Notification 4')).toBeInTheDocument();
 		expect(screen.queryByText('Notification 2')).not.toBeInTheDocument();
 		expect(screen.getByRole('button', { name: 'Afficher' })).toBeEnabled();
@@ -172,10 +196,18 @@ describe('NavigationBar', () => {
 	it('keeps caisse controls hidden until the client is ready', () => {
 		document.cookie = `${CUSTOMER_DISPLAY_COOKIE}=${CUSTOMER_DISPLAY_COOKIE_VALUE}; Path=/`;
 		mockUseIsClient.mockReturnValue(false);
-		const { rerender } = render(<NavigationBar title="Caisse"><div /></NavigationBar>);
+		const { rerender } = render(
+			<NavigationBar title="Caisse">
+				<div />
+			</NavigationBar>,
+		);
 		expect(screen.queryByRole('button', { name: 'Fermer la caisse' })).not.toBeInTheDocument();
 		mockUseIsClient.mockReturnValue(true);
-		rerender(<NavigationBar title="Caisse"><div /></NavigationBar>);
+		rerender(
+			<NavigationBar title="Caisse">
+				<div />
+			</NavigationBar>,
+		);
 		expect(screen.getByRole('button', { name: 'Fermer la caisse' })).toBeInTheDocument();
 	});
 
@@ -253,7 +285,6 @@ describe('NavigationBar', () => {
 			screen.getAllByText(/Bienvenue|Bienvenu/i).some((el) => /Bienvenue/.test(el.textContent || '')),
 		).toBeTruthy();
 	});
-
 
 	it('shows Utilisateurs section for staff users', () => {
 		mockProfile = {
@@ -341,17 +372,20 @@ describe('NavigationBar', () => {
 		expect(screen.queryByText('Notifications')).not.toBeInTheDocument();
 	});
 
-
 	it('drawer toggle button only appears on mobile', async () => {
 		mockIsMobile = false;
 		const { rerender } = render(
-			<NavigationBar title="D"><div /></NavigationBar>,
+			<NavigationBar title="D">
+				<div />
+			</NavigationBar>,
 		);
 		expect(screen.queryByLabelText('Basculer le tiroir de navigation')).not.toBeInTheDocument();
 
 		mockIsMobile = true;
 		rerender(
-			<NavigationBar title="D2"><div /></NavigationBar>,
+			<NavigationBar title="D2">
+				<div />
+			</NavigationBar>,
 		);
 		const toggleBtn = screen.getByLabelText('Basculer le tiroir de navigation');
 		expect(toggleBtn).toBeInTheDocument();

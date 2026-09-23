@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import { type FC } from 'react';
 import { TextField } from '@mui/material';
 import { GridFilterInputValueProps, GridFilterItem, GridFilterOperator } from '@mui/x-data-grid';
 import { useLanguage } from '@/utils/hooks';
@@ -13,7 +13,7 @@ const parseNumeric = (value: number | string | null | undefined): number | null 
 	return Number.isFinite(parsed) ? parsed : null;
 };
 
-const NumericFilterInput: React.FC<GridFilterInputValueProps> = ({ item, applyValue }) => {
+const NumericFilterInput: FC<GridFilterInputValueProps> = ({ item, applyValue }) => {
 	const { t } = useLanguage();
 
 	return (

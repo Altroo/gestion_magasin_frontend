@@ -1,16 +1,9 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type FC } from 'react';
 import { Box } from '@mui/material';
 import ChipSelectFilter from './chipSelectFilter';
-import type { ChipSelectOption } from './chipSelectFilter';
-
-export interface ChipFilterConfig {
-	key: string;
-	label: string;
-	paramName: string;
-	options: ChipSelectOption[];
-}
+import type { ChipFilterConfig } from '@/types/filterTypes';
 
 interface ChipSelectFilterBarProps {
 	filters: ChipFilterConfig[];
@@ -18,8 +11,8 @@ interface ChipSelectFilterBarProps {
 	columns?: number;
 }
 
-const ChipSelectFilterBar: React.FC<ChipSelectFilterBarProps> = ({ filters, onFilterChange, columns }) => {
-	const filterKeys = useMemo(() => filters.map((filter) => filter.key).join(','), [filters]);
+const ChipSelectFilterBar: FC<ChipSelectFilterBarProps> = ({ filters, onFilterChange, columns }) => {
+	const filterKeys = filters.map((filter) => filter.key).join(',');
 
 	const [selectedMap, setSelectedMap] = useState<Record<string, string[]>>(() => {
 		const initial: Record<string, string[]> = {};
@@ -39,8 +32,10 @@ const ChipSelectFilterBar: React.FC<ChipSelectFilterBarProps> = ({ filters, onFi
 		setSelectedMap(reset);
 	}
 
-	const buildParams = useCallback(
-		(currentMap: Record<string, string[]>): Record<string, string> => {
+	const prevParamsRef = useRef<string>('{}');
+
+	useEffect(() => {
+		const buildParams = (currentMap: Record<string, string[]>): Record<string, string> => {
 			const params: Record<string, string> = {};
 			filters.forEach((filter) => {
 				const ids = currentMap[filter.key];
@@ -49,27 +44,21 @@ const ChipSelectFilterBar: React.FC<ChipSelectFilterBarProps> = ({ filters, onFi
 				}
 			});
 			return params;
-		},
-		[filters],
-	);
-
-	const prevParamsRef = useRef<string>('{}');
-
-	useEffect(() => {
+		};
 		const params = buildParams(selectedMap);
 		const paramsKey = JSON.stringify(params);
 		if (paramsKey !== prevParamsRef.current) {
 			prevParamsRef.current = paramsKey;
 			onFilterChange(params);
 		}
-	}, [selectedMap, buildParams, onFilterChange]);
+	}, [selectedMap, filters, onFilterChange]);
 
-	const handleChange = useCallback((key: string, ids: string[]) => {
+	const handleChange = (key: string, ids: string[]) => {
 		setSelectedMap((prev) => ({
 			...prev,
 			[key]: ids,
 		}));
-	}, []);
+	};
 
 	if (filters.length === 0) return null;
 

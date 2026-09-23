@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import { EMPTY_PURCHASE_LINE as emptyLine } from '@/utils/rawData';
+import { useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
@@ -65,7 +66,6 @@ import type { ProductType, PurchasePayload } from '@/types/gestionMagasinTypes';
 
 const inputTheme = textInputTheme();
 const dropdownTheme = customDropdownTheme();
-const emptyLine = { product: '', quantity: '1', unit_cost: '0' };
 
 type PurchaseFormValues = {
 	store: string;
@@ -93,12 +93,12 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 	const { onSuccess, onError } = useToast();
 	const isEditMode = id !== undefined;
 	const { defaultStore, globalStore, memberships } = useSelectedStore(token);
-	const storeOptions = useMemo(() => {
+	const storeOptions = (() => {
 		const options = [globalStore, ...memberships.map((membership) => membership.store)].filter(Boolean);
 		return options.filter(
 			(store, index, stores) => stores.findIndex((candidate) => candidate?.id === store?.id) === index,
 		);
-	}, [globalStore, memberships]);
+	})();
 	const defaultPurchaseStore = globalStore ?? defaultStore;
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [linePaginationModel, setLinePaginationModel] = useDataGridPagination(5, 'lines');
@@ -109,10 +109,7 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 		isLoading: isPurchaseLoading,
 		error: purchaseError,
 	} = useGetPurchaseQuery({ id: id! }, { skip: !token || !isEditMode });
-	const axiosError = useMemo(
-		() => (purchaseError ? (purchaseError as ResponseDataInterface<ApiErrorResponseType>) : undefined),
-		[purchaseError],
-	);
+	const axiosError = purchaseError ? (purchaseError as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 
 	const toPayload = (values: PurchaseFormValues): PurchasePayload => ({
 		store: Number(values.store),
@@ -174,22 +171,19 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 		{ skip: !token || !activeProductStoreId },
 	);
 
-	const fieldLabels = useMemo<Record<string, string>>(
-		() => ({
-			supplier_name: t.magasin.supplier,
-			store: t.magasin.store,
-			reference: t.magasin.reference,
-			purchase_date: t.magasin.date,
-			status: t.magasin.status,
-			invoice_file: t.magasin.invoice,
-			note: t.magasin.note,
-			lines: t.magasin.purchaseLines,
-			globalError: t.errors.globalError,
-		}),
-		[t],
-	);
+	const fieldLabels = {
+		supplier_name: t.magasin.supplier,
+		store: t.magasin.store,
+		reference: t.magasin.reference,
+		purchase_date: t.magasin.date,
+		status: t.magasin.status,
+		invoice_file: t.magasin.invoice,
+		note: t.magasin.note,
+		lines: t.magasin.purchaseLines,
+		globalError: t.errors.globalError,
+	};
 
-	const validationErrors = useMemo(() => {
+	const validationErrors = (() => {
 		const errors: Record<string, string> = {};
 		if (hasAttemptedSubmit) {
 			Object.entries(formik.errors).forEach(([key, value]) => {
@@ -198,7 +192,7 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 			});
 		}
 		return errors;
-	}, [formik.errors, hasAttemptedSubmit, t.validation.required]);
+	})();
 
 	const addLine = () => void formik.setFieldValue('lines', [...formik.values.lines, { ...emptyLine }]);
 	const removeLine = (index: number) => {
@@ -679,7 +673,7 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 												active={!addState.isLoading && !editState.isLoading}
 												loading={addState.isLoading || editState.isLoading}
 												startIcon={isEditMode ? <EditIcon /> : <AddIcon />}
-												onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+												onClick={(event: MouseEvent<HTMLButtonElement>) => {
 													setHasAttemptedSubmit(true);
 													if (!formik.isValid) {
 														event.preventDefault();

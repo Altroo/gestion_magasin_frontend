@@ -1,6 +1,9 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import { EMPTY_PROMOTION_LINE as emptyLine } from '@/utils/rawData';
+import { runAsyncWithErrorHandler } from '@/utils/runWithCleanup';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useEffect, useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
@@ -88,8 +91,6 @@ type PromotionFormValues = {
 	globalError: string;
 };
 
-const emptyLine = { product: '', quantity: '1' };
-
 type PromotionLineGridRow = typeof emptyLine & {
 	id: number;
 	index: number;
@@ -122,10 +123,7 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 	const [editPromotion, editState] = useEditPromotionMutation();
 
 	const error = promotionError || addState.error || editState.error;
-	const axiosError = useMemo(
-		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
-		[error],
-	);
+	const axiosError = error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 
 	const toPayload = (values: PromotionFormValues): PromotionPayload => ({
 		store: isEditMode ? (promotion?.store ?? initialStoreId) : undefined,
@@ -162,46 +160,53 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 		onSubmit: async (values, { setFieldError }) => {
 			setHasAttemptedSubmit(true);
 			setIsPending(true);
-			try {
-				if (isEditMode) {
-					await editPromotion({ id: id!, data: toPayload(values) }).unwrap();
-					onSuccess(t.magasin.promotionUpdated);
-					router.push(PROMOTIONS_VIEW(id!));
-				} else {
-					const response = await addPromotion(toPayload(values)).unwrap();
-					const createdPromotion = 'created' in response ? response.created[0] : response;
-					onSuccess(
-						'created' in response ? t.magasin.promotionCreatedForStores(response.count) : t.magasin.promotionCreated,
+			await runWithCleanup(
+				async () => {
+					await runAsyncWithErrorHandler(
+						async () => {
+							if (isEditMode) {
+								await editPromotion({ id: id!, data: toPayload(values) }).unwrap();
+								onSuccess(t.magasin.promotionUpdated);
+								router.push(PROMOTIONS_VIEW(id!));
+							} else {
+								const response = await addPromotion(toPayload(values)).unwrap();
+								const createdPromotion = 'created' in response ? response.created[0] : response;
+								onSuccess(
+									'created' in response
+										? t.magasin.promotionCreatedForStores(response.count)
+										: t.magasin.promotionCreated,
+								);
+								router.push(createdPromotion ? PROMOTIONS_VIEW(createdPromotion.id) : PROMOTIONS_LIST);
+							}
+						},
+						async (e) => {
+							onError(
+								extractApiErrorMessage(e, isEditMode ? t.magasin.promotionUpdateError : t.magasin.promotionCreateError),
+							);
+							setFormikAutoErrors({ e, setFieldError });
+						},
 					);
-					router.push(createdPromotion ? PROMOTIONS_VIEW(createdPromotion.id) : PROMOTIONS_LIST);
-				}
-			} catch (e) {
-				onError(
-					extractApiErrorMessage(e, isEditMode ? t.magasin.promotionUpdateError : t.magasin.promotionCreateError),
-				);
-				setFormikAutoErrors({ e, setFieldError });
-			} finally {
-				setIsPending(false);
-			}
+				},
+				() => {
+					setIsPending(false);
+				},
+			);
 		},
 	});
 
-	const fieldLabels = useMemo<Record<string, string>>(
-		() => ({
-			name: t.magasin.promotionName,
-			selling_price: t.magasin.sellingPrice,
-			status: t.magasin.status,
-			start_date: t.magasin.startDate,
-			end_date: t.magasin.endDate,
-			note: t.magasin.note,
-			stores: t.magasin.targetStores,
-			lines: t.magasin.promotionLines,
-			globalError: t.errors.globalError,
-		}),
-		[t],
-	);
+	const fieldLabels = {
+		name: t.magasin.promotionName,
+		selling_price: t.magasin.sellingPrice,
+		status: t.magasin.status,
+		start_date: t.magasin.startDate,
+		end_date: t.magasin.endDate,
+		note: t.magasin.note,
+		stores: t.magasin.targetStores,
+		lines: t.magasin.promotionLines,
+		globalError: t.errors.globalError,
+	};
 
-	const validationErrors = useMemo(() => {
+	const validationErrors = (() => {
 		const errors: Record<string, string> = {};
 		if (hasAttemptedSubmit) {
 			Object.entries(formik.errors).forEach(([key, value]) => {
@@ -217,7 +222,7 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 			});
 		}
 		return errors;
-	}, [formik.errors, hasAttemptedSubmit, t.validation.required]);
+	})();
 	const fieldError = (field: keyof PromotionFormValues) =>
 		(formik.touched[field] || hasAttemptedSubmit) && typeof formik.errors[field] === 'string'
 			? (formik.errors[field] as string)
@@ -237,23 +242,20 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 		void formik.setFieldValue('lines', nextLines.length ? nextLines : [{ ...emptyLine }]);
 	};
 
-	const productOptions = useMemo(
-		() => (products?.results ?? []).filter((product) => Number(product.available_stock ?? 0) > 0),
-		[products?.results],
-	);
-	const eligibleStoreQueryParams = useMemo(() => {
+	const productOptions = (products?.results ?? []).filter((product) => Number(product.available_stock ?? 0) > 0);
+	const eligibleStoreQueryParams = (() => {
 		const selectedLines = formik.values.lines.filter((line) => line.product);
 		if (!selectedLines.length) return undefined;
 		return {
 			product_ids: selectedLines.map((line) => line.product).join(','),
 			quantities: selectedLines.map((line) => line.quantity || '1').join(','),
 		};
-	}, [formik.values.lines]);
+	})();
 	const { currentData: eligibleStores, isFetching: areEligibleStoresLoading } = useGetPromotionEligibleStoresQuery(
 		eligibleStoreQueryParams!,
 		{ skip: !token || isEditMode || !eligibleStoreQueryParams },
 	);
-	const targetStoreOptions = useMemo<PromotionEligibleStoreType[]>(() => {
+	const targetStoreOptions = (() => {
 		if (isEditMode) {
 			return (storesData?.results ?? []).map((store) => ({
 				...store,
@@ -262,15 +264,16 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 			}));
 		}
 		return eligibleStores ?? [];
-	}, [eligibleStores, isEditMode, storesData?.results]);
-	const eligibleStoreIds = useMemo(
-		() => new Set(targetStoreOptions.filter((store) => store.is_eligible).map((store) => String(store.id))),
-		[targetStoreOptions],
-	);
-	const eligibleStoreIdsKey = useMemo(() => Array.from(eligibleStoreIds).sort().join(','), [eligibleStoreIds]);
+	})();
+	const eligibleStoreIdsKey = targetStoreOptions
+		.filter((store) => store.is_eligible)
+		.map((store) => String(store.id))
+		.sort()
+		.join(',');
 	const selectedStoresKey = formik.values.stores.join(',');
 	const storesError = fieldError('stores');
 	useEffect(() => {
+		const eligibleStoreIds = new Set(eligibleStoreIdsKey ? eligibleStoreIdsKey.split(',') : []);
 		if (isEditMode) return;
 		if (!eligibleStoreQueryParams) {
 			if (formik.values.stores.length > 0) {
@@ -286,7 +289,6 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 		}
 	}, [
 		areEligibleStoresLoading,
-		eligibleStoreIds,
 		eligibleStoreIdsKey,
 		eligibleStoreQueryParams,
 		formik,
@@ -890,7 +892,7 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 												active={!isPending}
 												loading={isPending}
 												startIcon={isEditMode ? <EditIcon /> : <AddIcon />}
-												onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+												onClick={(event: MouseEvent<HTMLButtonElement>) => {
 													setHasAttemptedSubmit(true);
 													if (!formik.isValid) {
 														event.preventDefault();

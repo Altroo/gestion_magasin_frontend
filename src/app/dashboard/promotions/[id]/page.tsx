@@ -1,3 +1,4 @@
+import type { NumericIdPageProps } from '@/types/routeTypes';
 import { redirect } from 'next/navigation';
 import { type Metadata } from 'next';
 import { auth } from '@/auth';
@@ -5,16 +6,12 @@ import PromotionsViewClient from '@/components/pages/magasin/promotions/promotio
 import { AUTH_LOGIN, PROMOTIONS_LIST } from '@/utils/routes';
 import { getServerTranslations } from '@/utils/serverTranslations';
 
-type PageProps = {
-	params: Promise<{ id: string }>;
-};
-
 export async function generateMetadata(): Promise<Metadata> {
 	const t = await getServerTranslations();
 	return { title: t.metadata.promotionDetailsTitle, description: t.metadata.promotionDetailsDescription };
 }
 
-const PromotionViewPage = async ({ params }: PageProps) => {
+const PromotionViewPage = async ({ params }: NumericIdPageProps) => {
 	const session = await auth();
 	const { id } = await params;
 

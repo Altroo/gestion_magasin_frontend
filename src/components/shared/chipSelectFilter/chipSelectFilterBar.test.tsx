@@ -1,4 +1,3 @@
-import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import ChipSelectFilterBar from './chipSelectFilterBar';
 import type { ChipSelectFilterProps } from './chipSelectFilter';

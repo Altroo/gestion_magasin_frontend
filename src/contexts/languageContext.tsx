@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useCallback, useEffect, useState } from 'react';
+import { createContext, useEffect, useState, type FC, type ReactNode } from 'react';
 import type { Language, TranslationDictionary } from '@/types/languageTypes';
 import { translations } from '@/translations';
 import { setHelpersLanguage } from '@/utils/helpers';
@@ -20,7 +20,10 @@ export const LanguageContext = createContext<LanguageContextType>({
 	t: translations[DEFAULT_LANGUAGE],
 });
 
-export const LanguageContextProvider: React.FC<{ children: React.ReactNode; initialLanguage?: Language }> = ({ children, initialLanguage }) => {
+export const LanguageContextProvider: FC<{ children: ReactNode; initialLanguage?: Language }> = ({
+	children,
+	initialLanguage,
+}) => {
 	const [language, setLanguageState] = useState<Language>(initialLanguage ?? DEFAULT_LANGUAGE);
 
 	useEffect(() => {
@@ -31,18 +34,14 @@ export const LanguageContextProvider: React.FC<{ children: React.ReactNode; init
 		}
 	}, [initialLanguage]);
 
-	const setLanguage = useCallback((lang: Language) => {
+	const setLanguage = (lang: Language) => {
 		setLanguageState(lang);
 		setHelpersLanguage(lang);
 		localStorage.setItem(STORAGE_KEY, lang);
 		document.cookie = `${STORAGE_KEY}=${lang};path=/;max-age=31536000;SameSite=Lax`;
-	}, []);
+	};
 
 	const t = translations[language];
 
-	return (
-		<LanguageContext.Provider value={{ language, setLanguage, t }}>
-			{children}
-		</LanguageContext.Provider>
-	);
+	return <LanguageContext.Provider value={{ language, setLanguage, t }}>{children}</LanguageContext.Provider>;
 };

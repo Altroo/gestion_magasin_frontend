@@ -1,6 +1,7 @@
 'use client';
 
-import React, { isValidElement, useMemo, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { isValidElement, useState, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
 	Alert,
@@ -47,9 +48,9 @@ type Props = SessionProps & {
 };
 
 type InfoRowProps = {
-	icon: React.ReactNode;
+	icon: ReactNode;
 	label: string;
-	value: React.ReactNode;
+	value: ReactNode;
 };
 
 const InfoRow = ({ icon, label, value }: InfoRowProps) => {
@@ -113,22 +114,24 @@ const StockViewClient = ({ session, id, storeId: initialStoreId, source }: Props
 	const backLabel = isStoreStockSource ? t.magasin.storeStockOverview : t.magasin.backToStock;
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const { data: stockBalance, isLoading, error } = useGetStockBalanceQuery({ id }, { skip: !token });
-	const axiosError = useMemo(
-		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
-		[error],
-	);
+	const axiosError = error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 	const [deleteStockBalance] = useDeleteStockBalanceMutation();
 
 	const handleDelete = async () => {
-		try {
-			await deleteStockBalance({ id }).unwrap();
-			onSuccess(t.magasin.stockDeleted);
-			router.push(backRoute);
-		} catch (deleteError) {
-			onError(extractApiErrorMessage(deleteError, t.magasin.stockDeleteError));
-		} finally {
-			setShowDeleteModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await deleteStockBalance({ id }).unwrap();
+					onSuccess(t.magasin.stockDeleted);
+					router.push(backRoute);
+				} catch (deleteError) {
+					onError(extractApiErrorMessage(deleteError, t.magasin.stockDeleteError));
+				}
+			},
+			() => {
+				setShowDeleteModal(false);
+			},
+		);
 	};
 
 	return (

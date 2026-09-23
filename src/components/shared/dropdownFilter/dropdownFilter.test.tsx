@@ -1,4 +1,4 @@
-import React from 'react';
+import { type ReactElement } from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import DropdownFilter, { createDropdownFilterOperators, createBooleanFilterOperators } from './dropdownFilter';
@@ -6,10 +6,14 @@ import type { DropdownFilterOption } from './dropdownFilter';
 import type { GridFilterItem, GridFilterInputValueProps, GridColDef } from '@mui/x-data-grid';
 
 jest.mock('@/utils/hooks', () => ({
-	useLanguage: () => ({ language: 'fr', setLanguage: jest.fn(), t: jest.requireActual('@/translations').translations.fr }),
+	useLanguage: () => ({
+		language: 'fr',
+		setLanguage: jest.fn(),
+		t: jest.requireActual('@/translations').translations.fr,
+	}),
 }));
 
-const renderWithTheme = (ui: React.ReactElement) => render(<ThemeProvider theme={createTheme()}>{ui}</ThemeProvider>);
+const renderWithTheme = (ui: ReactElement) => render(<ThemeProvider theme={createTheme()}>{ui}</ThemeProvider>);
 
 const options: DropdownFilterOption[] = [
 	{ value: 'opt1', label: 'Option 1', color: 'primary' },

@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { InitContextProvider } from './InitContext';
 import { useAppSelector } from '@/utils/hooks';

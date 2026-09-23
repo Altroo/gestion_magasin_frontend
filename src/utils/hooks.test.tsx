@@ -1,17 +1,14 @@
-import React from 'react';
+import { type ReactNode } from 'react';
 import { renderHook } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import '@testing-library/jest-dom';
 
 // ─── useAppDispatch / useAppSelector ─────────────────────────────────────────
-
 import { useAppDispatch, useAppSelector } from './hooks';
 import { store } from '@/store/store';
 
-const wrapper = ({ children }: { children: React.ReactNode }) => (
-	<Provider store={store}>{children}</Provider>
-);
+const wrapper = ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>;
 
 describe('useAppDispatch', () => {
 	it('returns a dispatch function', () => {
@@ -35,14 +32,13 @@ jest.mock('@/store/selectors', () => ({
 		return (s?.account?.profil ?? {}) as ReturnType<typeof import('@/store/selectors').getProfilState>;
 	}),
 }));
-
 import { usePermission } from './hooks';
 
 describe('usePermission', () => {
 	const makeWrapper =
 		(profil: Record<string, unknown>) =>
 		// eslint-disable-next-line react/display-name
-		({ children }: { children: React.ReactNode }) => {
+		({ children }: { children: ReactNode }) => {
 			const fakeStore = configureStore({
 				reducer: {
 					account: () => ({ profil }),
@@ -96,7 +92,6 @@ describe('usePermission', () => {
 });
 
 // ─── useIsClient ─────────────────────────────────────────────────────────────
-
 import { useIsClient } from './hooks';
 
 describe('useIsClient', () => {
@@ -107,14 +102,13 @@ describe('useIsClient', () => {
 });
 
 // ─── useToast ──────────────────────────────────────────────────────────────
-
 import { useToast } from './hooks';
 import { ToastContext } from '@/contexts/toastContext';
 
 describe('useToast', () => {
 	it('returns the toast context value when within provider', () => {
 		const mockCtx = { onSuccess: jest.fn(), onError: jest.fn() };
-		const contextWrapper = ({ children }: { children: React.ReactNode }) => (
+		const contextWrapper = ({ children }: { children: ReactNode }) => (
 			<ToastContext.Provider value={mockCtx}>{children}</ToastContext.Provider>
 		);
 		const { result } = renderHook(() => useToast(), { wrapper: contextWrapper });

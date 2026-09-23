@@ -1,6 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { OFFLINE_KEY, actionButtonSx } from '@/utils/rawData';
+import { runAsyncWithErrorHandler, runWithCleanup } from '@/utils/runWithCleanup';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import {
 	Box,
 	Button,
@@ -96,18 +98,7 @@ type ScanError = {
 	data?: ScanErrorPayload;
 	error?: ScanErrorPayload;
 };
-
-const OFFLINE_KEY = 'gestion-magasin-offline-sales';
 const inputTheme = textInputTheme();
-const actionButtonSx = {
-	borderRadius: 2,
-	minHeight: 56,
-	px: 2,
-	textTransform: 'none',
-	fontFamily: 'Poppins',
-	fontSize: '0.95rem',
-	fontWeight: 600,
-};
 
 const money = (value: number | string) => `${Number(value || 0).toFixed(2)} Dhs`;
 const productSalePrice = (product: ProductType, saleType: SaleMode) =>
@@ -189,14 +180,11 @@ const PosClient = ({ session }: SessionProps) => {
 		{ page: 1, pageSize: 100, is_active: 'true' },
 		{ skip: !token },
 	);
-	const paymentModeOptions = useMemo(() => paymentModes?.results ?? [], [paymentModes?.results]);
-	const defaultPaymentMode = useMemo(
-		() =>
-			paymentModeOptions.find((mode) => mode.code === 'cash') ??
-			paymentModeOptions.find((mode) => !mode.is_credit) ??
-			paymentModeOptions[0],
-		[paymentModeOptions],
-	);
+	const paymentModeOptions = paymentModes?.results ?? [];
+	const defaultPaymentMode =
+		paymentModeOptions.find((mode) => mode.code === 'cash') ??
+		paymentModeOptions.find((mode) => !mode.is_credit) ??
+		paymentModeOptions[0];
 	const effectivePaymentModeId = selectedPaymentModeId || (defaultPaymentMode ? String(defaultPaymentMode.id) : '');
 	const effectivePaymentMode = paymentModeOptions.find((mode) => String(mode.id) === effectivePaymentModeId);
 	const selectedStoreMembership = memberships.find((membership) => membership.store.id === storeId);
@@ -204,41 +192,35 @@ const PosClient = ({ session }: SessionProps) => {
 	const canPrintReceipt = permissions.can_print || isSelectedStoreVendeur;
 	const canWholesaleSale = permissions.can_wholesale_sale && !isSelectedStoreVendeur;
 	const effectiveSaleType = canWholesaleSale ? saleType : 'normal';
-	const currentStoreOfflineQueue = useMemo(
-		() => offlineQueue.filter((sale) => sale.store === storeId),
-		[offlineQueue, storeId],
-	);
+	const currentStoreOfflineQueue = offlineQueue.filter((sale) => sale.store === storeId);
 
-	const total = useMemo(() => cart.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0), [cart]);
+	const total = cart.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0);
 	useCustomerDisplay(total);
 
-	const addProduct = useCallback(
-		(product: ProductType) => {
-			const availableStock = productAvailableStock(product);
-			setCart((current) => {
-				const existing = current.find((line) => line.type === 'product' && line.product.id === product.id);
-				if (existing) {
-					if (existing.quantity + 1 > availableStock) return current;
-					return current.map((line) =>
-						line.type === 'product' && line.product.id === product.id ? { ...line, quantity: line.quantity + 1 } : line,
-					);
-				}
-				if (availableStock < 1) return current;
-				return [
-					...current,
-					{
-						type: 'product',
-						product,
-						quantity: 1,
-						unitPrice: productSalePrice(product, effectiveSaleType),
-					},
-				];
-			});
-		},
-		[effectiveSaleType],
-	);
+	const addProduct = (product: ProductType) => {
+		const availableStock = productAvailableStock(product);
+		setCart((current) => {
+			const existing = current.find((line) => line.type === 'product' && line.product.id === product.id);
+			if (existing) {
+				if (existing.quantity + 1 > availableStock) return current;
+				return current.map((line) =>
+					line.type === 'product' && line.product.id === product.id ? { ...line, quantity: line.quantity + 1 } : line,
+				);
+			}
+			if (availableStock < 1) return current;
+			return [
+				...current,
+				{
+					type: 'product',
+					product,
+					quantity: 1,
+					unitPrice: productSalePrice(product, effectiveSaleType),
+				},
+			];
+		});
+	};
 
-	const handleSaleTypeChange = useCallback((nextType: SaleMode) => {
+	const handleSaleTypeChange = (nextType: SaleMode) => {
 		setSaleType(nextType);
 		setLastWholesaleSaleId(null);
 		setCart((current) =>
@@ -246,19 +228,19 @@ const PosClient = ({ session }: SessionProps) => {
 				line.type === 'product' ? { ...line, unitPrice: productSalePrice(line.product, nextType) } : line,
 			),
 		);
-	}, []);
+	};
 
-	const scanByCode = useCallback(
-		async (code: string, setFieldError?: (field: string, message: string | undefined) => void) => {
-			const normalizedCode = code.trim();
-			if (!storeId || !normalizedCode) {
-				return false;
-			}
-			if (saleInFlightRef.current) {
-				pendingScanCodesRef.current.push(normalizedCode);
-				return true;
-			}
-			try {
+	const scanByCode = async (code: string, setFieldError?: (field: string, message: string | undefined) => void) => {
+		const normalizedCode = code.trim();
+		if (!storeId || !normalizedCode) {
+			return false;
+		}
+		if (saleInFlightRef.current) {
+			pendingScanCodesRef.current.push(normalizedCode);
+			return true;
+		}
+		return await runAsyncWithErrorHandler(
+			async () => {
 				const product = await scanProduct({ store: storeId, code: normalizedCode }).unwrap();
 				const availableStock = productAvailableStock(product);
 				const cartQuantity =
@@ -274,7 +256,8 @@ const PosClient = ({ session }: SessionProps) => {
 				}
 				addProduct(product);
 				return true;
-			} catch (e) {
+			},
+			async (e) => {
 				const { statusCode, message } = getScanErrorPayload(e);
 				if (setFieldError && (statusCode === 400 || statusCode === 404) && message) {
 					setFieldError('barcode', message);
@@ -285,10 +268,9 @@ const PosClient = ({ session }: SessionProps) => {
 				}
 				onError(message || t.errors.genericError);
 				return false;
-			}
-		},
-		[addProduct, cart, onError, scanProduct, storeId, t.errors.genericError, t.magasin],
-	);
+			},
+		);
+	};
 
 	const scanFormik = useFormik<PosScanFormValues>({
 		initialValues: { barcode: '', globalError: '' },
@@ -323,34 +305,28 @@ const PosClient = ({ session }: SessionProps) => {
 		}
 	};
 
-	const lineKey = useCallback(
-		(line: CartLine) => `${line.type}-${line.type === 'product' ? line.product.id : line.promotion.id}`,
-		[],
-	);
+	const lineKey = (line: CartLine) => `${line.type}-${line.type === 'product' ? line.product.id : line.promotion.id}`;
 
-	const updateQuantity = useCallback(
-		(targetKey: string, delta: number) => {
-			const target = cart.find((line) => lineKey(line) === targetKey);
-			if (target?.type === 'product' && delta > 0) {
-				const availableStock = productAvailableStock(target.product);
-				if (target.quantity + delta > availableStock) {
-					onError(t.magasin.stockLimitReached(target.product.name, stockQuantity(availableStock)));
-					return;
-				}
+	const updateQuantity = (targetKey: string, delta: number) => {
+		const target = cart.find((line) => lineKey(line) === targetKey);
+		if (target?.type === 'product' && delta > 0) {
+			const availableStock = productAvailableStock(target.product);
+			if (target.quantity + delta > availableStock) {
+				onError(t.magasin.stockLimitReached(target.product.name, stockQuantity(availableStock)));
+				return;
 			}
-			setCart((current) =>
-				current
-					.map((line) => {
-						if (lineKey(line) !== targetKey) return line;
-						const nextQuantity = Math.max(0, line.quantity + delta);
-						if (line.type === 'product' && nextQuantity > productAvailableStock(line.product)) return line;
-						return { ...line, quantity: nextQuantity };
-					})
-					.filter((line) => line.quantity > 0),
-			);
-		},
-		[cart, lineKey, onError, t.magasin],
-	);
+		}
+		setCart((current) =>
+			current
+				.map((line) => {
+					if (lineKey(line) !== targetKey) return line;
+					const nextQuantity = Math.max(0, line.quantity + delta);
+					if (line.type === 'product' && nextQuantity > productAvailableStock(line.product)) return line;
+					return { ...line, quantity: nextQuantity };
+				})
+				.filter((line) => line.quantity > 0),
+		);
+	};
 
 	const payload = (): SaleCreatePayload | null => {
 		if (!storeId || !cart.length || !effectivePaymentModeId) {
@@ -388,13 +364,13 @@ const PosClient = ({ session }: SessionProps) => {
 		onError(t.magasin.queuedOffline);
 	};
 
-	const focusBarcode = useCallback(() => {
+	const focusBarcode = () => {
 		window.requestAnimationFrame(() => barcodeInputRef.current?.focus({ preventScroll: true }));
-	}, []);
+	};
 
-	const printTicket = useCallback(
-		async (sale: SaleType, receiptStore: ReceiptStore, quiet = false) => {
-			try {
+	const printTicket = async (sale: SaleType, receiptStore: ReceiptStore, quiet = false) => {
+		return await runAsyncWithErrorHandler(
+			async () => {
 				await printer.printReceipt(sale, {
 					storeName: receiptStore.name,
 					storeAddress: receiptStore.address,
@@ -405,14 +381,14 @@ const PosClient = ({ session }: SessionProps) => {
 				if (!quiet) onSuccess(t.magasin.ticketPrinted);
 				focusBarcode();
 				return true;
-			} catch {
+			},
+			async () => {
 				onError(t.magasin.ticketPrintError);
 				focusBarcode();
 				return false;
-			}
-		},
-		[focusBarcode, onError, onSuccess, printer, t.magasin.ticketPrintError, t.magasin.ticketPrinted, token],
-	);
+			},
+		);
+	};
 
 	const isConnectionFailure = (error: unknown) => {
 		const status = (error as { status?: string | number })?.status;
@@ -434,50 +410,69 @@ const PosClient = ({ session }: SessionProps) => {
 		}
 		const receiptStore: ReceiptStore = selectedStore;
 		saleInFlightRef.current = true;
-		try {
-			const sale = await createSale(salePayload).unwrap();
-			setLastWholesaleSaleId(sale.sale_type === 'wholesale' ? sale.id : null);
-			setLastCompletedSale({ sale, store: receiptStore });
-			setCart([]);
-			onSuccess(t.magasin.saleConfirmed);
-			if (canPrintReceipt && printer.autoPrint) {
-				await printTicket(sale, receiptStore, true);
-			}
-			if (effectivePaymentMode?.code === 'cash') {
-				void openCashDrawer(sale.id);
-			}
-		} catch (error) {
-			setLastWholesaleSaleId(null);
-			if (isConnectionFailure(error)) {
-				queueOfflineSale(salePayload);
-				setCart([]);
-			} else {
-				onError(extractApiErrorMessage(error, t.errors.genericError));
-			}
-		} finally {
-			saleInFlightRef.current = false;
-			const pendingCodes = pendingScanCodesRef.current.splice(0);
-			for (const code of pendingCodes) {
-				await scanByCode(code);
-			}
-			focusBarcode();
-		}
+		await runWithCleanup(
+			async () => {
+				await runAsyncWithErrorHandler(
+					async () => {
+						const sale = await createSale(salePayload).unwrap();
+						setLastWholesaleSaleId(sale.sale_type === 'wholesale' ? sale.id : null);
+						setLastCompletedSale({ sale, store: receiptStore });
+						setCart([]);
+						onSuccess(t.magasin.saleConfirmed);
+						if (canPrintReceipt && printer.autoPrint) {
+							await printTicket(sale, receiptStore, true);
+						}
+						if (effectivePaymentMode?.code === 'cash') {
+							void openCashDrawer(sale.id);
+						}
+					},
+					async (error) => {
+						setLastWholesaleSaleId(null);
+						if (isConnectionFailure(error)) {
+							queueOfflineSale(salePayload);
+							setCart([]);
+						} else {
+							onError(extractApiErrorMessage(error, t.errors.genericError));
+						}
+					},
+				);
+			},
+			async () => {
+				saleInFlightRef.current = false;
+				const pendingCodes = pendingScanCodesRef.current.splice(0);
+				for (const code of pendingCodes) {
+					await scanByCode(code);
+				}
+				focusBarcode();
+			},
+		);
 	};
 
 	const handlePrintFacture = async () => {
 		if (!token || !lastWholesaleSaleId) {
 			return;
 		}
-		try {
-			const blob = await fetchFileBlob(`${process.env.NEXT_PUBLIC_SALES_ROOT}${lastWholesaleSaleId}/facture/`, token);
-			const pdfBlob = new Blob([blob], { type: 'application/pdf' });
-			const blobUrl = window.URL.createObjectURL(pdfBlob);
-			window.open(blobUrl, '_blank');
-		} catch {
-			onError(t.magasin.saleFacturePrintError);
-		} finally {
-			focusBarcode();
-		}
+		await runWithCleanup(
+			async () => {
+				await runAsyncWithErrorHandler(
+					async () => {
+						const blob = await fetchFileBlob(
+							`${process.env.NEXT_PUBLIC_SALES_ROOT}${lastWholesaleSaleId}/facture/`,
+							token,
+						);
+						const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+						const blobUrl = window.URL.createObjectURL(pdfBlob);
+						window.open(blobUrl, '_blank');
+					},
+					async () => {
+						onError(t.magasin.saleFacturePrintError);
+					},
+				);
+			},
+			() => {
+				focusBarcode();
+			},
+		);
 	};
 
 	const syncQueue = async () => {
@@ -485,60 +480,69 @@ const PosClient = ({ session }: SessionProps) => {
 			return;
 		}
 		syncInFlightRef.current = true;
-		try {
-			const response = await syncOffline({ store: storeId, sales: currentStoreOfflineQueue }).unwrap();
-			const failedIndexes = new Set(
-				(response.errors ?? [])
-					.map((error) => Number((error as { index?: number }).index))
-					.filter((index) => Number.isInteger(index)),
-			);
-			const failedForStore = currentStoreOfflineQueue.filter((_, index) => failedIndexes.has(index));
-			const otherStores = offlineQueue.filter((sale) => sale.store !== storeId);
-			const remaining = [...otherStores, ...failedForStore];
-			writeOfflineQueue(remaining);
-			setOfflineQueue(remaining);
-			onSuccess(t.magasin.syncOffline);
-		} catch {
-			onError(t.errors.genericError);
-		} finally {
-			syncInFlightRef.current = false;
-			focusBarcode();
-		}
+		await runWithCleanup(
+			async () => {
+				await runAsyncWithErrorHandler(
+					async () => {
+						const response = await syncOffline({ store: storeId, sales: currentStoreOfflineQueue }).unwrap();
+						const failedIndexes = new Set(
+							(response.errors ?? [])
+								.map((error) => Number((error as { index?: number }).index))
+								.filter((index) => Number.isInteger(index)),
+						);
+						const failedForStore = currentStoreOfflineQueue.filter((_, index) => failedIndexes.has(index));
+						const otherStores = offlineQueue.filter((sale) => sale.store !== storeId);
+						const remaining = [...otherStores, ...failedForStore];
+						writeOfflineQueue(remaining);
+						setOfflineQueue(remaining);
+						onSuccess(t.magasin.syncOffline);
+					},
+					async () => {
+						onError(t.errors.genericError);
+					},
+				);
+			},
+			() => {
+				syncInFlightRef.current = false;
+				focusBarcode();
+			},
+		);
 	};
 
 	const shouldShowBarcodeError =
 		Boolean(scanFormik.errors.barcode) && (hasAttemptedScan || Boolean(scanFormik.values.barcode));
 
+	const handleScannerKey = useEffectEvent((event: KeyboardEvent) => {
+		if (event.ctrlKey || event.metaKey || event.altKey) return;
+		const target = event.target as HTMLElement | null;
+		if (target === barcodeInputRef.current) return;
+		if (target?.matches('input, textarea, [contenteditable="true"]')) return;
+		const now = performance.now();
+
+		if (event.key === 'Enter' || event.key === 'Tab') {
+			const code = wedgeBufferRef.current;
+			wedgeBufferRef.current = '';
+			if (code.length >= 3 && now - wedgeLastKeyAtRef.current < 180) {
+				event.preventDefault();
+				void scanByCode(code).finally(focusBarcode);
+			}
+			return;
+		}
+
+		if (event.key.length !== 1) return;
+		if (now - wedgeLastKeyAtRef.current > 180) {
+			wedgeBufferRef.current = '';
+		}
+		wedgeBufferRef.current += event.key;
+		wedgeLastKeyAtRef.current = now;
+		event.preventDefault();
+	});
+
 	useEffect(() => {
-		const handleScannerKey = (event: KeyboardEvent) => {
-			if (event.ctrlKey || event.metaKey || event.altKey) return;
-			const target = event.target as HTMLElement | null;
-			if (target === barcodeInputRef.current) return;
-			if (target?.matches('input, textarea, [contenteditable="true"]')) return;
-			const now = performance.now();
-
-			if (event.key === 'Enter' || event.key === 'Tab') {
-				const code = wedgeBufferRef.current;
-				wedgeBufferRef.current = '';
-				if (code.length >= 3 && now - wedgeLastKeyAtRef.current < 180) {
-					event.preventDefault();
-					void scanByCode(code).finally(focusBarcode);
-				}
-				return;
-			}
-
-			if (event.key.length !== 1) return;
-			if (now - wedgeLastKeyAtRef.current > 180) {
-				wedgeBufferRef.current = '';
-			}
-			wedgeBufferRef.current += event.key;
-			wedgeLastKeyAtRef.current = now;
-			event.preventDefault();
-		};
-
-		window.addEventListener('keydown', handleScannerKey, true);
-		return () => window.removeEventListener('keydown', handleScannerKey, true);
-	}, [focusBarcode, scanByCode]);
+		const listener = (event: KeyboardEvent) => handleScannerKey(event);
+		window.addEventListener('keydown', listener, true);
+		return () => window.removeEventListener('keydown', listener, true);
+	}, []);
 
 	if (areStoresLoading) {
 		return (
@@ -700,75 +704,74 @@ const PosClient = ({ session }: SessionProps) => {
 							>
 								<Stack spacing={1} sx={{ height: '100%', minHeight: 0 }}>
 									<Stack spacing={1.1} sx={{ flex: 1, minHeight: 0, overflowY: 'auto', pr: 0.25 }}>
-									<Box sx={{ p: 1.25, borderRadius: 2, bgcolor: 'primary.main', color: 'primary.contrastText' }}>
-										<Typography variant="caption" sx={{ opacity: 0.82, textTransform: 'uppercase', fontWeight: 700 }}>
-											{t.magasin.total}
-										</Typography>
-										<Typography sx={{ fontSize: { xs: '1.8rem', sm: '2rem' }, lineHeight: 1.1, fontWeight: 900 }}>
-											{money(total)}
-										</Typography>
-									</Box>
-
-									{canWholesaleSale && (
-										<Stack spacing={0.5}>
-											<Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700 }}>
-												{t.magasin.saleType}
+										<Box sx={{ p: 1.25, borderRadius: 2, bgcolor: 'primary.main', color: 'primary.contrastText' }}>
+											<Typography variant="caption" sx={{ opacity: 0.82, textTransform: 'uppercase', fontWeight: 700 }}>
+												{t.magasin.total}
 											</Typography>
-											<ToggleButtonGroup
-												exclusive
-												value={saleType}
-												onChange={(_, value: SaleMode | null) => value && handleSaleTypeChange(value)}
-												fullWidth
-												sx={{
-													height: 56,
-													'& .MuiToggleButton-root': { flex: 1, textTransform: 'none', fontWeight: 700, px: 0.5 },
-												}}
-											>
-												<ToggleButton value="normal">{t.magasin.normalSale}</ToggleButton>
-												<ToggleButton value="wholesale">{t.magasin.wholesaleSale}</ToggleButton>
-											</ToggleButtonGroup>
-										</Stack>
-									)}
+											<Typography sx={{ fontSize: { xs: '1.8rem', sm: '2rem' }, lineHeight: 1.1, fontWeight: 900 }}>
+												{money(total)}
+											</Typography>
+										</Box>
 
-									<Stack spacing={0.5} sx={{ minHeight: 0 }}>
-										<Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700 }}>
-											{t.magasin.paymentMode}
-										</Typography>
-										<Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.75 }}>
-											{paymentModeOptions.map((mode) => (
-												<Button
-													key={mode.id}
-													type="button"
-													variant={effectivePaymentModeId === String(mode.id) ? 'contained' : 'outlined'}
-													startIcon={paymentModeIcon(mode.code)}
-													onClick={() => {
-														setSelectedPaymentModeId(String(mode.id));
-														focusBarcode();
-													}}
-													disabled={arePaymentModesLoading || createState.isLoading}
+										{canWholesaleSale && (
+											<Stack spacing={0.5}>
+												<Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700 }}>
+													{t.magasin.saleType}
+												</Typography>
+												<ToggleButtonGroup
+													exclusive
+													value={saleType}
+													onChange={(_, value: SaleMode | null) => value && handleSaleTypeChange(value)}
+													fullWidth
 													sx={{
-														...actionButtonSx,
-														minHeight: 64,
-														px: 1.5,
-														fontSize: '0.95rem',
-														justifyContent: 'flex-start',
-														textAlign: 'left',
-														color: effectivePaymentModeId === String(mode.id) ? undefined : 'text.primary',
-														'& .MuiButton-startIcon': {
-															m: 0,
-															mr: 1.25,
-															width: 26,
-															justifyContent: 'center',
-															color: effectivePaymentModeId === String(mode.id) ? 'inherit' : 'primary.main',
-														},
+														height: 56,
+														'& .MuiToggleButton-root': { flex: 1, textTransform: 'none', fontWeight: 700, px: 0.5 },
 													}}
 												>
-													{mode.name}
-												</Button>
-											))}
-										</Box>
-									</Stack>
+													<ToggleButton value="normal">{t.magasin.normalSale}</ToggleButton>
+													<ToggleButton value="wholesale">{t.magasin.wholesaleSale}</ToggleButton>
+												</ToggleButtonGroup>
+											</Stack>
+										)}
 
+										<Stack spacing={0.5} sx={{ minHeight: 0 }}>
+											<Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700 }}>
+												{t.magasin.paymentMode}
+											</Typography>
+											<Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.75 }}>
+												{paymentModeOptions.map((mode) => (
+													<Button
+														key={mode.id}
+														type="button"
+														variant={effectivePaymentModeId === String(mode.id) ? 'contained' : 'outlined'}
+														startIcon={paymentModeIcon(mode.code)}
+														onClick={() => {
+															setSelectedPaymentModeId(String(mode.id));
+															focusBarcode();
+														}}
+														disabled={arePaymentModesLoading || createState.isLoading}
+														sx={{
+															...actionButtonSx,
+															minHeight: 64,
+															px: 1.5,
+															fontSize: '0.95rem',
+															justifyContent: 'flex-start',
+															textAlign: 'left',
+															color: effectivePaymentModeId === String(mode.id) ? undefined : 'text.primary',
+															'& .MuiButton-startIcon': {
+																m: 0,
+																mr: 1.25,
+																width: 26,
+																justifyContent: 'center',
+																color: effectivePaymentModeId === String(mode.id) ? 'inherit' : 'primary.main',
+															},
+														}}
+													>
+														{mode.name}
+													</Button>
+												))}
+											</Box>
+										</Stack>
 									</Stack>
 
 									<Stack spacing={1} sx={{ flexShrink: 0, pt: 1, bgcolor: 'background.paper' }}>

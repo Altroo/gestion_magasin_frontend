@@ -1,3 +1,4 @@
+import type { StoreScopedIdPageProps } from '@/types/routeTypes';
 import { redirect } from 'next/navigation';
 import { type Metadata } from 'next';
 import { auth } from '@/auth';
@@ -5,17 +6,12 @@ import CatalogFormClient from '@/components/pages/magasin/catalog/catalog-form';
 import { AUTH_LOGIN, CATALOG_LIST } from '@/utils/routes';
 import { getServerTranslations } from '@/utils/serverTranslations';
 
-type PageProps = {
-	params: Promise<{ id: string }>;
-	searchParams: Promise<{ store_id?: string }>;
-};
-
 export async function generateMetadata(): Promise<Metadata> {
 	const t = await getServerTranslations();
 	return { title: t.metadata.editProductTitle, description: t.metadata.editProductDescription };
 }
 
-const CatalogEditPage = async ({ params, searchParams }: PageProps) => {
+const CatalogEditPage = async ({ params, searchParams }: StoreScopedIdPageProps) => {
 	const session = await auth();
 	const { id } = await params;
 	const { store_id } = await searchParams;

@@ -1,10 +1,10 @@
-import React from 'react';
+import { type FC, useContext } from 'react';
 import { render, screen, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ToastContext, ToastContextProvider, type ToastContextType } from './toastContext';
 
-const TestConsumer: React.FC<{ action: 'success' | 'error'; message: string }> = ({ action, message }) => {
-	const ctx = React.useContext(ToastContext);
+const TestConsumer: FC<{ action: 'success' | 'error'; message: string }> = ({ action, message }) => {
+	const ctx = useContext(ToastContext);
 	return (
 		<button
 			onClick={() => {
@@ -62,7 +62,7 @@ describe('ToastContextProvider', () => {
 		let capturedCtx: ToastContextType | undefined;
 		const Capture = () => {
 			// eslint-disable-next-line react-hooks/globals
-			capturedCtx = React.useContext(ToastContext);
+			capturedCtx = useContext(ToastContext);
 			return null;
 		};
 		render(

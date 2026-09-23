@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, Box, Button, Chip, Divider, Stack } from '@mui/material';
 import {
@@ -48,21 +49,23 @@ const PromotionsViewClient = ({ session, id }: Props) => {
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const { data: promotion, isLoading, error } = useGetPromotionQuery({ id }, { skip: !token });
 	const [deletePromotion] = useDeletePromotionMutation();
-	const axiosError = useMemo(
-		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
-		[error],
-	);
+	const axiosError = error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 
 	const handleDelete = async () => {
-		try {
-			await deletePromotion({ id }).unwrap();
-			onSuccess(t.magasin.promotionDeleted);
-			router.push(PROMOTIONS_LIST);
-		} catch (deleteError) {
-			onError(extractApiErrorMessage(deleteError, t.magasin.promotionDeleteError));
-		} finally {
-			setShowDeleteModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await deletePromotion({ id }).unwrap();
+					onSuccess(t.magasin.promotionDeleted);
+					router.push(PROMOTIONS_LIST);
+				} catch (deleteError) {
+					onError(extractApiErrorMessage(deleteError, t.magasin.promotionDeleteError));
+				}
+			},
+			() => {
+				setShowDeleteModal(false);
+			},
+		);
 	};
 
 	return (

@@ -1,6 +1,8 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { ALL_STORES_CODE, doughnutPalette, chartOptions, legendChartOptions, doughnutOptions } from '@/utils/rawData';
+import { runAsyncWithErrorHandler } from '@/utils/runWithCleanup';
+import { useState, type ReactNode } from 'react';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import {
 	ArcElement,
@@ -14,7 +16,17 @@ import {
 	PointElement,
 	Tooltip,
 } from 'chart.js';
-import { Box, Button, Card, CardContent, CardHeader, CircularProgress, LinearProgress, Stack, Typography } from '@mui/material';
+import {
+	Box,
+	Button,
+	Card,
+	CardContent,
+	CardHeader,
+	CircularProgress,
+	LinearProgress,
+	Stack,
+	Typography,
+} from '@mui/material';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
@@ -27,52 +39,20 @@ import { useLanguage, useToast } from '@/utils/hooks';
 import { customDropdownTheme } from '@/utils/themes';
 import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
 import CustomAutoCompleteSelect from '@/components/formikElements/customAutoCompleteSelect/customAutoCompleteSelect';
-import type { DropDownType } from '@/types/accountTypes';
-import { CHART_OPTS } from '@/utils/rawData';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Filler, Tooltip, Legend);
+ChartJS.register(
+	CategoryScale,
+	LinearScale,
+	PointElement,
+	LineElement,
+	BarElement,
+	ArcElement,
+	Filler,
+	Tooltip,
+	Legend,
+);
 
 const dropdownTheme = customDropdownTheme();
-const ALL_STORES_CODE = '__all_stores__';
-
-const doughnutPalette = ['#1d4ed8', '#047857', '#b91c1c', '#c2410c', '#6d28d9', '#0f766e', '#be123c', '#4d7c0f'];
-
-const chartOptions = {
-	...CHART_OPTS,
-	plugins: {
-		legend: { display: false },
-	},
-	scales: {
-		x: { grid: { display: false } },
-		y: { beginAtZero: true },
-	},
-};
-
-const legendChartOptions = {
-	...chartOptions,
-	interaction: { mode: 'index' as const, intersect: false },
-	plugins: {
-		legend: {
-			display: true,
-			position: 'top' as const,
-		},
-	},
-	scales: {
-		x: { grid: { color: 'rgba(0, 0, 0, 0.04)' } },
-		y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.06)' } },
-	},
-};
-
-const doughnutOptions = {
-	...CHART_OPTS,
-	cutout: '64%',
-	plugins: {
-		legend: {
-			display: true,
-			position: 'bottom' as const,
-		},
-	},
-};
 
 const makeStatusDataset = (labels: string[], values: number[]) => ({
 	labels,
@@ -93,11 +73,7 @@ type NumericChartData = {
 
 const hasChartData = (chartData: NumericChartData) =>
 	Boolean(chartData.labels?.length) &&
-	Boolean(
-		chartData.datasets?.some((dataset) =>
-			dataset.data?.some((value) => Number(value ?? 0) !== 0),
-		),
-	);
+	Boolean(chartData.datasets?.some((dataset) => dataset.data?.some((value) => Number(value ?? 0) !== 0)));
 
 type KpiCardProps = {
 	label: string;
@@ -214,24 +190,21 @@ const DashboardClient = ({ session }: SessionProps) => {
 		{ store: storeFilter === 'all' ? undefined : storeFilter },
 		{ skip: !token },
 	);
-	const storeMemberships = useMemo(
-		() => memberships.filter((membership) => membership.store.is_active && !membership.store.is_global_stock && membership.store.code !== 'mbr-south'),
-		[memberships],
+	const storeMemberships = memberships.filter(
+		(membership) =>
+			membership.store.is_active && !membership.store.is_global_stock && membership.store.code !== 'mbr-south',
 	);
-	const allStoresOption = useMemo<DropDownType>(
-		() => ({ code: ALL_STORES_CODE, value: t.magasin.allMagasinsDashboard }),
-		[t.magasin.allMagasinsDashboard],
-	);
-	const storeOptions = useMemo<DropDownType[]>(
-		() => [allStoresOption, ...storeMemberships.map((membership) => ({ code: String(membership.store.id), value: membership.store.name }))],
-		[allStoresOption, storeMemberships],
-	);
+	const allStoresOption = { code: ALL_STORES_CODE, value: t.magasin.allMagasinsDashboard };
+	const storeOptions = [
+		allStoresOption,
+		...storeMemberships.map((membership) => ({ code: String(membership.store.id), value: membership.store.name })),
+	];
 	const selectedStoreOption =
 		storeFilter === 'all'
 			? allStoresOption
-			: storeOptions.find((store) => Number(store.code) === storeFilter) ?? allStoresOption;
+			: (storeOptions.find((store) => Number(store.code) === storeFilter) ?? allStoresOption);
 
-	const financialTrendChart = useMemo(() => {
+	const financialTrendChart = (() => {
 		const dates = Array.from(
 			new Set([
 				...(data?.sales_trend.map((item) => item.date) ?? []),
@@ -239,7 +212,8 @@ const DashboardClient = ({ session }: SessionProps) => {
 				...(data?.expenses_trend.map((item) => item.date) ?? []),
 			]),
 		).sort();
-		const valueForDate = (items: Array<{ date: string; total: string }>, date: string) => Number(items.find((item) => item.date === date)?.total ?? 0);
+		const valueForDate = (items: Array<{ date: string; total: string }>, date: string) =>
+			Number(items.find((item) => item.date === date)?.total ?? 0);
 		return {
 			labels: dates,
 			datasets: [
@@ -272,147 +246,120 @@ const DashboardClient = ({ session }: SessionProps) => {
 				},
 			],
 		};
-	}, [data?.expenses_trend, data?.purchases_trend, data?.sales_trend, t.magasin.expenses, t.magasin.purchases, t.magasin.sales]);
+	})();
 
-	const salesChart = useMemo(
-		() => ({
-			labels: data?.sales_trend.map((item) => item.date) ?? [],
-			datasets: [
-				{
-					data: data?.sales_trend.map((item) => Number(item.total || 0)) ?? [],
-					borderColor: '#047857',
-					backgroundColor: 'rgba(4, 120, 87, 0.26)',
-					fill: true,
-					pointRadius: 0,
-					tension: 0.35,
-				},
-			],
-		}),
-		[data?.sales_trend],
-	);
-
-	const stockByStoreChart = useMemo(
-		() => ({
-			labels: data?.stock_by_store.map((item) => item.store) ?? [],
-			datasets: [
-				{
-					label: t.magasin.stockQuantity,
-					data: data?.stock_by_store.map((item) => Number(item.quantity || 0)) ?? [],
-					backgroundColor: '#1d4ed8',
-					borderRadius: 4,
-				},
-				{
-					label: t.magasin.stockValue,
-					data: data?.stock_by_store.map((item) => Number(item.value || 0)) ?? [],
-					backgroundColor: '#047857',
-					borderRadius: 4,
-				},
-			],
-		}),
-		[data?.stock_by_store, t.magasin.stockQuantity, t.magasin.stockValue],
-	);
-
-	const outOfStockChart = useMemo(
-		() => ({
-			labels: data?.out_of_stock_products.map((item) => `${item.store} - ${item.product}`) ?? [],
-			datasets: [
-				{
-					label: t.magasin.outOfStockProducts,
-					data: data?.out_of_stock_products.map((item) => Number(item.quantity || 0)) ?? [],
-					backgroundColor: '#b91c1c',
-					borderRadius: 4,
-				},
-			],
-		}),
-		[data?.out_of_stock_products, t.magasin.outOfStockProducts],
-	);
-
-	const marginByProductChart = useMemo(
-		() => ({
-			labels: data?.margin_by_product.map((item) => item.product) ?? [],
-			datasets: [
-				{
-					label: t.magasin.marginByProduct,
-					data: data?.margin_by_product.map((item) => Number(item.margin || 0)) ?? [],
-					backgroundColor: '#047857',
-					borderRadius: 4,
-				},
-			],
-		}),
-		[data?.margin_by_product, t.magasin.marginByProduct],
-	);
-
-	const attendanceChart = useMemo(
-		() => ({
-			labels: data?.attendance_trend.map((item) => item.date) ?? [],
-			datasets: [
-				{
-					data: data?.attendance_trend.map((item) => Number(item.hours || 0)) ?? [],
-					backgroundColor: '#047857',
-					borderRadius: 4,
-				},
-			],
-		}),
-		[data?.attendance_trend],
-	);
-
-	const transferStatusChart = useMemo(
-		() =>
-			makeStatusDataset(
-				data?.transfers_by_status.map((item) => magasinStatusLabel(t, item.status)) ?? [],
-				data?.transfers_by_status.map((item) => item.count) ?? [],
-			),
-		[data?.transfers_by_status, t],
-	);
-
-	const inventoryStatusChart = useMemo(
-		() =>
-			makeStatusDataset(
-				data?.inventory_by_status.map((item) => magasinStatusLabel(t, item.status)) ?? [],
-				data?.inventory_by_status.map((item) => item.count) ?? [],
-			),
-		[data?.inventory_by_status, t],
-	);
-
-	const promotionsStatusChart = useMemo(
-		() =>
-			makeStatusDataset(
-				data?.promotions_by_status.map((item) => magasinStatusLabel(t, item.status)) ?? [],
-				data?.promotions_by_status.map((item) => item.count) ?? [],
-			),
-		[data?.promotions_by_status, t],
-	);
-
-	const reportKinds = useMemo(
-		() => [
-			{ kind: 'sales', label: t.magasin.sales },
-			{ kind: 'stock', label: t.magasin.stock },
-			{ kind: 'attendance', label: t.magasin.attendance },
-			{ kind: 'promotions', label: t.magasin.promotions },
-			{ kind: 'purchases', label: t.magasin.purchases },
-			{ kind: 'inventory', label: t.magasin.inventory },
-			{ kind: 'transfers', label: t.magasin.stockTransfers },
-			{ kind: 'expenses', label: t.magasin.expenses },
+	const salesChart = {
+		labels: data?.sales_trend.map((item) => item.date) ?? [],
+		datasets: [
+			{
+				data: data?.sales_trend.map((item) => Number(item.total || 0)) ?? [],
+				borderColor: '#047857',
+				backgroundColor: 'rgba(4, 120, 87, 0.26)',
+				fill: true,
+				pointRadius: 0,
+				tension: 0.35,
+			},
 		],
-		[t],
+	};
+
+	const stockByStoreChart = {
+		labels: data?.stock_by_store.map((item) => item.store) ?? [],
+		datasets: [
+			{
+				label: t.magasin.stockQuantity,
+				data: data?.stock_by_store.map((item) => Number(item.quantity || 0)) ?? [],
+				backgroundColor: '#1d4ed8',
+				borderRadius: 4,
+			},
+			{
+				label: t.magasin.stockValue,
+				data: data?.stock_by_store.map((item) => Number(item.value || 0)) ?? [],
+				backgroundColor: '#047857',
+				borderRadius: 4,
+			},
+		],
+	};
+
+	const outOfStockChart = {
+		labels: data?.out_of_stock_products.map((item) => `${item.store} - ${item.product}`) ?? [],
+		datasets: [
+			{
+				label: t.magasin.outOfStockProducts,
+				data: data?.out_of_stock_products.map((item) => Number(item.quantity || 0)) ?? [],
+				backgroundColor: '#b91c1c',
+				borderRadius: 4,
+			},
+		],
+	};
+
+	const marginByProductChart = {
+		labels: data?.margin_by_product.map((item) => item.product) ?? [],
+		datasets: [
+			{
+				label: t.magasin.marginByProduct,
+				data: data?.margin_by_product.map((item) => Number(item.margin || 0)) ?? [],
+				backgroundColor: '#047857',
+				borderRadius: 4,
+			},
+		],
+	};
+
+	const attendanceChart = {
+		labels: data?.attendance_trend.map((item) => item.date) ?? [],
+		datasets: [
+			{
+				data: data?.attendance_trend.map((item) => Number(item.hours || 0)) ?? [],
+				backgroundColor: '#047857',
+				borderRadius: 4,
+			},
+		],
+	};
+
+	const transferStatusChart = makeStatusDataset(
+		data?.transfers_by_status.map((item) => magasinStatusLabel(t, item.status)) ?? [],
+		data?.transfers_by_status.map((item) => item.count) ?? [],
 	);
+
+	const inventoryStatusChart = makeStatusDataset(
+		data?.inventory_by_status.map((item) => magasinStatusLabel(t, item.status)) ?? [],
+		data?.inventory_by_status.map((item) => item.count) ?? [],
+	);
+
+	const promotionsStatusChart = makeStatusDataset(
+		data?.promotions_by_status.map((item) => magasinStatusLabel(t, item.status)) ?? [],
+		data?.promotions_by_status.map((item) => item.count) ?? [],
+	);
+
+	const reportKinds = [
+		{ kind: 'sales', label: t.magasin.sales },
+		{ kind: 'stock', label: t.magasin.stock },
+		{ kind: 'attendance', label: t.magasin.attendance },
+		{ kind: 'promotions', label: t.magasin.promotions },
+		{ kind: 'purchases', label: t.magasin.purchases },
+		{ kind: 'inventory', label: t.magasin.inventory },
+		{ kind: 'transfers', label: t.magasin.stockTransfers },
+		{ kind: 'expenses', label: t.magasin.expenses },
+	];
 
 	const handleExportPdf = async (kind: string) => {
 		if (!token || !process.env.NEXT_PUBLIC_REPORTS_EXPORT) return;
-		try {
-			const url = new URL(`${process.env.NEXT_PUBLIC_REPORTS_EXPORT}${kind}/`);
-			url.searchParams.set('format', 'pdf');
-			if (storeFilter !== 'all') {
-				url.searchParams.set('store', String(storeFilter));
-			}
-			const blob = await fetchFileBlob(url.toString(), token);
-			const pdfBlob = blob.type === 'application/pdf' ? blob : new Blob([blob], { type: 'application/pdf' });
-			const blobUrl = window.URL.createObjectURL(pdfBlob);
-			window.open(blobUrl, '_blank');
-			setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60_000);
-		} catch {
-			onError(t.errors.genericError);
-		}
+		await runAsyncWithErrorHandler(
+			async () => {
+				const url = new URL(`${process.env.NEXT_PUBLIC_REPORTS_EXPORT}${kind}/`);
+				url.searchParams.set('format', 'pdf');
+				if (storeFilter !== 'all') {
+					url.searchParams.set('store', String(storeFilter));
+				}
+				const blob = await fetchFileBlob(url.toString(), token);
+				const pdfBlob = blob.type === 'application/pdf' ? blob : new Blob([blob], { type: 'application/pdf' });
+				const blobUrl = window.URL.createObjectURL(pdfBlob);
+				window.open(blobUrl, '_blank');
+				setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60_000);
+			},
+			async () => {
+				onError(t.errors.genericError);
+			},
+		);
 	};
 	const renderChart = (chartData: NumericChartData, chart: ReactNode) =>
 		hasChartData(chartData) ? chart : <EmptyChart />;
@@ -423,7 +370,11 @@ const DashboardClient = ({ session }: SessionProps) => {
 				<Box sx={magasinPageContainerSx}>
 					<Box sx={magasinPageContentSx}>
 						<Stack spacing={2.5}>
-							<Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'flex-end', alignItems: { xs: 'stretch', md: 'center' } }}>
+							<Stack
+								direction={{ xs: 'column', md: 'row' }}
+								spacing={2}
+								sx={{ justifyContent: 'flex-end', alignItems: { xs: 'stretch', md: 'center' } }}
+							>
 								<Box sx={{ width: { xs: '100%', md: 380 } }}>
 									<CustomAutoCompleteSelect
 										id="store-dashboard-filter"
@@ -446,19 +397,67 @@ const DashboardClient = ({ session }: SessionProps) => {
 								</Box>
 							) : (
 								<Stack spacing={3}>
-									<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, gap: 2 }}>
-										<KpiCard label={t.magasin.sales} value={`${formatNumber(String(data?.kpis.sales_total ?? 0))} Dhs`} sub={`${data?.kpis.sales_count ?? 0} ${t.magasin.sales}`} color="#047857" />
-										<KpiCard label={t.magasin.purchases} value={`${formatNumber(String(data?.kpis.purchases_total ?? 0))} Dhs`} color="#1d4ed8" />
-										<KpiCard label={t.magasin.expenses} value={`${formatNumber(String(data?.kpis.expenses_total ?? 0))} Dhs`} color="#b91c1c" />
-										<KpiCard label={t.magasin.netTotal} value={`${formatNumber(String(data?.kpis.net_total ?? 0))} Dhs`} color="#334155" />
-										<KpiCard label={t.magasin.stockQuantity} value={formatNumber(String(data?.kpis.stock_quantity_total ?? 0))} sub={t.magasin.currentStock} color="#1d4ed8" />
-										<KpiCard label={t.magasin.stockValue} value={`${formatNumber(String(data?.kpis.stock_value_total ?? 0))} Dhs`} color="#047857" />
-										<KpiCard label={t.magasin.outOfStockProducts} value={data?.kpis.out_of_stock_count ?? 0} color="#b91c1c" />
+									<Box
+										sx={{
+											display: 'grid',
+											gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
+											gap: 2,
+										}}
+									>
+										<KpiCard
+											label={t.magasin.sales}
+											value={`${formatNumber(String(data?.kpis.sales_total ?? 0))} Dhs`}
+											sub={`${data?.kpis.sales_count ?? 0} ${t.magasin.sales}`}
+											color="#047857"
+										/>
+										<KpiCard
+											label={t.magasin.purchases}
+											value={`${formatNumber(String(data?.kpis.purchases_total ?? 0))} Dhs`}
+											color="#1d4ed8"
+										/>
+										<KpiCard
+											label={t.magasin.expenses}
+											value={`${formatNumber(String(data?.kpis.expenses_total ?? 0))} Dhs`}
+											color="#b91c1c"
+										/>
+										<KpiCard
+											label={t.magasin.netTotal}
+											value={`${formatNumber(String(data?.kpis.net_total ?? 0))} Dhs`}
+											color="#334155"
+										/>
+										<KpiCard
+											label={t.magasin.stockQuantity}
+											value={formatNumber(String(data?.kpis.stock_quantity_total ?? 0))}
+											sub={t.magasin.currentStock}
+											color="#1d4ed8"
+										/>
+										<KpiCard
+											label={t.magasin.stockValue}
+											value={`${formatNumber(String(data?.kpis.stock_value_total ?? 0))} Dhs`}
+											color="#047857"
+										/>
+										<KpiCard
+											label={t.magasin.outOfStockProducts}
+											value={data?.kpis.out_of_stock_count ?? 0}
+											color="#b91c1c"
+										/>
 										<KpiCard label={t.magasin.ordersCount} value={data?.kpis.orders_count ?? 0} color="#334155" />
-										<KpiCard label={t.magasin.todayCashIn} value={`${formatNumber(String(data?.kpis.today_cash_total ?? 0))} Dhs`} color="#047857" />
-										<KpiCard label={t.magasin.activePromotions} value={data?.kpis.promotions_active_count ?? 0} color="#6d28d9" />
+										<KpiCard
+											label={t.magasin.todayCashIn}
+											value={`${formatNumber(String(data?.kpis.today_cash_total ?? 0))} Dhs`}
+											color="#047857"
+										/>
+										<KpiCard
+											label={t.magasin.activePromotions}
+											value={data?.kpis.promotions_active_count ?? 0}
+											color="#6d28d9"
+										/>
 										<KpiCard label={t.magasin.transfersCount} value={data?.kpis.transfers_count ?? 0} color="#334155" />
-										<KpiCard label={t.magasin.expiringProducts} value={data?.kpis.expiring_count ?? 0} color="#c2410c" />
+										<KpiCard
+											label={t.magasin.expiringProducts}
+											value={data?.kpis.expiring_count ?? 0}
+											color="#c2410c"
+										/>
 									</Box>
 									<Card elevation={2}>
 										<CardContent>
@@ -467,7 +466,13 @@ const DashboardClient = ({ session }: SessionProps) => {
 													<Typography variant="subtitle2" sx={{ textTransform: 'uppercase', letterSpacing: 0 }}>
 														{t.magasin.netTotal}
 													</Typography>
-													<Typography variant="subtitle2" sx={{ fontWeight: 700, color: Number(data?.kpis.net_total ?? 0) >= 0 ? 'success.main' : 'error.main' }}>
+													<Typography
+														variant="subtitle2"
+														sx={{
+															fontWeight: 700,
+															color: Number(data?.kpis.net_total ?? 0) >= 0 ? 'success.main' : 'error.main',
+														}}
+													>
 														{formatNumber(String(data?.kpis.net_total ?? 0))} Dhs
 													</Typography>
 												</Stack>
@@ -494,11 +499,7 @@ const DashboardClient = ({ session }: SessionProps) => {
 										{renderChart(financialTrendChart, <Line data={financialTrendChart} options={legendChartOptions} />)}
 									</ChartCard>
 									<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2 }}>
-										<ChartCard
-											title={t.magasin.salesTrend}
-											subheader={t.magasin.salesTrendTooltip}
-											height={320}
-										>
+										<ChartCard title={t.magasin.salesTrend} subheader={t.magasin.salesTrendTooltip} height={320}>
 											{renderChart(salesChart, <Line data={salesChart} options={chartOptions} />)}
 										</ChartCard>
 										<ChartCard
@@ -510,11 +511,7 @@ const DashboardClient = ({ session }: SessionProps) => {
 										</ChartCard>
 									</Box>
 									<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2 }}>
-										<ChartCard
-											title={t.magasin.stockByStore}
-											subheader={t.magasin.stockByStoreTooltip}
-											height={320}
-										>
+										<ChartCard title={t.magasin.stockByStore} subheader={t.magasin.stockByStoreTooltip} height={320}>
 											{renderChart(stockByStoreChart, <Bar data={stockByStoreChart} options={legendChartOptions} />)}
 										</ChartCard>
 										<ChartCard
@@ -534,31 +531,56 @@ const DashboardClient = ({ session }: SessionProps) => {
 											{renderChart(outOfStockChart, <Bar data={outOfStockChart} options={chartOptions} />)}
 										</ChartCard>
 									</Box>
-									<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' }, gap: 2 }}>
+									<Box
+										sx={{
+											display: 'grid',
+											gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
+											gap: 2,
+										}}
+									>
 										<ChartCard
 											title={t.magasin.transfersByStatus}
 											subheader={t.magasin.transfersByStatusTooltip}
 											height={280}
 										>
-											{renderChart(transferStatusChart, <Doughnut data={transferStatusChart} options={doughnutOptions} />)}
+											{renderChart(
+												transferStatusChart,
+												<Doughnut data={transferStatusChart} options={doughnutOptions} />,
+											)}
 										</ChartCard>
 										<ChartCard
 											title={t.magasin.inventoryByStatus}
 											subheader={t.magasin.inventoryByStatusTooltip}
 											height={280}
 										>
-											{renderChart(inventoryStatusChart, <Doughnut data={inventoryStatusChart} options={doughnutOptions} />)}
+											{renderChart(
+												inventoryStatusChart,
+												<Doughnut data={inventoryStatusChart} options={doughnutOptions} />,
+											)}
 										</ChartCard>
 										<ChartCard
 											title={t.magasin.promotionsByStatus}
 											subheader={t.magasin.promotionsByStatusTooltip}
 											height={280}
 										>
-											{renderChart(promotionsStatusChart, <Doughnut data={promotionsStatusChart} options={doughnutOptions} />)}
+											{renderChart(
+												promotionsStatusChart,
+												<Doughnut data={promotionsStatusChart} options={doughnutOptions} />,
+											)}
 										</ChartCard>
 									</Box>
 									<ChartCard title={t.magasin.reports} subheader={t.metadata.dashboardDescription} height={210}>
-										<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(4, minmax(0, 1fr))' }, gap: 1.5 }}>
+										<Box
+											sx={{
+												display: 'grid',
+												gridTemplateColumns: {
+													xs: '1fr',
+													sm: 'repeat(2, minmax(0, 1fr))',
+													lg: 'repeat(4, minmax(0, 1fr))',
+												},
+												gap: 1.5,
+											}}
+										>
 											{reportKinds.map((report) => (
 												<Button
 													key={report.kind}

@@ -1,6 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import { baseAdminPermissionFields, permissionFields, pointageOnlyPermissionDefaults } from '@/utils/rawData';
+import { runAsyncWithErrorHandler } from '@/utils/runWithCleanup';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState, type ChangeEvent, type FC, type MouseEvent } from 'react';
 import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '@/types/_initTypes';
 import Styles from '@/styles/dashboard/dashboard.module.sass';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
@@ -100,41 +103,7 @@ type FormikContentProps = {
 	id?: number;
 };
 
-const permissionFields: Array<
-	keyof Pick<
-		UserFormValues,
-		| 'can_view'
-		| 'can_print'
-		| 'can_create'
-		| 'can_edit'
-		| 'can_delete'
-		| 'can_create_promotion'
-		| 'can_wholesale_sale'
-	>
-> = ['can_view', 'can_print', 'can_create', 'can_edit', 'can_delete', 'can_create_promotion', 'can_wholesale_sale'];
-
-const baseAdminPermissionFields: Array<
-	Exclude<(typeof permissionFields)[number], 'can_create_promotion' | 'can_wholesale_sale'>
-> = [
-	'can_view',
-	'can_print',
-	'can_create',
-	'can_edit',
-	'can_delete',
-];
-
-const pointageOnlyPermissionDefaults = {
-	is_staff: false,
-	can_view: true,
-	can_print: false,
-	can_create: true,
-	can_edit: true,
-	can_delete: true,
-	can_create_promotion: false,
-	can_wholesale_sale: false,
-};
-
-const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) => {
+const FormikContent: FC<FormikContentProps> = (props: FormikContentProps) => {
 	const { token, id } = props;
 	const { onSuccess, onError } = useToast();
 	const { t } = useLanguage();
@@ -156,9 +125,9 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 	const { data: rolesRawData, isLoading: isRolesLoading } = useGetStoreRolesQuery(undefined, { skip: !token });
 
 	const error = checkEmailError || (isEditMode ? dataError || editError : addError);
-	const axiosError: ResponseDataInterface<ApiErrorResponseType> | undefined = useMemo(() => {
+	const axiosError: ResponseDataInterface<ApiErrorResponseType> | undefined = (() => {
 		return error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined;
-	}, [error]);
+	})();
 
 	const [isPending, setIsPending] = useState(false);
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
@@ -208,86 +177,77 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 					role: store.role,
 				})),
 			};
-			try {
-				if (rawData?.email !== data.email) {
-					await checkEmail({ email: data.email }).unwrap();
-				}
-				if (isEditMode) {
-					await editUser({ id: id!, data: payload }).unwrap();
-					onSuccess(t.users.userUpdatedSuccess);
-					router.push(USERS_VIEW(id!));
-				} else {
-					await addUser({ data: payload }).unwrap();
-					onSuccess(t.users.userCreatedSuccess);
-					router.push(USERS_LIST);
-				}
-			} catch (e) {
-				if (isEditMode) {
-					onError(t.users.userUpdateError);
-				} else {
-					onError(t.users.userCreateError);
-				}
-				setFormikAutoErrors({ e, setFieldError });
-			} finally {
-				setIsPending(false);
-			}
+			await runWithCleanup(
+				async () => {
+					await runAsyncWithErrorHandler(
+						async () => {
+							if (rawData?.email !== data.email) {
+								await checkEmail({ email: data.email }).unwrap();
+							}
+							if (isEditMode) {
+								await editUser({ id: id!, data: payload }).unwrap();
+								onSuccess(t.users.userUpdatedSuccess);
+								router.push(USERS_VIEW(id!));
+							} else {
+								await addUser({ data: payload }).unwrap();
+								onSuccess(t.users.userCreatedSuccess);
+								router.push(USERS_LIST);
+							}
+						},
+						async (e) => {
+							if (isEditMode) {
+								onError(t.users.userUpdateError);
+							} else {
+								onError(t.users.userCreateError);
+							}
+							setFormikAutoErrors({ e, setFieldError });
+						},
+					);
+				},
+				() => {
+					setIsPending(false);
+				},
+			);
 		},
 	});
 
-	const fieldLabels = useMemo<Record<string, string>>(
-		() => ({
-			email: t.users.email,
-			first_name: t.users.lastName,
-			last_name: t.users.firstName,
-			gender: t.users.gender,
-			is_active: t.users.activeAccount,
-			is_staff: t.users.adminAccount,
-			avatar: t.users.profilePhoto,
-			avatar_cropped: t.users.avatarCropped,
-			can_view: t.users.canView,
-			can_print: t.users.canPrint,
-			can_create: t.users.canCreate,
-			can_edit: t.users.canEdit,
-			can_delete: t.users.canDelete,
-			can_create_promotion: t.users.canCreatePromotion,
-			can_wholesale_sale: t.users.canWholesaleSale,
-			pointage_only: t.users.pointageOnlyUser,
-			stores: t.users.storeAccess,
-			globalError: t.errors.globalError,
-		}),
-		[t],
-	);
+	const fieldLabels = {
+		email: t.users.email,
+		first_name: t.users.lastName,
+		last_name: t.users.firstName,
+		gender: t.users.gender,
+		is_active: t.users.activeAccount,
+		is_staff: t.users.adminAccount,
+		avatar: t.users.profilePhoto,
+		avatar_cropped: t.users.avatarCropped,
+		can_view: t.users.canView,
+		can_print: t.users.canPrint,
+		can_create: t.users.canCreate,
+		can_edit: t.users.canEdit,
+		can_delete: t.users.canDelete,
+		can_create_promotion: t.users.canCreatePromotion,
+		can_wholesale_sale: t.users.canWholesaleSale,
+		pointage_only: t.users.pointageOnlyUser,
+		stores: t.users.storeAccess,
+		globalError: t.errors.globalError,
+	};
 
-	const storesData = useMemo(() => storesRawData?.results ?? [], [storesRawData?.results]);
-	const rolesData = useMemo(() => rolesRawData?.results ?? [], [rolesRawData?.results]);
-	const storeAssignments = useMemo(() => formik.values.stores ?? [], [formik.values.stores]);
-	const assignedStoreIds = useMemo(() => storeAssignments.map((store) => store.store_id), [storeAssignments]);
-	const availableStores = useMemo(
-		() =>
-			storesData
-				.filter((store) => store.is_active && !assignedStoreIds.includes(store.id))
-				.map((store) => ({
-					value: String(store.id),
-					code: store.name,
-				})),
-		[assignedStoreIds, storesData],
-	);
-	const roleOptions = useMemo(
-		() =>
-			rolesData.map((role) => ({
-				value: role.name,
-				code: role.code,
-			})),
-		[rolesData],
-	);
-	const roleNameByCode = useMemo(
-		() => Object.fromEntries(rolesData.map((role) => [role.code, role.name])),
-		[rolesData],
-	);
-	const roleCodeByName = useMemo(
-		() => Object.fromEntries(rolesData.map((role) => [role.name, role.code])),
-		[rolesData],
-	);
+	const storesData = storesRawData?.results ?? [];
+	const rolesData = rolesRawData?.results ?? [];
+	const storeAssignments = formik.values.stores ?? [];
+	const assignedStoreIds = storeAssignments.map((store) => store.store_id);
+	const availableStores = storesData
+		.filter((store) => store.is_active && !assignedStoreIds.includes(store.id))
+		.map((store) => ({
+			value: String(store.id),
+			code: store.name,
+		}));
+	const roleOptions = rolesData.map((role) => ({
+		value: role.name,
+		code: role.code,
+	}));
+	const roleNameByCode = Object.fromEntries(rolesData.map((role) => [role.code, role.name]));
+	const roleCodeByName = Object.fromEntries(rolesData.map((role) => [role.name, role.code]));
 
 	const setAllPermissions = (checked: boolean) => {
 		permissionFields.forEach((field) => {
@@ -295,7 +255,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 		});
 	};
 
-	const handleAdminChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleAdminChange = (event: ChangeEvent<HTMLInputElement>) => {
 		const checked = event.target.checked;
 		void formik.setFieldValue('pointage_only', false, true);
 		void formik.setFieldValue('is_staff', checked, true);
@@ -305,7 +265,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 		}
 	};
 
-	const handleUserTypeChange = (_event: React.ChangeEvent<HTMLInputElement>, value: string) => {
+	const handleUserTypeChange = (_event: ChangeEvent<HTMLInputElement>, value: string) => {
 		if (value === 'pointage_only') {
 			void formik.setValues(
 				{
@@ -321,7 +281,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 	};
 
 	const handlePermissionChange =
-		(field: (typeof permissionFields)[number]) => (event: React.ChangeEvent<HTMLInputElement>) => {
+		(field: (typeof permissionFields)[number]) => (event: ChangeEvent<HTMLInputElement>) => {
 			if (formik.values.pointage_only) {
 				return;
 			}
@@ -376,7 +336,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 		setSelectedRole('');
 	};
 
-	const validationErrors = useMemo(() => {
+	const validationErrors = (() => {
 		const errors: Record<string, string> = {};
 		if (hasAttemptedSubmit) {
 			Object.entries(formik.errors).forEach(([key, value]) => {
@@ -386,7 +346,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 			});
 		}
 		return errors;
-	}, [formik.errors, hasAttemptedSubmit]);
+	})();
 
 	const hasValidationErrors = Object.keys(validationErrors).length > 0;
 	const fieldError = (field: keyof UserFormValues) =>
@@ -482,8 +442,8 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 									<CustomSquareImageUploading
 										image={formik.values.avatar}
 										croppedImage={formik.values.avatar_cropped}
-										onChange={(img) => formik.setFieldValue('avatar', img)}
-										onCrop={(cropped) => formik.setFieldValue('avatar_cropped', cropped)}
+										onChange={(img) => void formik.setFieldValue('avatar', img)}
+										onCrop={(cropped) => void formik.setFieldValue('avatar_cropped', cropped)}
 									/>
 								</Box>
 							</CardContent>
@@ -561,7 +521,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 										label={`${t.users.gender} *`}
 										items={genderItemsList(t)}
 										value={formik.values.gender}
-										onChange={(e) => formik.setFieldValue('gender', e.target.value)}
+										onChange={(e) => void formik.setFieldValue('gender', e.target.value)}
 										theme={customDropdownTheme()}
 										startIcon={<GroupsIcon fontSize="small" />}
 										onBlur={formik.handleBlur('gender')}
@@ -671,8 +631,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 												{ value: 'standard', label: t.users.standardUser },
 												{ value: 'pointage_only', label: t.users.pointageOnlyUser },
 											].map((option) => {
-												const selected =
-													(formik.values.pointage_only ? 'pointage_only' : 'standard') === option.value;
+												const selected = (formik.values.pointage_only ? 'pointage_only' : 'standard') === option.value;
 												return (
 													<Box
 														key={option.value}
@@ -997,7 +956,7 @@ const FormikContent: React.FC<FormikContentProps> = (props: FormikContentProps) 
 								active={!isPending}
 								loading={isPending}
 								startIcon={isEditMode ? <EditIcon /> : <AddIcon />}
-								onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+								onClick={(e: MouseEvent<HTMLButtonElement>) => {
 									setHasAttemptedSubmit(true);
 									if (!formik.isValid) {
 										e.preventDefault();
@@ -1020,7 +979,7 @@ interface Props extends SessionProps {
 	id?: number;
 }
 
-const UsersFormClient: React.FC<Props> = ({ session, id }: Props) => {
+const UsersFormClient: FC<Props> = ({ session, id }: Props) => {
 	const token = useInitAccessToken(session);
 	const isEditMode = id !== undefined;
 	const { t } = useLanguage();

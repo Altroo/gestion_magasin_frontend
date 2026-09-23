@@ -1,3 +1,4 @@
+import type { StoreSearchPageProps } from '@/types/routeTypes';
 import { redirect } from 'next/navigation';
 import { type Metadata } from 'next';
 import { auth } from '@/auth';
@@ -5,16 +6,12 @@ import SalesFormClient from '@/components/pages/magasin/sales/sales-form';
 import { AUTH_LOGIN, SALES_LIST } from '@/utils/routes';
 import { getServerTranslations } from '@/utils/serverTranslations';
 
-type PageProps = {
-	searchParams: Promise<{ store_id?: string }>;
-};
-
 export async function generateMetadata(): Promise<Metadata> {
 	const t = await getServerTranslations();
 	return { title: t.metadata.newSaleTitle, description: t.metadata.newSaleDescription };
 }
 
-const SalesNewPage = async ({ searchParams }: PageProps) => {
+const SalesNewPage = async ({ searchParams }: StoreSearchPageProps) => {
 	const session = await auth();
 	const { store_id } = await searchParams;
 

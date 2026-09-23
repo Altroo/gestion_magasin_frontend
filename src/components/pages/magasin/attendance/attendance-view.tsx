@@ -1,6 +1,7 @@
 'use client';
 
-import { isValidElement, useMemo, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { isValidElement, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -107,21 +108,23 @@ const AttendanceViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const { data: attendance, isLoading, error } = useGetAttendanceRecordQuery({ id }, { skip: !token });
 	const [deleteAttendance] = useDeleteAttendanceRecordMutation();
-	const axiosError = useMemo(
-		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
-		[error],
-	);
+	const axiosError = error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 
 	const handleDelete = async () => {
-		try {
-			await deleteAttendance({ id }).unwrap();
-			onSuccess(t.magasin.attendanceDeleted);
-			router.push(ATTENDANCE_LIST);
-		} catch (deleteError) {
-			onError(extractApiErrorMessage(deleteError, t.magasin.attendanceDeleteError));
-		} finally {
-			setShowDeleteModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await deleteAttendance({ id }).unwrap();
+					onSuccess(t.magasin.attendanceDeleted);
+					router.push(ATTENDANCE_LIST);
+				} catch (deleteError) {
+					onError(extractApiErrorMessage(deleteError, t.magasin.attendanceDeleteError));
+				}
+			},
+			() => {
+				setShowDeleteModal(false);
+			},
+		);
 	};
 
 	return (

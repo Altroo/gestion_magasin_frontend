@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import { runAsyncWithErrorHandler } from '@/utils/runWithCleanup';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState, type ReactNode } from 'react';
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Stack } from '@mui/material';
 import { Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import type { Theme } from '@mui/material/styles';
@@ -19,7 +21,7 @@ type EntityPayload = {
 
 type EntityCrudControlsProps<T> = {
 	label: string;
-	icon: React.ReactNode;
+	icon: ReactNode;
 	inputTheme: Theme;
 	selectedItem: DropDownType | null;
 	addEntity: (data: EntityPayload) => Promise<T>;
@@ -54,7 +56,7 @@ const getMutationErrorMessage = (error: unknown, fallback: string): string => {
 	return fallback;
 };
 
-const EntityCrudControls = <T extends { id?: number },>({
+const EntityCrudControls = <T extends { id?: number }>({
 	label,
 	icon,
 	inputTheme,
@@ -74,11 +76,11 @@ const EntityCrudControls = <T extends { id?: number },>({
 	const [deleteOpen, setDeleteOpen] = useState(false);
 	const [actionLoading, setActionLoading] = useState(false);
 
-	const selectedId = useMemo(() => {
+	const selectedId = (() => {
 		if (!selectedItem?.code) return null;
 		const parsed = Number(selectedItem.code);
 		return Number.isFinite(parsed) ? parsed : null;
-	}, [selectedItem]);
+	})();
 
 	const handleEditOpen = () => {
 		if (!selectedItem?.value) return;
@@ -91,33 +93,44 @@ const EntityCrudControls = <T extends { id?: number },>({
 		const cleanedName = editName.trim();
 		if (!selectedId || !cleanedName) return;
 		setActionLoading(true);
-		try {
-			await editEntity({
-				id: selectedId,
-				data: {
-					code: normalizeCode(cleanedName) || String(selectedId),
-					name: cleanedName,
-					is_active: true,
-				},
-			});
-			setEditOpen(false);
-		} catch (error) {
-			setEditError(getMutationErrorMessage(error, t.errors.genericError));
-		} finally {
-			setActionLoading(false);
-		}
+		await runWithCleanup(
+			async () => {
+				await runAsyncWithErrorHandler(
+					async () => {
+						await editEntity({
+							id: selectedId,
+							data: {
+								code: normalizeCode(cleanedName) || String(selectedId),
+								name: cleanedName,
+								is_active: true,
+							},
+						});
+						setEditOpen(false);
+					},
+					async (error) => {
+						setEditError(getMutationErrorMessage(error, t.errors.genericError));
+					},
+				);
+			},
+			() => {
+				setActionLoading(false);
+			},
+		);
 	};
 
 	const handleDeleteConfirm = async () => {
 		if (!selectedId) return;
 		setActionLoading(true);
-		try {
-			await deleteEntity({ id: selectedId });
-			setDeleteOpen(false);
-			onDeleteSuccess?.();
-		} finally {
-			setActionLoading(false);
-		}
+		await runWithCleanup(
+			async () => {
+				await deleteEntity({ id: selectedId });
+				setDeleteOpen(false);
+				onDeleteSuccess?.();
+			},
+			() => {
+				setActionLoading(false);
+			},
+		);
 	};
 
 	return (
@@ -128,7 +141,13 @@ const EntityCrudControls = <T extends { id?: number },>({
 						<IconButton size="small" onClick={handleEditOpen} title={t.common.update} disabled={disabled}>
 							<EditIcon fontSize="small" />
 						</IconButton>
-						<IconButton size="small" onClick={() => setDeleteOpen(true)} title={t.common.delete} color="error" disabled={disabled}>
+						<IconButton
+							size="small"
+							onClick={() => setDeleteOpen(true)}
+							title={t.common.delete}
+							color="error"
+							disabled={disabled}
+						>
 							<DeleteIcon fontSize="small" />
 						</IconButton>
 					</>
@@ -174,7 +193,11 @@ const EntityCrudControls = <T extends { id?: number },>({
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={() => setEditOpen(false)}>{t.common.cancel}</Button>
-					<Button onClick={() => void handleEditSubmit()} variant="contained" disabled={actionLoading || !editName.trim()}>
+					<Button
+						onClick={() => void handleEditSubmit()}
+						variant="contained"
+						disabled={actionLoading || !editName.trim()}
+					>
 						{t.common.update}
 					</Button>
 				</DialogActions>

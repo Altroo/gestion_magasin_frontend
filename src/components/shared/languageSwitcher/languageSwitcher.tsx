@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import { type FC } from 'react';
 import { Button, IconButton, Tooltip } from '@mui/material';
 import Image from 'next/image';
 import { useLanguage } from '@/utils/hooks';
@@ -22,7 +22,7 @@ export const LanguageFlag = ({ language, size = 20 }: LanguageFlagProps) => (
 	/>
 );
 
-const LanguageSwitcher: React.FC = () => {
+const LanguageSwitcher: FC = () => {
 	const { language, setLanguage } = useLanguage();
 
 	const toggleLanguage = () => {
@@ -36,7 +36,12 @@ const LanguageSwitcher: React.FC = () => {
 		<>
 			<Desktop>
 				<Tooltip title={label}>
-					<Button variant="text" color="inherit" onClick={toggleLanguage} startIcon={<LanguageFlag language={nextLanguage} />}>
+					<Button
+						variant="text"
+						color="inherit"
+						onClick={toggleLanguage}
+						startIcon={<LanguageFlag language={nextLanguage} />}
+					>
 						{language === 'fr' ? 'EN' : 'FR'}
 					</Button>
 				</Tooltip>

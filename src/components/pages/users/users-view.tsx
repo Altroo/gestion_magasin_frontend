@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useMemo, isValidElement, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { isValidElement, useState, type FC, Fragment, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '@/types/_initTypes';
 import { useInitAccessToken } from '@/contexts/InitContext';
@@ -46,16 +47,16 @@ import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
 
 interface InfoRowProps {
-	icon: React.ReactNode;
+	icon: ReactNode;
 	label: string;
-	value: string | number | null | undefined | React.ReactNode;
+	value: string | number | null | undefined | ReactNode;
 }
 
-const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value }) => {
+const InfoRow: FC<InfoRowProps> = ({ icon, label, value }) => {
 	const theme = useTheme();
 	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-	const displayValue = React.isValidElement(value) ? value : value && value.toString().length > 1 ? value : '-';
+	const displayValue = isValidElement(value) ? value : value && value.toString().length > 1 ? value : '-';
 
 	return (
 		<Stack
@@ -113,14 +114,18 @@ interface Props extends SessionProps {
 	id: number;
 }
 
-const UsersViewClient: React.FC<Props> = ({ session, id }) => {
+const getUserHeading = (
+	firstName: string | undefined,
+	lastName: string | undefined,
+	email: string | undefined,
+	fallback: string,
+) => [firstName, lastName].filter(Boolean).join(' ') || email || fallback;
+
+const UsersViewClient: FC<Props> = ({ session, id }) => {
 	const router = useRouter();
 	const token = useInitAccessToken(session);
 	const { data: userData, isLoading, error } = useGetUserQuery({ id }, { skip: !token });
-	const axiosError = useMemo(
-		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
-		[error],
-	);
+	const axiosError = error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 	const theme = useTheme();
 	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -131,15 +136,20 @@ const UsersViewClient: React.FC<Props> = ({ session, id }) => {
 	const userStores = userData?.stores ?? [];
 
 	const handleDelete = async () => {
-		try {
-			await deleteRecord({ id }).unwrap();
-			onSuccess(t.users.userDeletedSuccess);
-			router.push(USERS_LIST);
-		} catch (err) {
-			onError(extractApiErrorMessage(err, t.users.userDeleteError));
-		} finally {
-			setShowDeleteModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await deleteRecord({ id }).unwrap();
+					onSuccess(t.users.userDeletedSuccess);
+					router.push(USERS_LIST);
+				} catch (err) {
+					onError(extractApiErrorMessage(err, t.users.userDeleteError));
+				}
+			},
+			() => {
+				setShowDeleteModal(false);
+			},
+		);
 	};
 
 	const deleteModalActions = [
@@ -263,9 +273,12 @@ const UsersViewClient: React.FC<Props> = ({ session, id }) => {
 																fontWeight: 700,
 															}}
 														>
-															{[userData?.first_name, userData?.last_name].filter(Boolean).join(' ') ||
-																userData?.email ||
-																t.users.userDetails}
+															{getUserHeading(
+																userData?.first_name,
+																userData?.last_name,
+																userData?.email,
+																t.users.userDetails,
+															)}
 														</Typography>
 														<Stack
 															direction="row"
@@ -426,7 +439,7 @@ const UsersViewClient: React.FC<Props> = ({ session, id }) => {
 											) : (
 												<Stack spacing={0}>
 													{userStores.map((store, index) => (
-														<React.Fragment key={`${store.store_id}-${index}`}>
+														<Fragment key={`${store.store_id}-${index}`}>
 															<InfoRow
 																icon={<StorefrontIcon />}
 																label={store.store_name}
@@ -440,7 +453,7 @@ const UsersViewClient: React.FC<Props> = ({ session, id }) => {
 																}
 															/>
 															{index < userStores.length - 1 && <Divider />}
-														</React.Fragment>
+														</Fragment>
 													))}
 												</Stack>
 											)}

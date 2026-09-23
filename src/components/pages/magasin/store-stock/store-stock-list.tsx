@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Chip, Stack } from '@mui/material';
 import {
@@ -58,58 +58,42 @@ const StoreStockOverviewClient = ({ session }: SessionProps) => {
 	const { data: categories } = useGetCategoriesQuery(undefined, { skip: !token });
 	const { data: productUnits } = useGetProductUnitsQuery(undefined, { skip: !token });
 
-	const booleanFilterOptions = useMemo(
-		() => [
-			{ value: 'true', label: t.magasin.lowStockReached },
-			{ value: 'false', label: t.magasin.stockSufficient },
-		],
-		[t.magasin.lowStockReached, t.magasin.stockSufficient],
-	);
+	const booleanFilterOptions = [
+		{ value: 'true', label: t.magasin.lowStockReached },
+		{ value: 'false', label: t.magasin.stockSufficient },
+	];
 
-	const chipFilters = useMemo(
-		() => [
-			{
-				key: 'store',
-				label: t.magasin.store,
-				paramName: 'store_ids',
-				options: (stores?.results ?? [])
-					.filter((store) => !store.is_global_stock)
-					.map((store) => ({ id: String(store.id), nom: store.name })),
-			},
-			{
-				key: 'category',
-				label: t.magasin.category,
-				paramName: 'category_ids',
-				options: (categories?.results ?? []).map((category) => ({ id: String(category.id), nom: category.name })),
-			},
-			{
-				key: 'unit',
-				label: t.magasin.unit,
-				paramName: 'unit_ids',
-				options: (productUnits?.results ?? []).map((unit) => ({ id: String(unit.id), nom: unit.name })),
-			},
-			{
-				key: 'stock',
-				label: t.magasin.lowStockStatus,
-				paramName: 'low',
-				options: [
-					{ id: 'true', nom: t.magasin.lowStockReached },
-					{ id: 'false', nom: t.magasin.stockSufficient },
-				],
-			},
-		],
-		[
-			categories?.results,
-			productUnits?.results,
-			stores?.results,
-			t.magasin.category,
-			t.magasin.lowStockReached,
-			t.magasin.lowStockStatus,
-			t.magasin.stockSufficient,
-			t.magasin.store,
-			t.magasin.unit,
-		],
-	);
+	const chipFilters = [
+		{
+			key: 'store',
+			label: t.magasin.store,
+			paramName: 'store_ids',
+			options: (stores?.results ?? [])
+				.filter((store) => !store.is_global_stock)
+				.map((store) => ({ id: String(store.id), nom: store.name })),
+		},
+		{
+			key: 'category',
+			label: t.magasin.category,
+			paramName: 'category_ids',
+			options: (categories?.results ?? []).map((category) => ({ id: String(category.id), nom: category.name })),
+		},
+		{
+			key: 'unit',
+			label: t.magasin.unit,
+			paramName: 'unit_ids',
+			options: (productUnits?.results ?? []).map((unit) => ({ id: String(unit.id), nom: unit.name })),
+		},
+		{
+			key: 'stock',
+			label: t.magasin.lowStockStatus,
+			paramName: 'low',
+			options: [
+				{ id: 'true', nom: t.magasin.lowStockReached },
+				{ id: 'false', nom: t.magasin.stockSufficient },
+			],
+		},
+	];
 
 	const columns: GridColDef[] = [
 		{
@@ -216,7 +200,13 @@ const StoreStockOverviewClient = ({ session }: SessionProps) => {
 					</DarkTooltip>
 				) : (
 					<DarkTooltip title={t.magasin.stockSufficient}>
-						<Chip icon={<CheckCircleIcon />} label={t.magasin.stockSufficient} color="success" size="small" variant="outlined" />
+						<Chip
+							icon={<CheckCircleIcon />}
+							label={t.magasin.stockSufficient}
+							color="success"
+							size="small"
+							variant="outlined"
+						/>
 					</DarkTooltip>
 				),
 		},

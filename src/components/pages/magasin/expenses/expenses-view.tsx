@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, Box, Button, Chip, Divider, Stack } from '@mui/material';
 import {
@@ -43,21 +44,23 @@ const ExpensesViewClient = ({ session, id }: Props) => {
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const { data: expense, isLoading, error } = useGetExpenseQuery({ id }, { skip: !token });
 	const [deleteExpense] = useDeleteExpenseMutation();
-	const axiosError = useMemo(
-		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
-		[error],
-	);
+	const axiosError = error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 
 	const handleDelete = async () => {
-		try {
-			await deleteExpense({ id }).unwrap();
-			onSuccess(t.magasin.expenseDeleted);
-			router.push(EXPENSES_LIST);
-		} catch (deleteError) {
-			onError(extractApiErrorMessage(deleteError, t.magasin.expenseDeleteError));
-		} finally {
-			setShowDeleteModal(false);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await deleteExpense({ id }).unwrap();
+					onSuccess(t.magasin.expenseDeleted);
+					router.push(EXPENSES_LIST);
+				} catch (deleteError) {
+					onError(extractApiErrorMessage(deleteError, t.magasin.expenseDeleteError));
+				}
+			},
+			() => {
+				setShowDeleteModal(false);
+			},
+		);
 	};
 
 	return (

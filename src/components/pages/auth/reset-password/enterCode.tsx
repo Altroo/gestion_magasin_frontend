@@ -1,6 +1,16 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import {
+	useState,
+	useRef,
+	type ChangeEvent,
+	type ClipboardEvent,
+	type FC,
+	type InputEvent,
+	type KeyboardEvent,
+	type RefObject,
+} from 'react';
 import Styles from '@/styles/auth/auth.module.sass';
 import { setFormikAutoErrors } from '@/utils/helpers';
 import { Desktop, TabletAndMobile } from '@/utils/clientHelpers';
@@ -21,13 +31,14 @@ import { useSendPasswordResetCodeMutation, usePasswordResetMutation } from '@/st
 import { useSession } from 'next-auth/react';
 import { useToast, useLanguage } from '@/utils/hooks';
 import { Send as SendIcon, ThumbUpAlt as ThumbUpAltIcon } from '@mui/icons-material';
+import type { PasswordResetCodeField } from '@/types/accountTypes';
+import { fields } from '@/utils/rawData';
 
 type EnterCodePageContentProps = {
 	email: string;
 };
 
-type FieldKey = 'one' | 'two' | 'three' | 'four' | 'five' | 'six';
-const fields: FieldKey[] = ['one', 'two', 'three', 'four', 'five', 'six'];
+type FieldKey = PasswordResetCodeField;
 
 const EnterCodePageContent = ({ email }: EnterCodePageContentProps) => {
 	const router = useRouter();
@@ -37,7 +48,7 @@ const EnterCodePageContent = ({ email }: EnterCodePageContentProps) => {
 	const [passwordReset, { isLoading: isPasswordResetLoading }] = usePasswordResetMutation();
 	const [isPending, setIsPending] = useState(false);
 
-	const inputRefs: Record<FieldKey, React.RefObject<HTMLInputElement | null>> = {
+	const inputRefs: Record<FieldKey, RefObject<HTMLInputElement | null>> = {
 		one: useRef<HTMLInputElement | null>(null),
 		two: useRef<HTMLInputElement | null>(null),
 		three: useRef<HTMLInputElement | null>(null),
@@ -47,16 +58,13 @@ const EnterCodePageContent = ({ email }: EnterCodePageContentProps) => {
 	};
 
 	// input/onChange handler attached to native input (htmlInput)
-	const handleInput = (
-		field: FieldKey,
-		e: React.InputEvent<HTMLInputElement> | React.ChangeEvent<HTMLInputElement>,
-	) => {
+	const handleInput = (field: FieldKey, e: InputEvent<HTMLInputElement> | ChangeEvent<HTMLInputElement>) => {
 		const val = (e.currentTarget as HTMLInputElement).value.replace(/\D/g, '').slice(0, 1);
-		formik.setFieldValue(field, val);
+		void formik.setFieldValue(field, val);
 
 		// update combined code if you use one
 		const next = { ...formik.values, [field]: val } as Record<string, string>;
-		formik.setFieldValue('code', fields.map((k) => next[k]).join(''));
+		void formik.setFieldValue('code', fields.map((k) => next[k]).join(''));
 
 		if (val.length >= 1) {
 			const i = fields.indexOf(field);
@@ -74,7 +82,7 @@ const EnterCodePageContent = ({ email }: EnterCodePageContentProps) => {
 	};
 
 	// Backspace navigation on native input
-	const handleKeyDown = (field: FieldKey, e: React.KeyboardEvent<HTMLInputElement>) => {
+	const handleKeyDown = (field: FieldKey, e: KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === 'Backspace') {
 			const curVal = (e.currentTarget as HTMLInputElement).value;
 			if (!curVal) {
@@ -91,13 +99,13 @@ const EnterCodePageContent = ({ email }: EnterCodePageContentProps) => {
 	};
 
 	// Paste handler: fill fields with digits from clipboard
-	const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+	const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
 		e.preventDefault();
 		const txt = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, fields.length);
 		if (!txt) return;
 		const digits = txt.split('');
-		digits.forEach((ch, idx) => formik.setFieldValue(fields[idx], ch));
-		formik.setFieldValue('code', digits.join(''));
+		digits.forEach((ch, idx) => void formik.setFieldValue(fields[idx], ch));
+		void formik.setFieldValue('code', digits.join(''));
 		setTimeout(() => {
 			formik.validateForm().catch(() => {
 				// Validation errors are handled by formik state
@@ -114,15 +122,20 @@ const EnterCodePageContent = ({ email }: EnterCodePageContentProps) => {
 		onSubmit: async (values, { setFieldError }) => {
 			setIsPending(true);
 			const code = values.one + values.two + values.three + values.four + values.five + values.six;
-			try {
-				await passwordReset({ email, code }).unwrap();
-				await cookiesPoster('/api/cookies', { code });
-				router.push(AUTH_RESET_PASSWORD_SET_PASSWORD);
-			} catch (e) {
-				setFormikAutoErrors({ e, setFieldError });
-			} finally {
-				setIsPending(false);
-			}
+			await runWithCleanup(
+				async () => {
+					try {
+						await passwordReset({ email, code }).unwrap();
+						await cookiesPoster('/api/cookies', { code });
+						router.push(AUTH_RESET_PASSWORD_SET_PASSWORD);
+					} catch (e) {
+						setFormikAutoErrors({ e, setFieldError });
+					}
+				},
+				() => {
+					setIsPending(false);
+				},
+			);
 		},
 	});
 
@@ -175,10 +188,10 @@ const EnterCodePageContent = ({ email }: EnterCodePageContentProps) => {
 									slotProps={{
 										htmlInput: {
 											maxLength: 1,
-											onInput: (e: React.InputEvent<HTMLInputElement>) => handleInput(field, e),
-											onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleInput(field, e),
-											onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(field, e),
-											onPaste: (e: React.ClipboardEvent<HTMLInputElement>) => handlePaste(e),
+											onInput: (e: InputEvent<HTMLInputElement>) => handleInput(field, e),
+											onChange: (e: ChangeEvent<HTMLInputElement>) => handleInput(field, e),
+											onKeyDown: (e: KeyboardEvent<HTMLInputElement>) => handleKeyDown(field, e),
+											onPaste: (e: ClipboardEvent<HTMLInputElement>) => handlePaste(e),
 										},
 									}}
 									inputRef={inputRefs[field]}
@@ -222,7 +235,7 @@ type Props = {
 	email: string;
 };
 
-const EnterCodeClient: React.FC<Props> = ({ email }) => {
+const EnterCodeClient: FC<Props> = ({ email }) => {
 	const { data: session, status } = useSession();
 	const loading = status === 'loading';
 

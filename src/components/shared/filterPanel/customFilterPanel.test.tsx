@@ -1,10 +1,13 @@
-import React from 'react';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import CustomFilterPanel, { filterHasValue, type CustomFilterItem, type CustomFilterModel } from './customFilterPanel';
 import { GridLogicOperator, type GridColDef } from '@mui/x-data-grid';
 
 jest.mock('@/utils/hooks', () => ({
-	useLanguage: () => ({ language: 'fr', setLanguage: jest.fn(), t: jest.requireActual('@/translations').translations.fr }),
+	useLanguage: () => ({
+		language: 'fr',
+		setLanguage: jest.fn(),
+		t: jest.requireActual('@/translations').translations.fr,
+	}),
 }));
 
 const mockColumns: GridColDef[] = [

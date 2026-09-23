@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Card, CardContent, Divider, Stack, Typography } from '@mui/material';
 import {
@@ -62,10 +63,7 @@ const StockTransfersListClient = ({ session }: SessionProps) => {
 	const [selectedRequestIds, setSelectedRequestIds] = useState<number[]>([]);
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 	const [validateTarget, setValidateTarget] = useState<number | null>(null);
-	const mergedFilterParams = useMemo(
-		() => ({ ...chipFilterParams, ...customFilterParams }),
-		[chipFilterParams, customFilterParams],
-	);
+	const mergedFilterParams = { ...chipFilterParams, ...customFilterParams };
 	const { data, isLoading, refetch } = useGetStockTransfersQuery(
 		{ search: searchTerm, page: paginationModel.page + 1, pageSize: paginationModel.pageSize, ...mergedFilterParams },
 		{ skip: !token },
@@ -88,55 +86,58 @@ const StockTransfersListClient = ({ session }: SessionProps) => {
 		{ skip: !token || !canApproveRequests },
 	);
 
-	const targetStoreOptions = useMemo(
-		() =>
-			memberships
-				.map((membership) => membership.store)
-				.filter((store) => !store.is_global_stock)
-				.map((store) => ({ id: String(store.id), nom: store.name })),
-		[memberships],
-	);
-	const chipFilters = useMemo(
-		() => [
-			{ key: 'status', label: t.magasin.status, paramName: 'status', options: stockWorkflowStatusOptions(t) },
-			{
-				key: 'target_store_ids',
-				label: t.magasin.targetStore,
-				paramName: 'target_store_ids',
-				options: targetStoreOptions,
-			},
-		],
-		[t, targetStoreOptions],
-	);
-	const handleChipFilterChange = useCallback((params: Record<string, string>) => {
+	const targetStoreOptions = memberships
+		.map((membership) => membership.store)
+		.filter((store) => !store.is_global_stock)
+		.map((store) => ({ id: String(store.id), nom: store.name }));
+	const chipFilters = [
+		{ key: 'status', label: t.magasin.status, paramName: 'status', options: stockWorkflowStatusOptions(t) },
+		{
+			key: 'target_store_ids',
+			label: t.magasin.targetStore,
+			paramName: 'target_store_ids',
+			options: targetStoreOptions,
+		},
+	];
+	const handleChipFilterChange = (params: Record<string, string>) => {
 		setChipFilterParams(params);
 		setPaginationModel((current) => ({ ...current, page: 0 }));
-	}, [setPaginationModel]);
+	};
 
 	const handleDelete = async () => {
 		if (!deleteTarget) return;
-		try {
-			await deleteTransfer({ id: deleteTarget }).unwrap();
-			onSuccess(t.magasin.transferDeleted);
-			refetch();
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.transferDeleteError));
-		} finally {
-			setDeleteTarget(null);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await deleteTransfer({ id: deleteTarget }).unwrap();
+					onSuccess(t.magasin.transferDeleted);
+					refetch();
+				} catch (error) {
+					onError(extractApiErrorMessage(error, t.magasin.transferDeleteError));
+				}
+			},
+			() => {
+				setDeleteTarget(null);
+			},
+		);
 	};
 
 	const handleValidate = async () => {
 		if (!validateTarget) return;
-		try {
-			await validateTransfer({ id: validateTarget }).unwrap();
-			onSuccess(t.magasin.transferValidated);
-			refetch();
-		} catch (error) {
-			onError(extractApiErrorMessage(error, t.magasin.transferValidateError));
-		} finally {
-			setValidateTarget(null);
-		}
+		await runWithCleanup(
+			async () => {
+				try {
+					await validateTransfer({ id: validateTarget }).unwrap();
+					onSuccess(t.magasin.transferValidated);
+					refetch();
+				} catch (error) {
+					onError(extractApiErrorMessage(error, t.magasin.transferValidateError));
+				}
+			},
+			() => {
+				setValidateTarget(null);
+			},
+		);
 	};
 
 	const approveRequestHandler = async (requestId: number) => {

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { runWithCleanup } from '@/utils/runWithCleanup';
+import { useEffect, useRef, useState, type MouseEvent, type ReactNode, type SyntheticEvent } from 'react';
 import { styled, ThemeProvider } from '@mui/material/styles';
 import MuiAppBar, { type AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
 import {
@@ -105,7 +106,7 @@ type NavigationItem = {
 
 type NavigationSection = {
 	title: string;
-	icon: React.ReactNode;
+	icon: ReactNode;
 	items: NavigationItem[];
 };
 
@@ -269,7 +270,7 @@ const AppBar = styled(MuiAppBar, {
 
 type Props = {
 	title: string;
-	children: React.ReactNode;
+	children: ReactNode;
 	compact?: boolean;
 };
 
@@ -283,13 +284,9 @@ const NavigationBar = (props: Props) => {
 	const { data: storeMemberships = [], isSuccess: storeMembershipsLoaded } = useGetMyStoresQuery(undefined, {
 		skip: status !== 'authenticated' || is_staff || !!pointage_only,
 	});
-	const vendeurOnly =
-		!is_staff && !pointage_only && (!storeMembershipsLoaded || isVendeurOnly(storeMemberships));
+	const vendeurOnly = !is_staff && !pointage_only && (!storeMembershipsLoaded || isVendeurOnly(storeMemberships));
 	const canInstallPrinter = is_staff || (storeMembershipsLoaded && vendeurOnly);
-	const navigationMenu = useMemo(
-		() => getNavigationMenu(is_staff, !!pointage_only, vendeurOnly, t),
-		[is_staff, pointage_only, vendeurOnly, t],
-	);
+	const navigationMenu = getNavigationMenu(is_staff, !!pointage_only, vendeurOnly, t);
 	const dispatch = useAppDispatch();
 	const moreVertRef = useRef<HTMLButtonElement>(null);
 	const [mobileMenuAnchor, setMobileMenuAnchor] = useState<HTMLElement | null>(null);
@@ -337,7 +334,7 @@ const NavigationBar = (props: Props) => {
 		}
 	}, [status, vendeurOnly]);
 
-	const handleNotifOpen = (event: React.MouseEvent<HTMLElement>) => {
+	const handleNotifOpen = (event: MouseEvent<HTMLElement>) => {
 		setNotifAnchor(event.currentTarget);
 	};
 
@@ -350,21 +347,24 @@ const NavigationBar = (props: Props) => {
 		dispatch(setUnreadCount(0));
 	};
 
-	const handleLoadMore = useCallback(async () => {
+	const handleLoadMore = async () => {
 		const nextPage = notifPage + 1;
 		setLoadingMore(true);
-		try {
-			const result = await fetchNotifications({ page: nextPage }).unwrap();
-			setPagination((current) => ({
-				firstPage,
-				results: [...(current && current.firstPage === firstPage ? current.results : []), ...result.results],
-				page: nextPage,
-				hasMore: result.next !== null,
-			}));
-		} finally {
-			setLoadingMore(false);
-		}
-	}, [fetchNotifications, firstPage, notifPage]);
+		await runWithCleanup(
+			async () => {
+				const result = await fetchNotifications({ page: nextPage }).unwrap();
+				setPagination((current) => ({
+					firstPage,
+					results: [...(current && current.firstPage === firstPage ? current.results : []), ...result.results],
+					page: nextPage,
+					hasMore: result.next !== null,
+				}));
+			},
+			() => {
+				setLoadingMore(false);
+			},
+		);
+	};
 
 	const logOutHandler = async () => {
 		await cookiesDeleter('/api/cookies', {
@@ -393,7 +393,7 @@ const NavigationBar = (props: Props) => {
 
 	const [userExpanded, setUserExpanded] = useState<string | false>(false);
 
-	const defaultExpanded: string | false = useMemo(() => {
+	const defaultExpanded: string | false = (() => {
 		const exactMatch = Object.entries(navigationMenu).find(([, section]) =>
 			section.items.some((item) => {
 				const normalizedPath = item.path.replace(/^https?:\/\/[^/]+/, '');
@@ -431,7 +431,7 @@ const NavigationBar = (props: Props) => {
 		});
 
 		return bestMatch ? `panel-${bestMatch}` : false;
-	}, [pathname, navigationMenu]);
+	})();
 
 	const expanded = userExpanded !== false ? userExpanded : defaultExpanded;
 
@@ -443,7 +443,7 @@ const NavigationBar = (props: Props) => {
 		}
 	};
 
-	const handleChange = (panel: string) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
+	const handleChange = (panel: string) => (_event: SyntheticEvent, isExpanded: boolean) => {
 		setUserExpanded(isExpanded ? panel : false);
 	};
 
@@ -507,12 +507,7 @@ const NavigationBar = (props: Props) => {
 												</IconButton>
 											)}
 											<LanguageSwitcher />
-											<Button
-												variant="text"
-												color="inherit"
-												href={DASHBOARD_EDIT_PROFILE}
-												startIcon={<PersonIcon />}
-											>
+											<Button variant="text" color="inherit" href={DASHBOARD_EDIT_PROFILE} startIcon={<PersonIcon />}>
 												{t.navigation.myProfile}
 											</Button>
 											{is_staff && (

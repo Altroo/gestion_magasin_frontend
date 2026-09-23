@@ -1,4 +1,4 @@
-import React from 'react';
+import { type FC, type MouseEventHandler, type ReactNode } from 'react';
 import { ThemeProvider, Button } from '@mui/material';
 import Styles from './primaryLoadingButton.module.sass';
 import { getDefaultTheme } from '@/utils/themes';
@@ -6,15 +6,15 @@ import { getDefaultTheme } from '@/utils/themes';
 type Props = {
 	buttonText: string;
 	loading: boolean;
-	onClick?: React.MouseEventHandler<HTMLButtonElement> | (() => void);
+	onClick?: MouseEventHandler<HTMLButtonElement> | (() => void);
 	active?: boolean;
 	type?: 'submit' | 'reset' | 'button' | undefined;
-	startIcon?: React.ReactNode;
+	startIcon?: ReactNode;
 	cssClass?: string;
-	children?: React.ReactNode;
+	children?: ReactNode;
 };
 
-const PrimaryLoadingButton: React.FC<Props> = (props: Props) => {
+const PrimaryLoadingButton: FC<Props> = (props: Props) => {
 	return (
 		<ThemeProvider theme={getDefaultTheme()}>
 			<Button

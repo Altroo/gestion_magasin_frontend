@@ -34,13 +34,15 @@ const remotePatterns: RemotePattern[] = unique(
 ).flatMap((origin) => {
 	const parsed = parseUrl(origin);
 	if (!parsed) return [];
-	return [{
-		protocol: parsed.protocol.replace(':', '') as http,
-		hostname: parsed.hostname,
-		port: parsed.port,
-		pathname: '/media/**',
-		search: '',
-	}];
+	return [
+		{
+			protocol: parsed.protocol.replace(':', '') as http,
+			hostname: parsed.hostname,
+			port: parsed.port,
+			pathname: '/media/**',
+			search: '',
+		},
+	];
 });
 
 if (isDev && process.env.NEXT_PUBLIC_API_ROOT_URL) {
@@ -88,12 +90,6 @@ const nextConfig: NextConfig = {
 
 	async headers() {
 		return [
-			...(isProd ? [{
-				source: '/_next/static/:path*',
-				headers: [
-					{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-				],
-			}] : []),
 			{
 				source: '/assets/ico/manifest.json',
 				headers: [
@@ -110,21 +106,15 @@ const nextConfig: NextConfig = {
 			},
 			{
 				source: '/assets/images/:path*',
-				headers: [
-					{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-				],
+				headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
 			},
 			{
 				source: '/assets/ico/:path*',
-				headers: [
-					{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-				],
+				headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
 			},
 			{
 				source: '/assets/:path*',
-				headers: [
-					{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-				],
+				headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
 			},
 			{
 				source: '/(.*)',
