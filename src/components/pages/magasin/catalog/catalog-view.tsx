@@ -384,7 +384,7 @@ const CatalogViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
 											/>
 											<Divider />
 											<Box sx={{ width: '100%', mt: 2 }}>
-												<DataGrid
+													<DataGrid<StockTrackingGridRow>
 													rows={stockTrackingRows}
 													columns={stockTrackingColumns}
 													localeText={frFR.components.MuiDataGrid.defaultProps.localeText}

@@ -505,7 +505,7 @@ const StockTransfersFormClient = ({ session, id }: Props) => {
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Box sx={{ width: '100%' }}>
-													<DataGrid
+													<DataGrid<TransferLineGridRow>
 														rows={lineRows}
 														columns={lineColumns}
 														showToolbar

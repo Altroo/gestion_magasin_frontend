@@ -635,7 +635,7 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 												</Typography>
 												<Divider sx={{ mb: 3 }} />
 												<Box sx={{ width: '100%' }}>
-													<DataGrid
+													<DataGrid<PromotionLineGridRow>
 														rows={lineRows}
 														columns={lineColumns}
 														showToolbar

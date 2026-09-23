@@ -738,7 +738,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Box sx={{ width: '100%' }}>
-													<DataGrid
+													<DataGrid<SaleLineGridRow>
 														rows={lineRows}
 														columns={lineColumns}
 														showToolbar

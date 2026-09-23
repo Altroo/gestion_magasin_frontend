@@ -681,7 +681,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 												<Divider sx={{ mb: 3 }} />
 												<Stack spacing={2.5}>
 													<Box sx={{ width: '100%', minWidth: 0 }}>
-														<DataGrid
+													<DataGrid<StockTrackingGridRow>
 															rows={stockTrackingRows}
 															columns={stockTrackingColumns}
 															showToolbar

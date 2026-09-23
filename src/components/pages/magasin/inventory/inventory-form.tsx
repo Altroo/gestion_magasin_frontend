@@ -557,7 +557,7 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 												</Stack>
 												<Divider sx={{ mb: 3 }} />
 												<Box sx={{ width: '100%' }}>
-													<DataGrid
+													<DataGrid<InventoryLineGridRow>
 														rows={lineRows}
 														columns={lineColumns}
 														showToolbar
