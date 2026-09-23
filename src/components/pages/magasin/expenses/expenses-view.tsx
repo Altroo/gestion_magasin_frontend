@@ -73,7 +73,7 @@ const ExpensesViewClient = ({ session, id }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(EXPENSES_LIST)}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
 									{t.magasin.backToExpenses}
 								</Button>
 								{expense && (

@@ -99,7 +99,7 @@ const StockTransfersViewClient = ({ session, id }: Props) => {
 								<Button
 									variant="outlined"
 									startIcon={<ArrowBackIcon />}
-									onClick={() => router.push(STOCK_TRANSFERS_LIST)}
+									onClick={() => router.back()}
 								>
 									{t.magasin.backToTransfers}
 								</Button>

@@ -21,6 +21,7 @@ import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages
 import TooltipTextCell from '@/components/shared/dataGridCells/tooltipTextCell';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
+import { useDataGridPagination } from '@/components/shared/paginatedDataGrid/useDataGridPagination';
 import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelectFilterBar';
 import { createBooleanFilterOperators } from '@/components/shared/dropdownFilter/dropdownFilter';
 import { useInitAccessToken } from '@/contexts/InitContext';
@@ -36,7 +37,7 @@ const StoresListClient = ({ session }: SessionProps) => {
 	const router = useRouter();
 	const { t } = useLanguage();
 	const { onSuccess, onError } = useToast();
-	const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
+	const [paginationModel, setPaginationModel] = useDataGridPagination();
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});

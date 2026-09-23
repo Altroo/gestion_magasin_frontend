@@ -19,6 +19,7 @@ import { createBooleanFilterOperators } from '@/components/shared/dropdownFilter
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import { createNumericFilterOperators } from '@/components/shared/numericFilter/numericFilterOperator';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
+import { useDataGridPagination } from '@/components/shared/paginatedDataGrid/useDataGridPagination';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import {
 	useGetCategoriesQuery,
@@ -36,7 +37,7 @@ const StoreStockOverviewClient = ({ session }: SessionProps) => {
 	const token = useInitAccessToken(session);
 	const router = useRouter();
 	const { t } = useLanguage();
-	const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
+	const [paginationModel, setPaginationModel] = useDataGridPagination();
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});

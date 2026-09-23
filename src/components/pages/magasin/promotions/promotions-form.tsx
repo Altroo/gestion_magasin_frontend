@@ -35,7 +35,8 @@ import {
 	Subject as RemarkIcon,
 	Warning as WarningIcon,
 } from '@mui/icons-material';
-import { DataGrid, type GridColDef, type GridPaginationModel, type GridRenderCellParams } from '@mui/x-data-grid';
+import { DataGrid, type GridColDef, type GridRenderCellParams } from '@mui/x-data-grid';
+import { useDataGridPagination } from '@/components/shared/paginatedDataGrid/useDataGridPagination';
 import { frFR } from '@mui/x-data-grid/locales';
 import { getIn, useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
@@ -105,7 +106,7 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 	const { globalStore } = useSelectedStore(token);
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [isPending, setIsPending] = useState(false);
-	const [linePaginationModel, setLinePaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 5 });
+	const [linePaginationModel, setLinePaginationModel] = useDataGridPagination(5, 'lines');
 
 	const {
 		data: promotion,
@@ -447,7 +448,7 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(PROMOTIONS_LIST)}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
 									{t.magasin.backToPromotions}
 								</Button>
 							</Stack>

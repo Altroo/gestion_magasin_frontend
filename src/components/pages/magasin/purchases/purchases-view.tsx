@@ -94,7 +94,7 @@ const PurchasesViewClient = ({ session, id }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(PURCHASES_LIST)}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
 									{t.magasin.backToPurchases}
 								</Button>
 								{purchase && (

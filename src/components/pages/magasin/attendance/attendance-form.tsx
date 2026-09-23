@@ -263,7 +263,7 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 							<Button
 								variant="outlined"
 								startIcon={<ArrowBackIcon />}
-								onClick={() => router.push(ATTENDANCE_LIST)}
+								onClick={() => router.back()}
 								sx={{ alignSelf: 'flex-start' }}
 							>
 								{t.magasin.backToAttendance}

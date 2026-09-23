@@ -96,7 +96,7 @@ const InventoryViewClient = ({ session, id }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(INVENTORY_LIST)}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
 									{t.magasin.backToInventory}
 								</Button>
 								{inventory && (

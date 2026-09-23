@@ -30,7 +30,8 @@ import {
 	Storefront as StorefrontIcon,
 	Warning as WarningIcon,
 } from '@mui/icons-material';
-import { DataGrid, type GridColDef, type GridPaginationModel, type GridRenderCellParams } from '@mui/x-data-grid';
+import { DataGrid, type GridColDef, type GridRenderCellParams } from '@mui/x-data-grid';
+import { useDataGridPagination } from '@/components/shared/paginatedDataGrid/useDataGridPagination';
 import { frFR } from '@mui/x-data-grid/locales';
 import { getIn, useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
@@ -55,7 +56,7 @@ import {
 import { purchaseSchema } from '@/utils/formValidationSchemas';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
 import { splitAutocompleteRenderParams } from '@/utils/muiAutocompleteSlots';
-import { PURCHASES_LIST, PURCHASES_VIEW } from '@/utils/routes';
+import { PURCHASES_VIEW } from '@/utils/routes';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { useLanguage, useToast } from '@/utils/hooks';
 import Styles from '@/styles/dashboard/dashboard.module.sass';
@@ -100,7 +101,7 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 	}, [globalStore, memberships]);
 	const defaultPurchaseStore = globalStore ?? defaultStore;
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
-	const [linePaginationModel, setLinePaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 5 });
+	const [linePaginationModel, setLinePaginationModel] = useDataGridPagination(5, 'lines');
 	const [addPurchase, addState] = useAddPurchaseMutation();
 	const [editPurchase, editState] = useEditPurchaseMutation();
 	const {
@@ -400,7 +401,7 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 							<Button
 								variant="outlined"
 								startIcon={<ArrowBackIcon />}
-								onClick={() => router.push(PURCHASES_LIST)}
+								onClick={() => router.back()}
 								sx={{ width: 'fit-content' }}
 							>
 								{t.magasin.backToPurchases}

@@ -27,6 +27,7 @@ import StoreTabs, { useSelectedStore } from '@/components/pages/magasin/shared/s
 import TooltipTextCell from '@/components/shared/dataGridCells/tooltipTextCell';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
+import { useDataGridPagination } from '@/components/shared/paginatedDataGrid/useDataGridPagination';
 import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelectFilterBar';
 import { createDropdownFilterOperators } from '@/components/shared/dropdownFilter/dropdownFilter';
 import { createNumericFilterOperators } from '@/components/shared/numericFilter/numericFilterOperator';
@@ -61,7 +62,7 @@ const AttendanceClient = ({ session }: SessionProps) => {
 	const selectedMembership = memberships.find((membership) => membership.store.id === storeId);
 	const isMbrSouth = selectedMembership?.store.code === 'mbr-south';
 	const canManageStore = roleCanManage(selectedMembership?.role.code);
-	const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
+	const [paginationModel, setPaginationModel] = useDataGridPagination();
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});

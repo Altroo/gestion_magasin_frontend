@@ -34,7 +34,7 @@ import {
 import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useGetSaleQuery, useVoidSaleMutation } from '@/store/services/magasin';
-import { SALES_LIST } from '@/utils/routes';
+
 import { fetchFileBlob } from '@/utils/apiHelpers';
 import { extractApiErrorMessage, formatDate, formatNumber } from '@/utils/helpers';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
@@ -96,7 +96,7 @@ const SalesViewClient = ({ session, id }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(SALES_LIST)}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
 									{t.magasin.backToSales}
 								</Button>
 								<Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>

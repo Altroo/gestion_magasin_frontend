@@ -145,7 +145,7 @@ const StockViewClient = ({ session, id, storeId: initialStoreId, source }: Props
 									alignItems: { xs: 'stretch', sm: 'center' },
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(backRoute)}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
 									{backLabel}
 								</Button>
 								{!isStoreStockSource && !isLoading && !error && stockBalance && (

@@ -30,6 +30,7 @@ import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelect
 import TooltipTextCell from '@/components/shared/dataGridCells/tooltipTextCell';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
+import { useDataGridPagination } from '@/components/shared/paginatedDataGrid/useDataGridPagination';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import {
 	useBulkDeleteExpensesMutation,
@@ -53,7 +54,7 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 	const { defaultStore, memberships } = useSelectedStore(token);
 	const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
 	const storeId = selectedStoreId ?? defaultStore?.id;
-	const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
+	const [paginationModel, setPaginationModel] = useDataGridPagination();
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});
@@ -119,7 +120,7 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 	const handleChipFilterChange = useCallback((params: Record<string, string>) => {
 		setChipFilterParams(params);
 		setPaginationModel((current) => ({ ...current, page: 0 }));
-	}, []);
+	}, [setPaginationModel]);
 
 	const renderPaymentStatusChip = (status?: string | null) => {
 		const label = magasinStatusLabel(t, status);

@@ -17,6 +17,7 @@ import ActionModals from '@/components/htmlElements/modals/actionModal/actionMod
 import DarkTooltip from '@/components/htmlElements/tooltip/darkTooltip/darkTooltip';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
+import { useDataGridPagination } from '@/components/shared/paginatedDataGrid/useDataGridPagination';
 import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelectFilterBar';
 import TooltipTextCell from '@/components/shared/dataGridCells/tooltipTextCell';
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
@@ -41,7 +42,7 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 	const permissions = usePermission();
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
-	const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
+	const [paginationModel, setPaginationModel] = useDataGridPagination();
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});
@@ -88,7 +89,7 @@ const PromotionsListClient = ({ session }: SessionProps) => {
 	const handleChipFilterChange = useCallback((params: Record<string, string>) => {
 		setChipFilterParams(params);
 		setPaginationModel((current) => ({ ...current, page: 0 }));
-	}, []);
+	}, [setPaginationModel]);
 
 	const handleDelete = async () => {
 		if (!deleteTarget) return;

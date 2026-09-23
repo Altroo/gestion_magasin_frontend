@@ -30,7 +30,8 @@ import {
 	Subject as RemarkIcon,
 	Warning as WarningIcon,
 } from '@mui/icons-material';
-import { DataGrid, type GridColDef, type GridPaginationModel, type GridRenderCellParams } from '@mui/x-data-grid';
+import { DataGrid, type GridColDef, type GridRenderCellParams } from '@mui/x-data-grid';
+import { useDataGridPagination } from '@/components/shared/paginatedDataGrid/useDataGridPagination';
 import { frFR } from '@mui/x-data-grid/locales';
 import { getIn, useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
@@ -55,7 +56,7 @@ import type { SaleCreatePayload, SaleFormLineValues, SaleFormValues } from '@/ty
 import { extractApiErrorMessage, formatNumber, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
 import { saleSchema } from '@/utils/formValidationSchemas';
 import { splitAutocompleteRenderParams } from '@/utils/muiAutocompleteSlots';
-import { SALES_LIST, SALES_VIEW } from '@/utils/routes';
+import { SALES_VIEW } from '@/utils/routes';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { useLanguage, useToast } from '@/utils/hooks';
 
@@ -100,7 +101,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 	const initialActiveStoreId = initialStoreId ?? defaultStore?.id;
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [isPending, setIsPending] = useState(false);
-	const [linePaginationModel, setLinePaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 5 });
+	const [linePaginationModel, setLinePaginationModel] = useDataGridPagination(5, 'lines');
 	const { data: paymentModes } = useGetPaymentModesQuery(
 		{ page: 1, pageSize: 100, is_active: 'true' },
 		{ skip: !token },
@@ -533,7 +534,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 							<Button
 								variant="outlined"
 								startIcon={<ArrowBackIcon />}
-								onClick={() => router.push(SALES_LIST)}
+								onClick={() => router.back()}
 								sx={{ alignSelf: 'flex-start' }}
 							>
 								{t.magasin.backToSales}

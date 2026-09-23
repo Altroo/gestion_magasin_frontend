@@ -73,7 +73,7 @@ import type { UserClass } from '@/models/classes';
 import type { StoreFormValues, StorePayload, StoreRoleCode } from '@/types/gestionMagasinTypes';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
 import { storeSchema } from '@/utils/formValidationSchemas';
-import { STORES_LIST, STORES_VIEW } from '@/utils/routes';
+import { STORES_VIEW } from '@/utils/routes';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { useAppSelector, useLanguage, useToast } from '@/utils/hooks';
 import { getProfilState } from '@/store/selectors';
@@ -345,7 +345,7 @@ const StoresFormClient = ({ session, id }: Props) => {
 							<Button
 								variant="outlined"
 								startIcon={<ArrowBackIcon />}
-								onClick={() => router.push(STORES_LIST)}
+								onClick={() => router.back()}
 								sx={{ alignSelf: 'flex-start' }}
 							>
 								{t.magasin.backToStores}

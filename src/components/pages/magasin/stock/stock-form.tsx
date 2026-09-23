@@ -241,7 +241,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(STOCK_LIST)}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
 									{t.magasin.backToStock}
 								</Button>
 							</Stack>

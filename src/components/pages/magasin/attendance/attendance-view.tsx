@@ -137,7 +137,7 @@ const AttendanceViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(ATTENDANCE_LIST)}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
 									{t.magasin.backToAttendance}
 								</Button>
 								{attendance && (

@@ -23,6 +23,7 @@ import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelect
 import TooltipTextCell from '@/components/shared/dataGridCells/tooltipTextCell';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
+import { useDataGridPagination } from '@/components/shared/paginatedDataGrid/useDataGridPagination';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeletePurchaseMutation, useGetPurchasesQuery, useReceivePurchaseMutation } from '@/store/services/magasin';
 import type { SessionProps } from '@/types/_initTypes';
@@ -38,7 +39,7 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
 	const { memberships } = useSelectedStore(token);
-	const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
+	const [paginationModel, setPaginationModel] = useDataGridPagination();
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});
@@ -100,7 +101,7 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 	const handleChipFilterChange = useCallback((params: Record<string, string>) => {
 		setChipFilterParams(params);
 		setPaginationModel((current) => ({ ...current, page: 0 }));
-	}, []);
+	}, [setPaginationModel]);
 
 	const handleDelete = async () => {
 		if (!deleteTarget) return;

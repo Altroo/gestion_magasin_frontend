@@ -58,7 +58,7 @@ import {
 } from '@/store/services/magasin';
 import { expenseSchema } from '@/utils/formValidationSchemas';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
-import { EXPENSES_LIST, EXPENSES_VIEW } from '@/utils/routes';
+import { EXPENSES_VIEW } from '@/utils/routes';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { useLanguage, useToast } from '@/utils/hooks';
 import Styles from '@/styles/dashboard/dashboard.module.sass';
@@ -211,7 +211,7 @@ const ExpensesFormClient = ({ session, id, storeId: initialStoreId }: Props) => 
 							<Button
 								variant="outlined"
 								startIcon={<ArrowBackIcon />}
-								onClick={() => router.push(EXPENSES_LIST)}
+								onClick={() => router.back()}
 								sx={{ width: 'fit-content' }}
 							>
 								{t.magasin.backToExpenses}

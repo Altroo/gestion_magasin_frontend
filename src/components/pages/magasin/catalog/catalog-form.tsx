@@ -34,7 +34,8 @@ import {
 	Straighten as StraightenIcon,
 	Warning as WarningIcon,
 } from '@mui/icons-material';
-import { DataGrid, type GridColDef, type GridPaginationModel, type GridRenderCellParams } from '@mui/x-data-grid';
+import { DataGrid, type GridColDef, type GridRenderCellParams } from '@mui/x-data-grid';
+import { useDataGridPagination } from '@/components/shared/paginatedDataGrid/useDataGridPagination';
 import { frFR } from '@mui/x-data-grid/locales';
 import { getIn, useFormik } from 'formik';
 import { toFormikValidationSchema } from 'zod-formik-adapter';
@@ -122,10 +123,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 	const storeId = initialStoreId ?? defaultStore?.id;
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [isPending, setIsPending] = useState(false);
-	const [stockPaginationModel, setStockPaginationModel] = useState<GridPaginationModel>({
-		page: 0,
-		pageSize: 5,
-	});
+	const [stockPaginationModel, setStockPaginationModel] = useDataGridPagination(5, 'stock');
 
 	const {
 		data: product,
@@ -449,7 +447,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(CATALOG_LIST)}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
 									{t.magasin.backToCatalog}
 								</Button>
 							</Stack>

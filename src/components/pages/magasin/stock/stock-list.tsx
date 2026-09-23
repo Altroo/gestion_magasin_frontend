@@ -24,6 +24,7 @@ import StoreTabs, { useSelectedStore } from '@/components/pages/magasin/shared/s
 import TooltipTextCell from '@/components/shared/dataGridCells/tooltipTextCell';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
+import { useDataGridPagination } from '@/components/shared/paginatedDataGrid/useDataGridPagination';
 import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelectFilterBar';
 import { createBooleanFilterOperators } from '@/components/shared/dropdownFilter/dropdownFilter';
 import { createNumericFilterOperators } from '@/components/shared/numericFilter/numericFilterOperator';
@@ -60,13 +61,13 @@ const StockClient = ({ session }: SessionProps) => {
 	const canManageStore = roleCanManage(selectedMembership?.role.code);
 	const canApproveRequests = permissions.is_staff || roleCanApproveRequests(selectedMembership?.role.code);
 
-	const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
+	const [paginationModel, setPaginationModel] = useDataGridPagination();
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});
 	const [chipFilterParams, setChipFilterParams] = useState<Record<string, string>>({});
 	const [selectedIds, setSelectedIds] = useState<number[]>([]);
-	const [requestPaginationModel, setRequestPaginationModel] = useState({ page: 0, pageSize: 5 });
+	const [requestPaginationModel, setRequestPaginationModel] = useDataGridPagination(5, 'requests');
 	const [requestSearchTerm, setRequestSearchTerm] = useState('');
 	const [requestFilterModel, setRequestFilterModel] = useState<GridFilterModel>({
 		items: [],

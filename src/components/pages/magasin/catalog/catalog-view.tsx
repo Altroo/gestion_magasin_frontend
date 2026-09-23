@@ -29,7 +29,8 @@ import {
 	QrCodeScanner as QrCodeScannerIcon,
 	Straighten as StraightenIcon,
 } from '@mui/icons-material';
-import { DataGrid, type GridColDef, type GridPaginationModel } from '@mui/x-data-grid';
+import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import { useDataGridPagination } from '@/components/shared/paginatedDataGrid/useDataGridPagination';
 import { frFR } from '@mui/x-data-grid/locales';
 import ActionModals from '@/components/htmlElements/modals/actionModal/actionModals';
 import ApiAlert from '@/components/formikElements/apiLoading/apiAlert/apiAlert';
@@ -117,10 +118,7 @@ const CatalogViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
 	const { defaultStore } = useSelectedStore(token);
 	const storeId = initialStoreId ?? defaultStore?.id;
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
-	const [stockPaginationModel, setStockPaginationModel] = useState<GridPaginationModel>({
-		page: 0,
-		pageSize: 5,
-	});
+	const [stockPaginationModel, setStockPaginationModel] = useDataGridPagination(5, 'stock');
 	const { data: product, isLoading, error } = useGetProductQuery({ id, store: storeId }, { skip: !token || !storeId });
 	const axiosError = useMemo(
 		() => (error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined),
@@ -203,7 +201,7 @@ const CatalogViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
 									alignItems: { xs: 'stretch', sm: 'center' },
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(CATALOG_LIST)}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
 									{t.magasin.backToCatalog}
 								</Button>
 								{!isLoading && !error && product && (

@@ -58,17 +58,17 @@ describe('MobileActionsMenu', () => {
 			expect(buttons).toHaveLength(3);
 
 			// Should have aria-labels for accessibility
-			expect(screen.getByLabelText('View')).toBeInTheDocument();
-			expect(screen.getByLabelText('Edit')).toBeInTheDocument();
-			expect(screen.getByLabelText('Delete')).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: 'View' })).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
 		});
 
 		it('calls onClick handlers when buttons are clicked on desktop', async () => {
 			render(<MobileActionsMenu actions={defaultActions} />);
 
-			const viewBtn = screen.getByLabelText('View');
-			const editBtn = screen.getByLabelText('Edit');
-			const deleteBtn = screen.getByLabelText('Delete');
+			const viewBtn = screen.getByRole('button', { name: 'View' });
+			const editBtn = screen.getByRole('button', { name: 'Edit' });
+			const deleteBtn = screen.getByRole('button', { name: 'Delete' });
 
 			await userEvent.click(viewBtn);
 			expect(mockOnClick1).toHaveBeenCalledTimes(1);
