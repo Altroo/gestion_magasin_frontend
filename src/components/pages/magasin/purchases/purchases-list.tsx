@@ -40,7 +40,7 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
 	const { memberships } = useSelectedStore(token);
-	const [paginationModel, setPaginationModel] = useDataGridPagination();
+	const [paginationModel, setPaginationModel, sorting] = useDataGridPagination();
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});
@@ -49,7 +49,13 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 	const [receiveTarget, setReceiveTarget] = useState<number | null>(null);
 	const mergedFilterParams = { ...chipFilterParams, ...customFilterParams };
 	const { data, isLoading, refetch } = useGetPurchasesQuery(
-		{ search: searchTerm, page: paginationModel.page + 1, pageSize: paginationModel.pageSize, ...mergedFilterParams },
+		{
+			search: searchTerm,
+			page: paginationModel.page + 1,
+			pageSize: paginationModel.pageSize,
+			ordering: sorting.ordering,
+			...mergedFilterParams,
+		},
 		{ skip: !token },
 	);
 	const { data: filterPurchases } = useGetPurchasesQuery({ page: 1, pageSize: 200 }, { skip: !token });
@@ -264,6 +270,7 @@ const PurchasesListClient = ({ session }: SessionProps) => {
 						columns={columns}
 						paginationModel={paginationModel}
 						setPaginationModel={setPaginationModel}
+						sorting={sorting}
 						searchTerm={searchTerm}
 						setSearchTerm={setSearchTerm}
 						filterModel={filterModel}

@@ -55,7 +55,7 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 	const { defaultStore, memberships } = useSelectedStore(token);
 	const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
 	const storeId = selectedStoreId ?? defaultStore?.id;
-	const [paginationModel, setPaginationModel] = useDataGridPagination();
+	const [paginationModel, setPaginationModel, sorting] = useDataGridPagination();
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});
@@ -71,6 +71,7 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 			search: searchTerm,
 			page: paginationModel.page + 1,
 			pageSize: paginationModel.pageSize,
+			ordering: sorting.ordering,
 			...mergedFilterParams,
 		},
 		{ skip: !token || (!storeId && !storeFilterActive) },
@@ -342,6 +343,7 @@ const ExpensesListClient = ({ session }: SessionProps) => {
 						columns={columns}
 						paginationModel={paginationModel}
 						setPaginationModel={setPaginationModel}
+						sorting={sorting}
 						searchTerm={searchTerm}
 						setSearchTerm={setSearchTerm}
 						filterModel={filterModel}

@@ -37,7 +37,7 @@ const StoreStockOverviewClient = ({ session }: SessionProps) => {
 	const token = useInitAccessToken(session);
 	const router = useRouter();
 	const { t } = useLanguage();
-	const [paginationModel, setPaginationModel] = useDataGridPagination();
+	const [paginationModel, setPaginationModel, sorting] = useDataGridPagination();
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});
@@ -48,6 +48,7 @@ const StoreStockOverviewClient = ({ session }: SessionProps) => {
 			search: searchTerm,
 			page: paginationModel.page + 1,
 			pageSize: paginationModel.pageSize,
+			ordering: sorting.ordering,
 			exclude_global_stock: true,
 			...customFilterParams,
 			...chipFilterParams,
@@ -254,6 +255,7 @@ const StoreStockOverviewClient = ({ session }: SessionProps) => {
 						columns={columns}
 						paginationModel={paginationModel}
 						setPaginationModel={setPaginationModel}
+						sorting={sorting}
 						searchTerm={searchTerm}
 						setSearchTerm={setSearchTerm}
 						filterModel={filterModel}

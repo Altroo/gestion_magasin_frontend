@@ -38,7 +38,7 @@ const StoresListClient = ({ session }: SessionProps) => {
 	const router = useRouter();
 	const { t } = useLanguage();
 	const { onSuccess, onError } = useToast();
-	const [paginationModel, setPaginationModel] = useDataGridPagination();
+	const [paginationModel, setPaginationModel, sorting] = useDataGridPagination();
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});
@@ -51,6 +51,7 @@ const StoresListClient = ({ session }: SessionProps) => {
 		{
 			page: paginationModel.page + 1,
 			pageSize: paginationModel.pageSize,
+			ordering: sorting.ordering,
 			search: searchTerm,
 			...customFilterParams,
 			...chipFilterParams,
@@ -258,6 +259,7 @@ const StoresListClient = ({ session }: SessionProps) => {
 						columns={columns}
 						paginationModel={paginationModel}
 						setPaginationModel={setPaginationModel}
+						sorting={sorting}
 						searchTerm={searchTerm}
 						setSearchTerm={setSearchTerm}
 						filterModel={filterModel}

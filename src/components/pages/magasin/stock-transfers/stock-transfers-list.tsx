@@ -49,12 +49,12 @@ const StockTransfersListClient = ({ session }: SessionProps) => {
 	const { memberships } = useSelectedStore(token);
 	const canApproveRequests =
 		permissions.is_staff || memberships.some((membership) => membership.role.code === 'direction');
-	const [paginationModel, setPaginationModel] = useDataGridPagination();
+	const [paginationModel, setPaginationModel, sorting] = useDataGridPagination();
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});
 	const [chipFilterParams, setChipFilterParams] = useState<Record<string, string>>({});
-	const [requestPaginationModel, setRequestPaginationModel] = useDataGridPagination(5, 'requests');
+	const [requestPaginationModel, setRequestPaginationModel, requestSorting] = useDataGridPagination(5, 'requests');
 	const [requestSearchTerm, setRequestSearchTerm] = useState('');
 	const [requestFilterModel, setRequestFilterModel] = useState<GridFilterModel>({
 		items: [],
@@ -65,7 +65,13 @@ const StockTransfersListClient = ({ session }: SessionProps) => {
 	const [validateTarget, setValidateTarget] = useState<number | null>(null);
 	const mergedFilterParams = { ...chipFilterParams, ...customFilterParams };
 	const { data, isLoading, refetch } = useGetStockTransfersQuery(
-		{ search: searchTerm, page: paginationModel.page + 1, pageSize: paginationModel.pageSize, ...mergedFilterParams },
+		{
+			search: searchTerm,
+			page: paginationModel.page + 1,
+			pageSize: paginationModel.pageSize,
+			ordering: sorting.ordering,
+			...mergedFilterParams,
+		},
 		{ skip: !token },
 	);
 	const [deleteTransfer] = useDeleteStockTransferMutation();
@@ -82,6 +88,7 @@ const StockTransfersListClient = ({ session }: SessionProps) => {
 			search: requestSearchTerm,
 			page: requestPaginationModel.page + 1,
 			pageSize: requestPaginationModel.pageSize,
+			ordering: requestSorting.ordering,
 		},
 		{ skip: !token || !canApproveRequests },
 	);
@@ -368,6 +375,7 @@ const StockTransfersListClient = ({ session }: SessionProps) => {
 									columns={requestColumns}
 									paginationModel={requestPaginationModel}
 									setPaginationModel={setRequestPaginationModel}
+									sorting={requestSorting}
 									searchTerm={requestSearchTerm}
 									setSearchTerm={setRequestSearchTerm}
 									filterModel={requestFilterModel}
@@ -386,6 +394,7 @@ const StockTransfersListClient = ({ session }: SessionProps) => {
 						columns={columns}
 						paginationModel={paginationModel}
 						setPaginationModel={setPaginationModel}
+						sorting={sorting}
 						searchTerm={searchTerm}
 						setSearchTerm={setSearchTerm}
 						filterModel={filterModel}

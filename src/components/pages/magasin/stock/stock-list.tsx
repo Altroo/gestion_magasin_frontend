@@ -62,13 +62,13 @@ const StockClient = ({ session }: SessionProps) => {
 	const canManageStore = roleCanManage(selectedMembership?.role.code);
 	const canApproveRequests = permissions.is_staff || roleCanApproveRequests(selectedMembership?.role.code);
 
-	const [paginationModel, setPaginationModel] = useDataGridPagination();
+	const [paginationModel, setPaginationModel, sorting] = useDataGridPagination();
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});
 	const [chipFilterParams, setChipFilterParams] = useState<Record<string, string>>({});
 	const [selectedIds, setSelectedIds] = useState<number[]>([]);
-	const [requestPaginationModel, setRequestPaginationModel] = useDataGridPagination(5, 'requests');
+	const [requestPaginationModel, setRequestPaginationModel, requestSorting] = useDataGridPagination(5, 'requests');
 	const [requestSearchTerm, setRequestSearchTerm] = useState('');
 	const [requestFilterModel, setRequestFilterModel] = useState<GridFilterModel>({
 		items: [],
@@ -83,6 +83,7 @@ const StockClient = ({ session }: SessionProps) => {
 			search: searchTerm,
 			page: paginationModel.page + 1,
 			pageSize: paginationModel.pageSize,
+			ordering: sorting.ordering,
 			...customFilterParams,
 			...chipFilterParams,
 		},
@@ -105,6 +106,7 @@ const StockClient = ({ session }: SessionProps) => {
 			search: requestSearchTerm,
 			page: requestPaginationModel.page + 1,
 			pageSize: requestPaginationModel.pageSize,
+			ordering: requestSorting.ordering,
 		},
 		{ skip: !token || !storeId || !canApproveRequests },
 	);
@@ -506,6 +508,7 @@ const StockClient = ({ session }: SessionProps) => {
 									columns={requestColumns}
 									paginationModel={requestPaginationModel}
 									setPaginationModel={setRequestPaginationModel}
+									sorting={requestSorting}
 									searchTerm={requestSearchTerm}
 									setSearchTerm={setRequestSearchTerm}
 									filterModel={requestFilterModel}
@@ -521,6 +524,7 @@ const StockClient = ({ session }: SessionProps) => {
 						columns={columns}
 						paginationModel={paginationModel}
 						setPaginationModel={setPaginationModel}
+						sorting={sorting}
 						searchTerm={searchTerm}
 						setSearchTerm={setSearchTerm}
 						filterModel={filterModel}

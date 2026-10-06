@@ -1,8 +1,8 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
-import type { GridPaginationModel } from '@mui/x-data-grid';
+import type { GridPaginationModel, GridSortModel } from '@mui/x-data-grid';
 
 const DATA_GRID_PAGINATION_EVENT = 'data-grid-pagination-change';
 const DATA_GRID_PAGE_PARAM = 'page';
@@ -35,10 +35,21 @@ export const parseDataGridPagination = (search: string, defaultPageSize = 10, gr
 	};
 };
 
+export type DataGridSorting = {
+	ordering: string;
+	sortModel: GridSortModel;
+	onSortModelChange: (model: GridSortModel) => void;
+};
+
+export const parseDataGridOrdering = (search: string, gridKey = '') => {
+	const value = new URLSearchParams(search).get(gridKey ? `${gridKey}_ordering` : 'ordering') ?? '';
+	return /^-?[a-zA-Z_][a-zA-Z0-9_]*$/.test(value) ? value : '';
+};
+
 export const useDataGridPagination = (
 	defaultPageSize = 10,
 	gridKey = '',
-): [GridPaginationModel, Dispatch<SetStateAction<GridPaginationModel>>] => {
+): [GridPaginationModel, Dispatch<SetStateAction<GridPaginationModel>>, DataGridSorting] => {
 	const search = useSyncExternalStore(
 		subscribeToDataGridPagination,
 		getDataGridPaginationSnapshot,
@@ -70,5 +81,23 @@ export const useDataGridPagination = (
 		window.dispatchEvent(new Event(DATA_GRID_PAGINATION_EVENT));
 	};
 
-	return [paginationModel, setPaginationModel];
+	const ordering = parseDataGridOrdering(search, gridKey);
+	// MUI emits a sort-change event when this array's identity changes. Keep it
+	// stable across page/filter updates so it does not reset pagination again.
+	const sortModel = useMemo<GridSortModel>(
+		() => (ordering ? [{ field: ordering.replace(/^-/, ''), sort: ordering.startsWith('-') ? 'desc' : 'asc' }] : []),
+		[ordering],
+	);
+	const onSortModelChange = (model: GridSortModel) => {
+		const item = model[0];
+		const nextOrdering = item?.sort ? `${item.sort === 'desc' ? '-' : ''}${item.field}` : '';
+		const url = new URL(window.location.href);
+		if (nextOrdering === parseDataGridOrdering(url.search, gridKey)) return;
+		if (nextOrdering) url.searchParams.set(gridKey ? `${gridKey}_ordering` : 'ordering', nextOrdering);
+		else url.searchParams.delete(gridKey ? `${gridKey}_ordering` : 'ordering');
+		url.searchParams.set(gridKey ? `${gridKey}_page` : 'page', '1');
+		window.history.replaceState(window.history.state, '', url);
+		window.dispatchEvent(new Event(DATA_GRID_PAGINATION_EVENT));
+	};
+	return [paginationModel, setPaginationModel, { ordering, sortModel, onSortModelChange }];
 };
