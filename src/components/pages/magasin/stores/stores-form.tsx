@@ -24,10 +24,10 @@ import {
 	TableContainer,
 	TableHead,
 	TableRow,
-	TextField,
 	ThemeProvider,
 	Typography,
 } from '@mui/material';
+import TextField from '@/components/shared/aiTextField/aiTextField';
 import {
 	Add as AddIcon,
 	ArrowBack as ArrowBackIcon,

@@ -151,7 +151,7 @@ const getScanErrorPayload = (error: unknown) => {
 
 const PosClient = ({ session }: SessionProps) => {
 	const token = useInitAccessToken(session);
-	const { t } = useLanguage();
+	const { t, language } = useLanguage();
 	const permissions = usePermission();
 	const { onSuccess, onError } = useToast();
 	const { defaultStore, memberships, isLoading: areStoresLoading } = useSelectedStore(token);
@@ -457,7 +457,7 @@ const PosClient = ({ session }: SessionProps) => {
 				await runAsyncWithErrorHandler(
 					async () => {
 						const blob = await fetchFileBlob(
-							`${process.env.NEXT_PUBLIC_SALES_ROOT}${lastWholesaleSaleId}/facture/`,
+							`${process.env.NEXT_PUBLIC_SALES_ROOT}${lastWholesaleSaleId}/facture/?language=${language}`,
 							token,
 						);
 						const pdfBlob = new Blob([blob], { type: 'application/pdf' });

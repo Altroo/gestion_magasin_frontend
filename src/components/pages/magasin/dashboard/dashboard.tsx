@@ -182,7 +182,7 @@ const EmptyChart = () => {
 
 const DashboardClient = ({ session }: SessionProps) => {
 	const token = useInitAccessToken(session);
-	const { t } = useLanguage();
+	const { t, language } = useLanguage();
 	const { onError } = useToast();
 	const [storeFilter, setStoreFilter] = useState<'all' | number>('all');
 	const { data: memberships = [] } = useGetMyStoresQuery(undefined, { skip: !token });
@@ -347,6 +347,7 @@ const DashboardClient = ({ session }: SessionProps) => {
 			async () => {
 				const url = new URL(`${process.env.NEXT_PUBLIC_REPORTS_EXPORT}${kind}/`);
 				url.searchParams.set('format', 'pdf');
+				url.searchParams.set('language', language);
 				if (storeFilter !== 'all') {
 					url.searchParams.set('store', String(storeFilter));
 				}

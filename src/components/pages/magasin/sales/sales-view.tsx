@@ -46,7 +46,7 @@ type Props = SessionProps & {
 
 const SalesViewClient = ({ session, id }: Props) => {
 	const token = useInitAccessToken(session);
-	const { t } = useLanguage();
+	const { t, language } = useLanguage();
 	const permissions = usePermission();
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
@@ -76,7 +76,10 @@ const SalesViewClient = ({ session, id }: Props) => {
 			return;
 		}
 		try {
-			const blob = await fetchFileBlob(`${process.env.NEXT_PUBLIC_SALES_ROOT}${sale.id}/facture/`, token);
+			const blob = await fetchFileBlob(
+				`${process.env.NEXT_PUBLIC_SALES_ROOT}${sale.id}/facture/?language=${language}`,
+				token,
+			);
 			const pdfBlob = new Blob([blob], { type: 'application/pdf' });
 			const blobUrl = window.URL.createObjectURL(pdfBlob);
 			window.open(blobUrl, '_blank');

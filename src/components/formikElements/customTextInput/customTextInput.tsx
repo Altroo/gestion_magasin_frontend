@@ -1,3 +1,4 @@
+'use client';
 import {
 	type ChangeEvent,
 	type FocusEvent,
@@ -8,7 +9,8 @@ import {
 } from 'react';
 import type { Theme } from '@mui/material/styles';
 import { InputAdornment, ThemeProvider } from '@mui/material';
-import TextField, { type TextFieldProps } from '@mui/material/TextField';
+import { type TextFieldProps } from '@mui/material/TextField';
+import TextField from '@/components/shared/aiTextField/aiTextField';
 
 type Props = {
 	type: HTMLInputTypeAttribute;

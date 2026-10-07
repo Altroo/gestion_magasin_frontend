@@ -14,13 +14,13 @@ import {
 	FormControlLabel,
 	IconButton,
 	Stack,
-	TextField,
 	Tooltip,
 	Typography,
 	useMediaQuery,
 	useTheme,
 	Button,
 } from '@mui/material';
+import TextField from '@/components/shared/aiTextField/aiTextField';
 import {
 	Add as AddIcon,
 	ArrowBack as ArrowBackIcon,
@@ -681,7 +681,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 												<Divider sx={{ mb: 3 }} />
 												<Stack spacing={2.5}>
 													<Box sx={{ width: '100%', minWidth: 0 }}>
-													<DataGrid<StockTrackingGridRow>
+														<DataGrid<StockTrackingGridRow>
 															rows={stockTrackingRows}
 															columns={stockTrackingColumns}
 															showToolbar
