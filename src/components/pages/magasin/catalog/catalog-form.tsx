@@ -519,6 +519,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 													/>
 													<CustomTextInput
 														id="name"
+														ai
 														type="text"
 														label={`${t.magasin.product} *`}
 														value={formik.values.name}

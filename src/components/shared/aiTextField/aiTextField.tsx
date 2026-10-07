@@ -5,8 +5,10 @@ import TextField, { type TextFieldProps } from '@mui/material/TextField';
 import AiAssistantControl from '@/components/shared/aiAssistantControl/aiAssistantControl';
 import { isAiTextField } from '@/utils/aiTextFields';
 
-const AiTextField = (props: TextFieldProps) => {
-	const fieldName = props.name || props.id || (typeof props.label === 'string' ? props.label : '');
+type Props = TextFieldProps & { ai?: boolean };
+
+const AiTextField = ({ ai, ...props }: Props) => {
+	const fieldName = props.name || props.id || '';
 	const input = props.slotProps?.input;
 	const htmlInput = props.slotProps?.htmlInput;
 	const readOnly =
@@ -20,8 +22,9 @@ const AiTextField = (props: TextFieldProps) => {
 		!readOnly &&
 		typeof props.value === 'string' &&
 		!!props.onChange &&
-		!!fieldName &&
-		isAiTextField(fieldName, props.type || 'text');
+		ai !== false &&
+		(props.type === undefined || props.type === 'text' || props.type === 'textarea') &&
+		(ai === true || isAiTextField(fieldName, props.type || 'text'));
 	if (!show) return <TextField {...props} />;
 	return (
 		<Box sx={{ width: props.fullWidth ? '100%' : undefined, flex: props.fullWidth ? 1 : undefined }}>
