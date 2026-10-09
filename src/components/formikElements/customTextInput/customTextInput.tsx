@@ -8,7 +8,8 @@ import {
 	type Ref,
 } from 'react';
 import type { Theme } from '@mui/material/styles';
-import { InputAdornment, ThemeProvider } from '@mui/material';
+import { InputAdornment } from '@mui/material';
+import { ThemeProvider } from '@/providers/scopedThemeProvider';
 import { type TextFieldProps } from '@mui/material/TextField';
 import TextField from '@/components/shared/aiTextField/aiTextField';
 

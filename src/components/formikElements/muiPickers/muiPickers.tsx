@@ -1,6 +1,6 @@
 import { type FocusEventHandler, type ReactNode } from 'react';
 import { InputAdornment } from '@mui/material';
-import { ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider } from '@/providers/scopedThemeProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { DesktopTimePicker } from '@mui/x-date-pickers/DesktopTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';

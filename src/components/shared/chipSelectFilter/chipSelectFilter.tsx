@@ -3,7 +3,7 @@
 import { useState, type FC, type SyntheticEvent } from 'react';
 import { Autocomplete, Box, Chip, TextField, Typography } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
-import { ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider } from '@/providers/scopedThemeProvider';
 import { chipSelectFilterTheme } from '@/utils/themes';
 import { useLanguage } from '@/utils/hooks';
 import type { ChipSelectOption } from '@/types/filterTypes';

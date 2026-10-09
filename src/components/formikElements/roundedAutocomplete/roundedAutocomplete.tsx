@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Autocomplete, InputAdornment, TextField, ThemeProvider } from '@mui/material';
+import { Autocomplete, InputAdornment, TextField } from '@mui/material';
+import { ThemeProvider } from '@/providers/scopedThemeProvider';
 import type { AutocompleteProps } from '@mui/material/Autocomplete';
 import type { TextFieldProps } from '@mui/material/TextField';
 import type { Theme } from '@mui/material/styles';
@@ -42,7 +43,8 @@ const RoundedAutocomplete = <T,>({
 					const { textFieldParams, inputSlot, htmlInputSlot } = splitAutocompleteRenderParams(params);
 					const { slotProps, ...restTextFieldProps } = textFieldProps ?? {};
 					const inputSlotProps = slotProps?.input && typeof slotProps.input === 'object' ? slotProps.input : {};
-					const htmlInputSlotProps = slotProps?.htmlInput && typeof slotProps.htmlInput === 'object' ? slotProps.htmlInput : {};
+					const htmlInputSlotProps =
+						slotProps?.htmlInput && typeof slotProps.htmlInput === 'object' ? slotProps.htmlInput : {};
 					const inputStartAdornment = inputSlot.startAdornment as ReactNode;
 					const customStartAdornment = inputSlotProps.startAdornment as ReactNode;
 					const inputEndAdornment = inputSlot.endAdornment as ReactNode;

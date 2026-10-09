@@ -125,7 +125,7 @@ const CustomSquareImageUploading: FC<Props> = ({ image, croppedImage, onChange, 
 								cropend={handleCrop}
 							/>
 							<Box className={Styles.closeButtonWrapper} onClick={handleClear} data-testid="clear-button">
-								<HighlightOffIcon sx={{ fontSize: 32 }} htmlColor="black" aria-hidden="true" />
+								<HighlightOffIcon sx={{ fontSize: 32 }} htmlColor="var(--app-text, #0D070B)" aria-hidden="true" />
 							</Box>
 						</>
 					) : (
@@ -163,7 +163,7 @@ const CustomSquareImageUploading: FC<Props> = ({ image, croppedImage, onChange, 
 								</Box>
 							</Box>
 							<Box className={Styles.closeButtonWrapper} onClick={handleClear}>
-								<HighlightOffIcon sx={{ fontSize: 32 }} htmlColor="black" aria-hidden="true" />
+								<HighlightOffIcon sx={{ fontSize: 32 }} htmlColor="var(--app-text, #0D070B)" aria-hidden="true" />
 							</Box>
 						</>
 					)}

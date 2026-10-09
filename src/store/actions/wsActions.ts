@@ -9,10 +9,11 @@ export const WSUserAvatarAction = (pk: number, avatar: string) => {
 	};
 };
 
-export const WSMaintenanceAction = (maintenance: boolean) => {
+export const WSMaintenanceAction = (maintenance: boolean, version?: string) => {
 	return {
 		type: types.WS_MAINTENANCE,
 		maintenance,
+		...(version === undefined ? {} : { version }),
 	};
 };
 

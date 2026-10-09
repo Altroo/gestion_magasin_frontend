@@ -235,7 +235,7 @@ const CustomFilterPanel: FC<CustomFilterPanelProps> = ({ columns, filterModel, o
 											alignItems: 'center',
 											justifyContent: 'center',
 											border: '1px solid',
-											borderColor: 'rgba(0, 0, 0, 0.23)',
+											borderColor: 'divider',
 											borderRadius: 1,
 											py: '8.5px',
 											fontSize: 'inherit',

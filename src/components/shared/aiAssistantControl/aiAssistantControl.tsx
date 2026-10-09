@@ -66,7 +66,7 @@ const DiffText: FC<DiffTextProps> = ({ changes, variant }) => (
 					data-change={variant === 'original' ? 'removed' : 'added'}
 					key={`${operation}-${index}`}
 					sx={{
-						bgcolor: variant === 'original' ? 'error.light' : '#fff59d',
+						bgcolor: variant === 'original' ? 'error.light' : 'var(--app-highlight)',
 						color: variant === 'original' ? 'error.contrastText' : 'text.primary',
 						borderRadius: 0.5,
 					}}

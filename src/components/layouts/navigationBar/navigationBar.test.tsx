@@ -115,6 +115,50 @@ describe('NavigationBar', () => {
 		mockIsMobile = false;
 	});
 
+	it.each(['member', 'staff', 'attendance', 'cashier'])(
+		'shows the direct changelog link after Settings for %s',
+		(role) => {
+			mockProfile.is_staff = role === 'staff';
+			mockProfile.pointage_only = role === 'attendance';
+			if (role === 'cashier')
+				mockUseGetMyStoresQuery.mockReturnValue({
+					isSuccess: true,
+					data: [{ is_active: true, store: { is_active: true, is_global_stock: false }, role: { code: 'vendeur' } }],
+				});
+			mockPathname = '/dashboard/changelog';
+			render(
+				<NavigationBar title="History">
+					<div />
+				</NavigationBar>,
+			);
+			const link = screen.getByRole('link', { name: 'Nouveautés' });
+			expect(link).toHaveAttribute('href', '/dashboard/changelog');
+			expect(link).toHaveAttribute('aria-current', 'page');
+			const settings = screen.getByRole('button', { name: 'Paramètres' });
+			expect(settings.compareDocumentPosition(link) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+			expect(settings).toHaveAttribute('aria-expanded', 'false');
+			expect(screen.getByRole('button', { name: 'Activer le mode sombre' })).toBeVisible();
+		},
+	);
+
+	it('keeps the mobile drawer closed when media queries settle after hydration', () => {
+		const { rerender } = render(
+			<NavigationBar title="Nouveautés">
+				<div />
+			</NavigationBar>,
+		);
+		mockIsMobile = true;
+		rerender(
+			<NavigationBar title="Nouveautés">
+				<div />
+			</NavigationBar>,
+		);
+		expect(screen.queryByRole('link', { name: 'Nouveautés' })).not.toBeInTheDocument();
+		expect(
+			screen.getByRole('button', { name: jest.requireActual('@/translations/fr').fr.accessibility.toggleDrawer }),
+		).toBeVisible();
+	});
+
 	it('loads notification pages and resets pagination when the first page refreshes', async () => {
 		mockNotificationsResult.data = undefined;
 		const { rerender } = render(

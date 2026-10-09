@@ -3,7 +3,7 @@
 import { ALL_STORES_CODE, doughnutPalette, chartOptions, legendChartOptions, doughnutOptions } from '@/utils/rawData';
 import { runAsyncWithErrorHandler } from '@/utils/runWithCleanup';
 import { useState, type ReactNode } from 'react';
-import { Bar, Doughnut, Line } from 'react-chartjs-2';
+import { Bar, Doughnut, Line } from '@/components/shared/themedCharts/themedCharts';
 import {
 	ArcElement,
 	BarElement,
@@ -163,10 +163,10 @@ const EmptyChart = () => {
 				justifyContent: 'center',
 				alignItems: 'center',
 				height: '100%',
-				bgcolor: 'grey.50',
+				bgcolor: 'var(--app-inset, #fafafa)',
 				borderRadius: 2,
 				border: '1px dashed',
-				borderColor: 'grey.300',
+				borderColor: 'var(--app-strong-border, #e0e0e0)',
 				color: 'text.secondary',
 				textAlign: 'center',
 				px: 2,

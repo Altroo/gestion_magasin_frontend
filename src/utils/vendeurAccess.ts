@@ -3,6 +3,7 @@ import type { StoreMembershipType } from '@/types/gestionMagasinTypes';
 const VENDEUR_ALLOWED_PATHS = new Set([
 	'/dashboard/caise',
 	'/dashboard/settings/edit-profile',
+	'/dashboard/changelog',
 	'/dashboard/settings/password',
 ]);
 

@@ -6,7 +6,7 @@ import type { RootState } from '@/store/store';
 import type { Action } from 'redux';
 import type { EventChannel, SagaIterator } from 'redux-saga';
 import * as Types from '@/store/actions';
-import { setWSMaintenance } from '@/store/slices/wsSlice';
+import { setWSMaintenance, setWSServerVersion } from '@/store/slices/wsSlice';
 import { incrementUnreadCount, setLatestNotification } from '@/store/slices/notificationSlice';
 import { notificationApi } from '@/store/services/notification';
 import type { NotificationType } from '@/types/gestionMagasinTypes';
@@ -14,6 +14,7 @@ import { initMaintenanceSaga } from '@/store/sagas/_initSaga';
 
 type WSChannelAction = Action & {
 	maintenance?: boolean;
+	version?: string;
 	notification?: NotificationType;
 };
 
@@ -45,6 +46,7 @@ export function* watchWS(): SagaIterator<void> {
 			const action: WSChannelAction = yield take(channel);
 			if (action.type === Types.WS_MAINTENANCE && typeof action.maintenance === 'boolean') {
 				yield put(setWSMaintenance(action.maintenance));
+				if (action.version !== undefined) yield put(setWSServerVersion(action.version));
 			} else if (action.type === Types.WS_RECONNECTED) {
 				yield call(initMaintenanceSaga);
 			} else if (action.type === Types.WS_NOTIFICATION && action.notification) {

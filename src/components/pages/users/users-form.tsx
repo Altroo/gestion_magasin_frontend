@@ -650,7 +650,7 @@ const FormikContent: FC<FormikContentProps> = (props: FormikContentProps) => {
 															transition: 'border-color 120ms ease, background-color 120ms ease',
 															'&:hover': {
 																borderColor: selected ? 'primary.main' : 'text.secondary',
-																bgcolor: selected ? 'action.selected' : 'grey.50',
+																bgcolor: selected ? 'action.selected' : 'var(--app-inset, #fafafa)',
 															},
 														}}
 													>
@@ -687,9 +687,13 @@ const FormikContent: FC<FormikContentProps> = (props: FormikContentProps) => {
 									</Typography>
 								</Stack>
 								<Divider sx={{ mb: 3 }} />
-								<TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'grey.200' }}>
+								<TableContainer
+									component={Paper}
+									elevation={0}
+									sx={{ border: '1px solid', borderColor: 'var(--app-soft-border, #eeeeee)' }}
+								>
 									<Table>
-										<TableHead sx={{ backgroundColor: 'grey.50' }}>
+										<TableHead sx={{ backgroundColor: 'var(--app-inset, #fafafa)' }}>
 											<TableRow>
 												<TableCell sx={{ fontWeight: 700 }}>
 													<Stack
@@ -719,7 +723,7 @@ const FormikContent: FC<FormikContentProps> = (props: FormikContentProps) => {
 																alignItems: 'center',
 															}}
 														>
-															<StorefrontIcon sx={{ fontSize: 48, color: 'grey.400' }} />
+															<StorefrontIcon sx={{ fontSize: 48, color: 'text.disabled' }} />
 															<Typography
 																variant="body2"
 																sx={{
@@ -735,7 +739,7 @@ const FormikContent: FC<FormikContentProps> = (props: FormikContentProps) => {
 												storeAssignments.map((item, index) => (
 													<TableRow
 														key={`${item.store_id}-${index}`}
-														sx={{ '&:hover': { backgroundColor: 'grey.50' } }}
+														sx={{ '&:hover': { backgroundColor: 'var(--app-inset, #fafafa)' } }}
 													>
 														<TableCell>
 															<Typography

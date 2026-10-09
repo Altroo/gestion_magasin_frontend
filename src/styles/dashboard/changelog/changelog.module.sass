@@ -1,0 +1,130 @@
+@use '@/styles/sass/colors' as *
+@use '@/styles/sass/variables' as *
+
+.page
+  font-family: $poppins, sans-serif
+  width: 100%
+  max-width: 1184px
+  margin: 56px 0 0
+  padding: 0 16px 32px
+  text-align: left
+  color: $primary
+
+.card
+  border: 1px solid $grayColor
+  border-radius: 24px
+  background: $surface
+  padding: 20px 12px
+  color: var(--app-muted)
+  font-size: 14px
+
+.timeline
+  min-width: 0
+  text-align: left
+
+.entry
+  display: grid
+  min-width: 0
+  grid-template-columns: 5.5rem minmax(0, 1fr)
+  &:last-child .content
+    padding-bottom: 0
+
+.dateColumn
+  min-width: 0
+  padding: 4px 12px 0 0
+
+.date
+  font-family: $font-family-semi-bold, $poppins, sans-serif
+  display: block
+  color: $blue
+  font-size: 12px
+  font-weight: 600
+  line-height: 20px
+  letter-spacing: .025em
+  text-transform: uppercase
+
+.version
+  margin: 8px 0 0
+  overflow-wrap: break-word
+  font-size: 12px
+  line-height: 20px
+  color: var(--app-muted)
+
+.content
+  min-width: 0
+  border-left: 1px solid $grayInput
+  padding: 0 0 40px 16px
+
+.entryTitle
+  font-family: $font-family-semi-bold, $poppins, sans-serif
+  margin: 0 0 16px
+  overflow-wrap: break-word
+  font-size: 18px
+  font-weight: 600
+  line-height: 1.375
+  color: $primary
+
+.changes
+  margin: 0
+  padding: 0
+  list-style: none
+
+.change
+  display: flex
+  align-items: flex-start
+  gap: 8px
+  font-size: 14px
+  line-height: 24px
+  color: var(--app-muted)
+  & + &
+    margin-top: 12px
+
+.bullet
+  flex-shrink: 0
+  color: $blue
+
+.changeText
+  min-width: 0
+  overflow-wrap: break-word
+
+.message
+  font-size: 14px
+  color: var(--app-muted)
+
+.error
+  margin-bottom: 24px
+
+.errorMessage
+  color: var(--app-error)
+
+.retry
+  cursor: pointer
+  border: 1px solid $blue
+  border-radius: 8px
+  padding: 8px 16px
+  background: $surface
+  color: $blue
+  font: inherit
+
+@media (min-width: 640px)
+  .page
+    padding-right: 32px
+    padding-left: 32px
+  .card
+    padding: 32px
+  .entry
+    grid-template-columns: 10rem minmax(0, 1fr)
+  .dateColumn
+    padding-right: 24px
+  .content
+    padding-left: 32px
+    padding-bottom: 48px
+  .entryTitle
+    font-size: 24px
+  .change
+    gap: 12px
+    line-height: 28px
+
+@media (min-width: 1024px)
+  .card
+    padding: 40px

@@ -2,6 +2,7 @@
 @use '@/styles/sass/typography' as *
 @use '@/styles/sass/colors' as *
 @use '@/styles/sass/mixins' as *
+@use '@/styles/sass/color-modes'
 
 html, body
   line-height: 1.5
@@ -13,7 +14,8 @@ html, body
   padding: 0
   margin: 0
   scroll-behavior: smooth
-  background-color: #F5F5F5
+  background-color: var(--app-bg)
+  color: $primary
 #__next
   height: inherit
   width: 100%
@@ -33,7 +35,7 @@ a
   height: 1px
   overflow: hidden
   z-index: 9999
-  background: #ffffff
+  background: $surface
   color: #1976d2
   padding: 8px 16px
   border: 2px solid #1976d2

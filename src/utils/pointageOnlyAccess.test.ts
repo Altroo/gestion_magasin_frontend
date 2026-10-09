@@ -7,6 +7,7 @@ describe('isPointageOnlyPathAllowed', () => {
 		'/dashboard/pointage/42/edit',
 		'/dashboard/settings/edit-profile',
 		'/dashboard/settings/password',
+		'/dashboard/changelog',
 	])('allows %s', (pathname) => {
 		expect(isPointageOnlyPathAllowed(pathname)).toBe(true);
 	});

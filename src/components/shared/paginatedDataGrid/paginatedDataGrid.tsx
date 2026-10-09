@@ -3,7 +3,8 @@
 import type { DataGridSorting } from './useDataGridPagination';
 
 import { Dispatch, SetStateAction, useState, useEffect, useRef, type ReactNode } from 'react';
-import { Badge, Box, Button, CircularProgress, Stack, ThemeProvider, Typography } from '@mui/material';
+import { Badge, Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
+import { ThemeProvider } from '@/providers/scopedThemeProvider';
 import { ViewColumn as ViewColumnIcon, FilterList as FilterListIcon } from '@mui/icons-material';
 import type { GridColDef, GridFilterModel, GridRowSelectionModel, GridRowId, GridRowParams } from '@mui/x-data-grid';
 import { DataGrid, GridSlotProps, ColumnsPanelTrigger, ToolbarButton, GridLogicOperator } from '@mui/x-data-grid';
@@ -390,7 +391,7 @@ const PaginatedDataGrid = <T,>({
 							{(showSelectAllMatchingBanner || isAllMatchingSelected) && (
 								<Box
 									sx={{
-										bgcolor: '#E3F2FD',
+										bgcolor: 'var(--app-info-bg, #E3F2FD)',
 										px: 2,
 										py: 1,
 										display: 'flex',

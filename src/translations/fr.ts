@@ -1,6 +1,22 @@
 import type { TranslationDictionary } from '@/types/languageTypes';
 
 export const fr: TranslationDictionary = {
+	changelog: {
+		description: 'Retrouvez les nouveautés et les améliorations de votre espace de travail.',
+		loading: 'Chargement des nouveautés…',
+		error: 'Les nouveautés n’ont pas pu être chargées. Réessayez dans un instant.',
+		empty: 'Les prochaines nouveautés seront présentées ici.',
+	},
+	appUpdate: {
+		title: 'Une mise à jour est disponible',
+		body: 'Enregistrez votre travail avant de continuer. L’application se rechargera pour appliquer la mise à jour, sans réinstallation.',
+		later: 'Plus tard',
+		update: 'Mettre à jour',
+		updating: 'Mise à jour…',
+		version: 'Nouvelle version :',
+		error:
+			'La mise à jour n’est pas encore accessible. Vérifiez votre connexion puis réessayez dans un instant. Votre travail n’a pas été rechargé.',
+	},
 	aiAssistant: {
 		translate: 'Traduire',
 		fixGrammar: 'Corriger la grammaire',
@@ -80,6 +96,7 @@ export const fr: TranslationDictionary = {
 		or: 'OU',
 	},
 	navigation: {
+		changelog: 'Nouveautés',
 		dashboard: 'Tableau de bord',
 		mbrSouth: 'MBR South',
 		operations: 'Opérations',

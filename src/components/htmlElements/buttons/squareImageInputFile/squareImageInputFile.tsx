@@ -2,7 +2,8 @@
 
 import { type FC, type ReactNode } from 'react';
 import Styles from './squareImageInputFile.module.sass';
-import { Button, Stack, ThemeProvider } from '@mui/material';
+import { Button, Stack } from '@mui/material';
+import { ThemeProvider } from '@/providers/scopedThemeProvider';
 import { Add as AddIcon } from '@mui/icons-material';
 import { getDefaultTheme } from '@/utils/themes';
 import { useLanguage } from '@/utils/hooks';

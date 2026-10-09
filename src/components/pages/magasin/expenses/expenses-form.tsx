@@ -12,9 +12,9 @@ import {
 	InputAdornment,
 	MenuItem,
 	Stack,
-	ThemeProvider,
 	Typography,
 } from '@mui/material';
+import { ThemeProvider } from '@/providers/scopedThemeProvider';
 import TextField from '@/components/shared/aiTextField/aiTextField';
 import {
 	Add as AddIcon,

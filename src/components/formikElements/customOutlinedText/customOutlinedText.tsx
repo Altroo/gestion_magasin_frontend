@@ -8,7 +8,7 @@ import {
 	type KeyboardEvent,
 	type Ref,
 } from 'react';
-import { ThemeProvider } from '@mui/material';
+import { ThemeProvider } from '@/providers/scopedThemeProvider';
 import TextField, { type TextFieldProps } from '@mui/material/TextField';
 import type { Theme } from '@mui/material/styles';
 

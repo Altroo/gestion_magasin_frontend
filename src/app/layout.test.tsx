@@ -1,3 +1,4 @@
+jest.mock('@/components/shared/themeToggle/themeToggle', () => ({ AuthThemeToggle: () => null }));
 import { jest } from '@jest/globals';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { type ReactNode, createElement, type ReactElement } from 'react';

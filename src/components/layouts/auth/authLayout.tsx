@@ -1,5 +1,6 @@
 'use client';
 
+import { useColorMode } from '@/providers/themeProvider';
 import { type ReactNode, type Ref } from 'react';
 import Styles from './authLayout.module.sass';
 import { Box, Stack } from '@mui/material';
@@ -15,6 +16,7 @@ type Props = {
 
 const AuthLayout = ({ ref, ...props }: Props & { ref?: Ref<HTMLAnchorElement> }) => {
 	const { t } = useLanguage();
+	const { mode } = useColorMode();
 
 	return (
 		<main className={Styles.main} ref={ref}>
@@ -23,7 +25,7 @@ const AuthLayout = ({ ref, ...props }: Props & { ref?: Ref<HTMLAnchorElement> })
 				<Box
 					className={Styles.leftBox}
 					sx={{
-						backgroundColor: '#E8F5E9',
+						backgroundColor: mode === 'dark' ? '#222c3d' : '#E8F5E9',
 						overflow: 'hidden',
 					}}
 				>

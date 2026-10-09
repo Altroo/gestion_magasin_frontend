@@ -23,10 +23,11 @@ describe('vendeur access', () => {
 		expect(isVendeurOnly([])).toBe(false);
 	});
 
-	it('allows only caisse and personal settings routes', () => {
+	it('allows caisse, personal settings and changelog routes', () => {
 		expect(isVendeurPathAllowed('/dashboard/caise')).toBe(true);
 		expect(isVendeurPathAllowed('/dashboard/settings/edit-profile')).toBe(true);
 		expect(isVendeurPathAllowed('/dashboard/settings/password')).toBe(true);
+		expect(isVendeurPathAllowed('/dashboard/changelog')).toBe(true);
 		expect(isVendeurPathAllowed('/dashboard')).toBe(false);
 		expect(isVendeurPathAllowed('/dashboard/sales')).toBe(false);
 	});

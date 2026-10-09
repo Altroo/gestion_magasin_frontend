@@ -1,5 +1,6 @@
 import { type Dispatch, type FC, type ReactNode, type SetStateAction, type SyntheticEvent, type Ref } from 'react';
-import { Stack, Snackbar, ThemeProvider, Slide } from '@mui/material';
+import { Stack, Snackbar, Slide } from '@mui/material';
+import { ThemeProvider } from '@/providers/scopedThemeProvider';
 import type { SlideProps } from '@mui/material/Slide';
 import Styles from './customToast.module.sass';
 import MuiAlert, { AlertProps, AlertColor } from '@mui/material/Alert';

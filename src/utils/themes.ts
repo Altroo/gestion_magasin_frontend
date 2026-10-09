@@ -59,7 +59,7 @@ export const getDefaultTheme = (primaryColor: string | undefined = undefined) =>
 
 export const textInputTheme = (primaryColor: string | undefined = undefined) => {
 	const defaultTheme = getDefaultTheme(primaryColor);
-	const blueColor = '#0274d7';
+	const blueColor = 'var(--app-accent, #0274d7)';
 
 	return createTheme({
 		...defaultTheme,
@@ -73,7 +73,7 @@ export const textInputTheme = (primaryColor: string | undefined = undefined) => 
 						},
 						'& fieldset': {
 							borderRadius: FORM_FIELD_RADIUS,
-							border: '1px solid #A3A3AD',
+							border: '1px solid var(--app-input-border, #A3A3AD)',
 						},
 						'& fieldset > legend': {
 							fontFamily: 'Poppins',
@@ -93,7 +93,7 @@ export const textInputTheme = (primaryColor: string | undefined = undefined) => 
 						'& .MuiFormLabel-root': {
 							fontFamily: 'Poppins',
 							fontSize: '19px',
-							color: '#A3A3AD',
+							color: 'var(--app-label, #A3A3AD)',
 						},
 						'& .MuiFormLabel-root.Mui-focused': {
 							fontFamily: 'Poppins',
@@ -115,8 +115,8 @@ export const navigationBarTheme = (primaryColor: string | undefined = undefined)
 			MuiAppBar: {
 				styleOverrides: {
 					root: {
-						backgroundColor: 'white',
-						color: '#0D070B',
+						backgroundColor: 'var(--app-surface, #FFFFFF)',
+						color: 'var(--app-text, #0D070B)',
 						boxShadow: '0px 0px 24px rgba(13, 7, 11, 0.2)',
 					},
 				},
@@ -148,7 +148,7 @@ export const navigationBarTheme = (primaryColor: string | undefined = undefined)
 
 export const customDropdownTheme = (primaryColor: string | undefined = undefined) => {
 	const defaultTheme = getDefaultTheme(primaryColor);
-	const blueColor = '#0274d7';
+	const blueColor = 'var(--app-accent, #0274d7)';
 
 	return createTheme({
 		...defaultTheme,
@@ -165,7 +165,7 @@ export const customDropdownTheme = (primaryColor: string | undefined = undefined
 							paddingBottom: 0,
 							'& fieldset': {
 								borderRadius: FORM_FIELD_RADIUS,
-								borderColor: '#A3A3AD',
+								borderColor: 'var(--app-input-border, #A3A3AD)',
 							},
 							'&:hover fieldset': {
 								borderColor: blueColor,
@@ -212,7 +212,7 @@ export const customDropdownTheme = (primaryColor: string | undefined = undefined
 						},
 						'& fieldset': {
 							borderRadius: FORM_FIELD_RADIUS,
-							border: '1px solid #A3A3AD',
+							border: '1px solid var(--app-input-border, #A3A3AD)',
 						},
 						'& fieldset > legend': {
 							fontFamily: 'Poppins',
@@ -232,7 +232,7 @@ export const customDropdownTheme = (primaryColor: string | undefined = undefined
 						'& .MuiFormLabel-root': {
 							fontFamily: 'Poppins',
 							fontSize: '16px',
-							color: '#A3A3AD',
+							color: 'var(--app-label, #A3A3AD)',
 						},
 						'& .MuiFormLabel-root.Mui-focused': {
 							fontFamily: 'Poppins',
@@ -268,7 +268,7 @@ export const customDropdownTheme = (primaryColor: string | undefined = undefined
 export const codeTextInputTheme = (error: boolean | undefined) => {
 	const validColor = '#07CBAD';
 	const defaultTheme = getDefaultTheme(validColor);
-	let borderColor = '#D9D9DD';
+	let borderColor = 'var(--app-border, #D9D9DD)';
 	if (error) {
 		borderColor = '#E12D3D';
 	}
@@ -310,7 +310,7 @@ export const codeTextInputTheme = (error: boolean | undefined) => {
 
 export const chipSelectFilterTheme = (primaryColor: string | undefined = undefined) => {
 	const defaultTheme = getDefaultTheme(primaryColor);
-	const blueColor = '#0274d7';
+	const blueColor = 'var(--app-accent, #0274d7)';
 
 	return createTheme({
 		...defaultTheme,
@@ -319,12 +319,12 @@ export const chipSelectFilterTheme = (primaryColor: string | undefined = undefin
 				styleOverrides: {
 					root: {
 						'& .MuiOutlinedInput-root': {
-							backgroundColor: '#FFFFFF',
+							backgroundColor: 'var(--app-surface, #FFFFFF)',
 							borderRadius: '16px',
 							fontFamily: 'Poppins',
 							fontSize: '14px',
 							'& fieldset': {
-								borderColor: '#A3A3AD',
+								borderColor: 'var(--app-input-border, #A3A3AD)',
 								borderWidth: '1px',
 								borderRadius: '16px',
 							},
@@ -374,7 +374,7 @@ export const chipSelectFilterTheme = (primaryColor: string | undefined = undefin
 					root: {
 						fontFamily: 'Poppins',
 						fontSize: '14px',
-						color: '#A3A3AD',
+						color: 'var(--app-label, #A3A3AD)',
 						'&.Mui-focused': {
 							color: blueColor,
 						},
@@ -394,7 +394,7 @@ export const customToastTheme = (primaryColor: string | undefined = undefined) =
 				styleOverrides: {
 					root: {
 						width: '20%',
-						backgroundColor: 'white',
+						backgroundColor: 'var(--app-surface, #FFFFFF)',
 						borderRadius: '20px',
 						position: 'absolute',
 						margin: '0 auto',
@@ -427,7 +427,7 @@ export const customToastTheme = (primaryColor: string | undefined = undefined) =
 
 export const gridInputTheme = (primaryColor: string | undefined = undefined) => {
 	const defaultTheme = getDefaultTheme(primaryColor);
-	const blueColor = '#0274d7';
+	const blueColor = 'var(--app-accent, #0274d7)';
 	return createTheme({
 		...defaultTheme,
 		components: {
@@ -452,7 +452,7 @@ export const gridInputTheme = (primaryColor: string | undefined = undefined) => 
 						'& .MuiFormLabel-root': {
 							fontFamily: 'Poppins',
 							fontSize: '0.875rem',
-							color: '#A3A3AD',
+							color: 'var(--app-label, #A3A3AD)',
 						},
 						'& .MuiFormLabel-root.Mui-focused': {
 							fontFamily: 'Poppins',
@@ -468,7 +468,7 @@ export const gridInputTheme = (primaryColor: string | undefined = undefined) => 
 
 export const customGridDropdownTheme = (primaryColor: string | undefined = undefined) => {
 	const defaultTheme = getDefaultTheme(primaryColor);
-	const blueColor = '#0274d7';
+	const blueColor = 'var(--app-accent, #0274d7)';
 	return createTheme({
 		...defaultTheme,
 		components: {
@@ -496,7 +496,7 @@ export const customGridDropdownTheme = (primaryColor: string | undefined = undef
 						'& .MuiFormLabel-root': {
 							fontFamily: 'Poppins',
 							fontSize: '0.875rem',
-							color: '#A3A3AD',
+							color: 'var(--app-label, #A3A3AD)',
 						},
 						'& .MuiFormLabel-root.Mui-focused': {
 							fontFamily: 'Poppins',

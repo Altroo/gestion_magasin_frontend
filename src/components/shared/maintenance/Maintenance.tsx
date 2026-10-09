@@ -24,7 +24,7 @@ const Maintenance: FC = () => {
 				position: 'fixed',
 				inset: 0,
 				zIndex: (theme) => theme.zIndex.modal + 100,
-				backgroundColor: '#FFFFFF',
+				backgroundColor: 'background.paper',
 				overflowY: 'auto',
 			}}
 		>
@@ -43,7 +43,7 @@ const Maintenance: FC = () => {
 						display: { xs: 'none', md: 'flex' },
 						flexDirection: 'column',
 						justifyContent: 'space-between',
-						background: 'linear-gradient(180deg, #FFF3E0 0%, #FCE8CC 100%)',
+						background: 'var(--app-maintenance-side)',
 						p: 5,
 						overflow: 'hidden',
 					}}
@@ -65,7 +65,7 @@ const Maintenance: FC = () => {
 						justifyContent: 'center',
 						px: { xs: 3, sm: 6, md: 8 },
 						py: { xs: 5, sm: 6, md: 8 },
-						background: 'linear-gradient(180deg, #FFFFFF 0%, #FAFBFC 100%)',
+						background: 'var(--app-maintenance-bg)',
 					}}
 				>
 					<Stack
@@ -89,7 +89,7 @@ const Maintenance: FC = () => {
 							border: '1px solid',
 							borderColor: 'divider',
 							boxShadow: '0 24px 80px rgba(13, 7, 11, 0.08)',
-							backgroundColor: '#FFFFFF',
+							backgroundColor: 'background.paper',
 						}}
 					>
 						<Stack spacing={3}>
@@ -98,8 +98,8 @@ const Maintenance: FC = () => {
 								label={t.errors.maintenanceChip}
 								sx={{
 									alignSelf: 'flex-start',
-									backgroundColor: '#FFF3E0',
-									color: '#A15C07',
+									backgroundColor: 'var(--app-warm-bg)',
+									color: 'var(--app-warm-text)',
 									fontWeight: 600,
 								}}
 							/>
@@ -112,7 +112,7 @@ const Maintenance: FC = () => {
 										fontSize: { xs: '2rem', md: '2.75rem' },
 										lineHeight: 1.05,
 										fontWeight: 700,
-										color: '#0D070B',
+										color: 'var(--app-text, #0D070B)',
 									}}
 								>
 									{t.errors.maintenanceTitle}
@@ -123,7 +123,7 @@ const Maintenance: FC = () => {
 									sx={{
 										fontSize: '1rem',
 										lineHeight: 1.7,
-										color: '#6B7280',
+										color: 'text.secondary',
 									}}
 								>
 									{t.errors.maintenanceText}
@@ -133,10 +133,10 @@ const Maintenance: FC = () => {
 							<Divider />
 
 							<Stack spacing={1.5}>
-								<Typography variant="body1" sx={{ color: '#0D070B', fontWeight: 600 }}>
+								<Typography variant="body1" sx={{ color: 'var(--app-text, #0D070B)', fontWeight: 600 }}>
 									{t.errors.maintenanceSuspended}
 								</Typography>
-								<Typography variant="body2" sx={{ color: '#6B7280', lineHeight: 1.7 }}>
+								<Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
 									{t.errors.maintenanceThanks}
 								</Typography>
 							</Stack>

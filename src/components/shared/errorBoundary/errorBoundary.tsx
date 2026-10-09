@@ -82,7 +82,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 								component="pre"
 								sx={{
 									textAlign: 'left',
-									bgcolor: 'grey.100',
+									bgcolor: 'var(--app-inset-hover, #f5f5f5)',
 									p: 2,
 									borderRadius: 1,
 									overflow: 'auto',

@@ -24,9 +24,9 @@ import {
 	TableContainer,
 	TableHead,
 	TableRow,
-	ThemeProvider,
 	Typography,
 } from '@mui/material';
+import { ThemeProvider } from '@/providers/scopedThemeProvider';
 import TextField from '@/components/shared/aiTextField/aiTextField';
 import {
 	Add as AddIcon,
@@ -542,10 +542,10 @@ const StoresFormClient = ({ session, id }: Props) => {
 													<TableContainer
 														component={Paper}
 														elevation={0}
-														sx={{ border: '1px solid', borderColor: 'grey.200' }}
+														sx={{ border: '1px solid', borderColor: 'var(--app-soft-border, #eeeeee)' }}
 													>
 														<Table>
-															<TableHead sx={{ backgroundColor: 'grey.50' }}>
+															<TableHead sx={{ backgroundColor: 'var(--app-inset, #fafafa)' }}>
 																<TableRow>
 																	<TableCell sx={{ fontWeight: 700 }}>
 																		<Stack
@@ -575,7 +575,7 @@ const StoresFormClient = ({ session, id }: Props) => {
 																					alignItems: 'center',
 																				}}
 																			>
-																				<PeopleIcon sx={{ fontSize: 48, color: 'grey.400' }} />
+																				<PeopleIcon sx={{ fontSize: 48, color: 'text.disabled' }} />
 																				<Typography
 																					variant="body2"
 																					sx={{
@@ -592,7 +592,10 @@ const StoresFormClient = ({ session, id }: Props) => {
 																		const isCurrentUser = item.pk === currentUserId;
 																		const label = getManagedUserLabel(item.pk);
 																		return (
-																			<TableRow key={item.pk} sx={{ '&:hover': { backgroundColor: 'grey.50' } }}>
+																			<TableRow
+																				key={item.pk}
+																				sx={{ '&:hover': { backgroundColor: 'var(--app-inset, #fafafa)' } }}
+																			>
 																				<TableCell>
 																					<Stack
 																						direction="row"
@@ -805,10 +808,10 @@ const StoresFormClient = ({ session, id }: Props) => {
 													<TableContainer
 														component={Paper}
 														elevation={0}
-														sx={{ border: '1px solid', borderColor: 'grey.200' }}
+														sx={{ border: '1px solid', borderColor: 'var(--app-soft-border, #eeeeee)' }}
 													>
 														<Table>
-															<TableHead sx={{ backgroundColor: 'grey.50' }}>
+															<TableHead sx={{ backgroundColor: 'var(--app-inset, #fafafa)' }}>
 																<TableRow>
 																	<TableCell sx={{ fontWeight: 700 }}>{t.magasin.employee}</TableCell>
 																	<TableCell sx={{ fontWeight: 700 }}>{t.users.roleHeader}</TableCell>
