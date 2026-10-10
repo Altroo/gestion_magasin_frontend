@@ -56,7 +56,7 @@ import {
 import { stockTransferSchema } from '@/utils/formValidationSchemas';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
 import { splitAutocompleteRenderParams } from '@/utils/muiAutocompleteSlots';
-import { STOCK_TRANSFERS_VIEW } from '@/utils/routes';
+import { STOCK_TRANSFERS_LIST, STOCK_TRANSFERS_VIEW } from '@/utils/routes';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { useLanguage, useToast } from '@/utils/hooks';
 import Styles from '@/styles/dashboard/dashboard.module.sass';
@@ -342,7 +342,7 @@ const StockTransfersFormClient = ({ session, id }: Props) => {
 							<Button
 								variant="outlined"
 								startIcon={<ArrowBackIcon />}
-								onClick={() => router.back()}
+								onClick={() => router.push(STOCK_TRANSFERS_LIST)}
 								sx={{ width: 'fit-content' }}
 							>
 								{t.magasin.backToTransfers}

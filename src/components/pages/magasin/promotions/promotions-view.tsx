@@ -81,7 +81,7 @@ const PromotionsViewClient = ({ session, id }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(PROMOTIONS_LIST)}>
 									{t.magasin.backToPromotions}
 								</Button>
 								{promotion && (

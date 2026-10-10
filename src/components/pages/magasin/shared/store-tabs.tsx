@@ -2,6 +2,7 @@
 
 import { Alert, Box, Tab, Tabs } from '@mui/material';
 import { useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useGetMyStoresQuery } from '@/store/services/magasin';
 import { useLanguage } from '@/utils/hooks';
 import type { StoreMembershipType } from '@/types/gestionMagasinTypes';
@@ -37,9 +38,12 @@ const setPersistedStoreId = (storeId: number) => {
 export const useSelectedStore = (token?: string, includeMbrSouth = false) => {
 	const { data = [], isLoading } = useGetMyStoresQuery(undefined, { skip: !token });
 	const [persistedStoreId] = useState<number | undefined>(() => getPersistedStoreId());
+	const searchParams = useSearchParams();
+	const requestedStoreId = Number(searchParams.get('store_id'));
 	const visibleMemberships = data.filter((membership) => isStoreTabVisible(membership, includeMbrSouth));
 	const persistedStore = visibleMemberships.find((membership) => membership.store.id === persistedStoreId)?.store;
-	const defaultStore = persistedStore ?? visibleMemberships[0]?.store;
+	const requestedStore = visibleMemberships.find((membership) => membership.store.id === requestedStoreId)?.store;
+	const defaultStore = requestedStore ?? persistedStore ?? visibleMemberships[0]?.store;
 	const globalStore = data.find(
 		(membership) => membership.is_active && membership.store.is_active && membership.store.is_global_stock,
 	)?.store;
@@ -52,6 +56,9 @@ export const useSelectedStore = (token?: string, includeMbrSouth = false) => {
 };
 
 const StoreTabs = ({ selectedStoreId, onChange, token, includeMbrSouth = false, compact = false }: Props) => {
+	const router = useRouter();
+	const pathname = usePathname();
+	const searchParams = useSearchParams();
 	const { t } = useLanguage();
 	const { data = [] } = useGetMyStoresQuery(undefined, { skip: !token });
 
@@ -79,6 +86,11 @@ const StoreTabs = ({ selectedStoreId, onChange, token, includeMbrSouth = false, 
 				onChange={(_, value: number) => {
 					setPersistedStoreId(value);
 					onChange(value);
+					if (searchParams.has('store_id')) {
+						const params = new URLSearchParams(window.location.search);
+						params.set('store_id', String(value));
+						router.replace(`${pathname}?${params.toString()}${window.location.hash}`, { scroll: false });
+					}
 				}}
 				variant="scrollable"
 				allowScrollButtonsMobile

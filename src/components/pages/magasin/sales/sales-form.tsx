@@ -58,7 +58,7 @@ import type { SaleCreatePayload, SaleFormLineValues, SaleFormValues } from '@/ty
 import { extractApiErrorMessage, formatNumber, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
 import { saleSchema } from '@/utils/formValidationSchemas';
 import { splitAutocompleteRenderParams } from '@/utils/muiAutocompleteSlots';
-import { SALES_VIEW } from '@/utils/routes';
+import { withStore, SALES_LIST, SALES_VIEW } from '@/utils/routes';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { useLanguage, useToast } from '@/utils/hooks';
 
@@ -536,7 +536,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 							<Button
 								variant="outlined"
 								startIcon={<ArrowBackIcon />}
-								onClick={() => router.back()}
+								onClick={() => router.push(withStore(SALES_LIST, Number(formik.values.store)))}
 								sx={{ alignSelf: 'flex-start' }}
 							>
 								{t.magasin.backToSales}

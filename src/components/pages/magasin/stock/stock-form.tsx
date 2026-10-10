@@ -44,7 +44,7 @@ import {
 	useGetStockBalanceQuery,
 	useUpdateStockThresholdMutation,
 } from '@/store/services/magasin';
-import { STOCK_LIST, STOCK_VIEW } from '@/utils/routes';
+import { withStore, STOCK_LIST, STOCK_VIEW } from '@/utils/routes';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
 import { stockAdjustmentSchema, stockThresholdSchema } from '@/utils/formValidationSchemas';
@@ -157,7 +157,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 									}).unwrap();
 								}
 								onSuccess(canAdjustDirectly ? t.magasin.stockAdjusted : t.magasin.stockRequestSent);
-								router.push(STOCK_LIST);
+								router.push(withStore(STOCK_LIST, stockBalance?.store ?? storeId));
 							}
 						},
 						async (e) => {
@@ -241,7 +241,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(withStore(STOCK_LIST, stockBalance?.store ?? storeId))}>
 									{t.magasin.backToStock}
 								</Button>
 							</Stack>

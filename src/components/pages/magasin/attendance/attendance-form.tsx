@@ -46,7 +46,7 @@ import {
 	useGetAttendanceRecordQuery,
 	useGetEmployeesQuery,
 } from '@/store/services/magasin';
-import { ATTENDANCE_LIST, ATTENDANCE_VIEW } from '@/utils/routes';
+import { withStore, ATTENDANCE_LIST, ATTENDANCE_VIEW } from '@/utils/routes';
 import { attendanceSchema } from '@/utils/formValidationSchemas';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
@@ -173,7 +173,7 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 						} else {
 							await addAttendance(toPayload(values, storeId)).unwrap();
 							onSuccess(t.magasin.attendanceCreated);
-							router.push(ATTENDANCE_LIST);
+							router.push(withStore(ATTENDANCE_LIST, attendance?.store ?? storeId));
 						}
 					} catch (e) {
 						onError(
@@ -286,7 +286,7 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 							<Button
 								variant="outlined"
 								startIcon={<ArrowBackIcon />}
-								onClick={() => router.back()}
+								onClick={() => router.push(withStore(ATTENDANCE_LIST, attendance?.store ?? storeId))}
 								sx={{ alignSelf: 'flex-start' }}
 							>
 								{t.magasin.backToAttendance}

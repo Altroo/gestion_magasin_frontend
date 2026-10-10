@@ -66,7 +66,7 @@ import {
 	useGetProductQuery,
 	useGetProductUnitsQuery,
 } from '@/store/services/magasin';
-import { CATALOG_LIST, CATALOG_VIEW } from '@/utils/routes';
+import { withStore, CATALOG_LIST, CATALOG_VIEW } from '@/utils/routes';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
 import { productSchema } from '@/utils/formValidationSchemas';
@@ -187,7 +187,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 						} else {
 							await addProduct({ store: storeId, data: toPayload(values) }).unwrap();
 							onSuccess(t.magasin.productCreated);
-							router.push(CATALOG_LIST);
+							router.push(withStore(CATALOG_LIST, storeId));
 						}
 					} catch (e) {
 						onError(
@@ -434,7 +434,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(withStore(CATALOG_LIST, storeId))}>
 									{t.magasin.backToCatalog}
 								</Button>
 							</Stack>

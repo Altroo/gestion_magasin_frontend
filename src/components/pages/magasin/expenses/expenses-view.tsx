@@ -28,7 +28,7 @@ import { expensePaymentModeLabel } from '@/components/pages/magasin/shared/statu
 import { DetailCard, DetailHeaderCard, InfoRow, StatusChip } from '@/components/pages/magasin/shared/view-components';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeleteExpenseMutation, useGetExpenseQuery } from '@/store/services/magasin';
-import { EXPENSES_EDIT, EXPENSES_LIST } from '@/utils/routes';
+import { withStore, EXPENSES_EDIT, EXPENSES_LIST } from '@/utils/routes';
 import { extractApiErrorMessage, formatDate, formatNumber } from '@/utils/helpers';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
 import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '@/types/_initTypes';
@@ -52,7 +52,7 @@ const ExpensesViewClient = ({ session, id }: Props) => {
 				try {
 					await deleteExpense({ id }).unwrap();
 					onSuccess(t.magasin.expenseDeleted);
-					router.push(EXPENSES_LIST);
+					router.push(withStore(EXPENSES_LIST, expense?.store));
 				} catch (deleteError) {
 					onError(extractApiErrorMessage(deleteError, t.magasin.expenseDeleteError));
 				}
@@ -76,7 +76,7 @@ const ExpensesViewClient = ({ session, id }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(withStore(EXPENSES_LIST, expense?.store))}>
 									{t.magasin.backToExpenses}
 								</Button>
 								{expense && (

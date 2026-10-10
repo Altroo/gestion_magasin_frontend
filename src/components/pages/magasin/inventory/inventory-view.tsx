@@ -37,7 +37,7 @@ import {
 	useGetInventorySessionQuery,
 	useValidateInventorySessionMutation,
 } from '@/store/services/magasin';
-import { INVENTORY_EDIT, INVENTORY_LIST } from '@/utils/routes';
+import { withStore, INVENTORY_EDIT, INVENTORY_LIST } from '@/utils/routes';
 import { extractApiErrorMessage, formatDate, formatNumber } from '@/utils/helpers';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
 import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '@/types/_initTypes';
@@ -63,7 +63,7 @@ const InventoryViewClient = ({ session, id }: Props) => {
 				try {
 					await deleteInventory({ id }).unwrap();
 					onSuccess(t.magasin.inventoryDeleted);
-					router.push(INVENTORY_LIST);
+					router.push(withStore(INVENTORY_LIST, inventory?.store));
 				} catch (deleteError) {
 					onError(extractApiErrorMessage(deleteError, t.magasin.inventoryDeleteError));
 				}
@@ -104,7 +104,7 @@ const InventoryViewClient = ({ session, id }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(withStore(INVENTORY_LIST, inventory?.store))}>
 									{t.magasin.backToInventory}
 								</Button>
 								{inventory && (

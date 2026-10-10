@@ -24,6 +24,8 @@ export const DASHBOARD_ATTENDANCE = `${SITE_ROOT}dashboard/pointage`;
 export const DASHBOARD_STORES = `${SITE_ROOT}dashboard/stores`;
 export const DASHBOARD_NOTIFICATIONS = `${SITE_ROOT}dashboard/settings/notifications`;
 const storeQuery = (storeId?: number) => (storeId ? `?store_id=${storeId}` : '');
+export const withStore = (route: string, storeId?: number) =>
+	storeId && Number.isSafeInteger(storeId) && storeId > 0 ? `${route}${storeQuery(storeId)}` : route;
 // Catalog
 export const CATALOG_LIST = DASHBOARD_CATALOG;
 export const CATALOG_ADD = (storeId?: number) => `${SITE_ROOT}dashboard/article/new${storeQuery(storeId)}`;

@@ -2,11 +2,9 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 const mockPush = jest.fn();
-const mockBack = jest.fn();
 jest.mock('next/navigation', () => ({
 	useRouter: () => ({
 		push: mockPush,
-		back: mockBack,
 		forward: jest.fn(),
 		refresh: jest.fn(),
 		replace: jest.fn(),
@@ -47,20 +45,14 @@ describe('NotFound (404 page)', () => {
 		expect(screen.getByText(/la page que vous cherchez/i)).toBeInTheDocument();
 	});
 
-	it('renders Retour button', () => {
+	it('does not offer a history-dependent return', () => {
 		render(<NotFound />);
-		expect(screen.getByText('Retour')).toBeInTheDocument();
+		expect(screen.queryByRole('button', { name: 'Retour' })).not.toBeInTheDocument();
 	});
 
 	it('renders "Tableau de bord" button', () => {
 		render(<NotFound />);
 		expect(screen.getByText('Tableau de bord')).toBeInTheDocument();
-	});
-
-	it('calls router.back() when Retour is clicked', () => {
-		render(<NotFound />);
-		fireEvent.click(screen.getByText('Retour'));
-		expect(mockBack).toHaveBeenCalledTimes(1);
 	});
 
 	it('calls router.push(DASHBOARD) when Tableau de bord is clicked', () => {

@@ -36,7 +36,7 @@ import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages
 import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeleteStockBalanceMutation, useGetStockBalanceQuery } from '@/store/services/magasin';
-import { DASHBOARD_STORE_STOCK, STOCK_EDIT, STOCK_LIST } from '@/utils/routes';
+import { withStore, DASHBOARD_STORE_STOCK, STOCK_EDIT, STOCK_LIST } from '@/utils/routes';
 import { extractApiErrorMessage, formatDateShort, formatNumber } from '@/utils/helpers';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
 import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '@/types/_initTypes';
@@ -110,10 +110,10 @@ const StockViewClient = ({ session, id, storeId: initialStoreId, source }: Props
 	const { defaultStore } = useSelectedStore(token);
 	const storeId = initialStoreId ?? defaultStore?.id;
 	const isStoreStockSource = source === 'store-stock' || searchParams.get('source') === 'store-stock';
-	const backRoute = isStoreStockSource ? DASHBOARD_STORE_STOCK : STOCK_LIST;
 	const backLabel = isStoreStockSource ? t.magasin.storeStockOverview : t.magasin.backToStock;
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const { data: stockBalance, isLoading, error } = useGetStockBalanceQuery({ id }, { skip: !token });
+	const backRoute = isStoreStockSource ? DASHBOARD_STORE_STOCK : withStore(STOCK_LIST, stockBalance?.store ?? storeId);
 	const axiosError = error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 	const [deleteStockBalance] = useDeleteStockBalanceMutation();
 
@@ -148,7 +148,7 @@ const StockViewClient = ({ session, id, storeId: initialStoreId, source }: Props
 									alignItems: { xs: 'stretch', sm: 'center' },
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(backRoute)}>
 									{backLabel}
 								</Button>
 								{!isStoreStockSource && !isLoading && !error && stockBalance && (

@@ -55,7 +55,7 @@ import {
 import { inventorySchema } from '@/utils/formValidationSchemas';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
 import { splitAutocompleteRenderParams } from '@/utils/muiAutocompleteSlots';
-import { INVENTORY_VIEW } from '@/utils/routes';
+import { withStore, INVENTORY_LIST, INVENTORY_VIEW } from '@/utils/routes';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { useLanguage, useToast } from '@/utils/hooks';
 import Styles from '@/styles/dashboard/dashboard.module.sass';
@@ -379,7 +379,7 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 							<Button
 								variant="outlined"
 								startIcon={<ArrowBackIcon />}
-								onClick={() => router.back()}
+								onClick={() => router.push(withStore(INVENTORY_LIST, inventory?.store ?? storeId))}
 								sx={{ width: 'fit-content' }}
 							>
 								{t.magasin.backToInventory}

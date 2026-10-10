@@ -42,7 +42,7 @@ import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages
 import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeleteProductMutation, useGetProductQuery } from '@/store/services/magasin';
-import { CATALOG_EDIT, CATALOG_LIST } from '@/utils/routes';
+import { withStore, CATALOG_EDIT, CATALOG_LIST } from '@/utils/routes';
 import { extractApiErrorMessage, formatDateShort, formatNumber } from '@/utils/helpers';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
 import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '@/types/_initTypes';
@@ -176,7 +176,7 @@ const CatalogViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
 				try {
 					await deleteProduct({ id, store: storeId }).unwrap();
 					onSuccess(t.magasin.productDeleted);
-					router.push(CATALOG_LIST);
+					router.push(withStore(CATALOG_LIST, storeId));
 				} catch (deleteError) {
 					onError(extractApiErrorMessage(deleteError, t.magasin.productDeleteError));
 				}
@@ -201,7 +201,7 @@ const CatalogViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
 									alignItems: { xs: 'stretch', sm: 'center' },
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(withStore(CATALOG_LIST, storeId))}>
 									{t.magasin.backToCatalog}
 								</Button>
 								{!isLoading && !error && product && (

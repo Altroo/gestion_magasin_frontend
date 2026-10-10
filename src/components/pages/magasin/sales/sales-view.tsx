@@ -3,6 +3,7 @@
 import { runWithCleanup } from '@/utils/runWithCleanup';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { withStore, SALES_LIST } from '@/utils/routes';
 import { Alert, Box, Button, Chip, Divider, Stack } from '@mui/material';
 import {
 	ArrowBack as ArrowBackIcon,
@@ -101,7 +102,7 @@ const SalesViewClient = ({ session, id }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(withStore(SALES_LIST, sale?.store))}>
 									{t.magasin.backToSales}
 								</Button>
 								<Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>

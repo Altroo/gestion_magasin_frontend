@@ -40,7 +40,7 @@ import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-lab
 import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeleteAttendanceRecordMutation, useGetAttendanceRecordQuery } from '@/store/services/magasin';
-import { ATTENDANCE_EDIT, ATTENDANCE_LIST } from '@/utils/routes';
+import { withStore, ATTENDANCE_EDIT, ATTENDANCE_LIST } from '@/utils/routes';
 import { extractApiErrorMessage, formatDate, formatNumber } from '@/utils/helpers';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
 import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '@/types/_initTypes';
@@ -116,7 +116,7 @@ const AttendanceViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 				try {
 					await deleteAttendance({ id }).unwrap();
 					onSuccess(t.magasin.attendanceDeleted);
-					router.push(ATTENDANCE_LIST);
+					router.push(withStore(ATTENDANCE_LIST, attendance?.store ?? storeId));
 				} catch (deleteError) {
 					onError(extractApiErrorMessage(deleteError, t.magasin.attendanceDeleteError));
 				}
@@ -140,7 +140,7 @@ const AttendanceViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(withStore(ATTENDANCE_LIST, attendance?.store ?? storeId))}>
 									{t.magasin.backToAttendance}
 								</Button>
 								{attendance && (

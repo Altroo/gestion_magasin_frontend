@@ -57,7 +57,7 @@ import {
 import { purchaseSchema } from '@/utils/formValidationSchemas';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
 import { splitAutocompleteRenderParams } from '@/utils/muiAutocompleteSlots';
-import { PURCHASES_VIEW } from '@/utils/routes';
+import { PURCHASES_LIST, PURCHASES_VIEW } from '@/utils/routes';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { useLanguage, useToast } from '@/utils/hooks';
 import Styles from '@/styles/dashboard/dashboard.module.sass';
@@ -395,7 +395,7 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 							<Button
 								variant="outlined"
 								startIcon={<ArrowBackIcon />}
-								onClick={() => router.back()}
+								onClick={() => router.push(PURCHASES_LIST)}
 								sx={{ width: 'fit-content' }}
 							>
 								{t.magasin.backToPurchases}

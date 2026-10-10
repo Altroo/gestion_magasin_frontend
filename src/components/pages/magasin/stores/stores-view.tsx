@@ -140,7 +140,7 @@ const StoresViewClient = ({ session, id }: Props) => {
 									alignItems: { xs: 'stretch', sm: 'center' },
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(STORES_LIST)}>
 									{t.magasin.backToStores}
 								</Button>
 								{!isLoading && !error && store && (

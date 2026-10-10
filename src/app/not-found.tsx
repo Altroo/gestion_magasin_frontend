@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Typography, Button, Paper, Stack } from '@mui/material';
-import { SentimentDissatisfied as SadIcon, Home as HomeIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+import { SentimentDissatisfied as SadIcon, Home as HomeIcon } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { DASHBOARD } from '@/utils/routes';
 import { useLanguage } from '@/utils/hooks';
@@ -43,9 +43,6 @@ const NotFound = () => {
 					{t.errors.pageNotFoundText}
 				</Typography>
 				<Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ justifyContent: 'center' }}>
-					<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.back()} size="large">
-						{t.common.back}
-					</Button>
 					<Button variant="contained" startIcon={<HomeIcon />} onClick={() => router.push(DASHBOARD)} size="large">
 						{t.common.dashboard}
 					</Button>
