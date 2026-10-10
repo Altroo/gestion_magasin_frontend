@@ -1,0 +1,74 @@
+export type ChatShortcut = { command: string; title: string; help: string; example: string };
+export type NavigationTarget = {
+	application: 'gestion_magasin';
+	resource: string;
+	identifier: number | null;
+	company_id: number;
+	path: string;
+};
+export type ChatRecord = {
+	can_delete?: boolean;
+	can_print?: boolean;
+	quantity?: string;
+	reference?: string;
+	can_update?: boolean;
+	id: number;
+	name?: string;
+	number?: string;
+	description?: string;
+	notes?: string;
+	project?: string;
+	client?: string;
+	supplier?: string;
+	status?: string;
+	date?: string;
+	amount?: string;
+	currency?: string;
+	navigation?: NavigationTarget;
+	details?: { label: string; label_en: string; value: string; status_code?: string }[];
+};
+export type ChatCard = {
+	format?: 'pdf' | 'docx';
+	language?: 'fr' | 'en';
+	type:
+		'record_list' | 'financial_summary' | 'navigation' | 'knowledge' | 'confirmation' | 'confirmation_status' | 'pdf';
+	resource?: string;
+	items?: ChatRecord[];
+	has_more?: boolean;
+	target?: NavigationTarget;
+	metric?: string;
+	value?: string;
+	currency?: string;
+	period?: { date_from: string; date_to: string };
+	label_en?: string;
+	definition?: string;
+	definition_en?: string;
+	as_of?: string;
+	scope?: string;
+	documents?: { document_id: string; version: string; title: string; content: string }[];
+	action_id?: string;
+	operation?: 'update' | 'delete';
+	record_id?: number;
+	company_id?: number;
+	label?: string;
+	changes?: Record<string, string | null>;
+	before?: Record<string, string | null>;
+	warning?: string;
+	message?: string;
+	number?: string;
+};
+export type ChatMessage = { id: string; role: 'user' | 'assistant'; text: string; cards?: ChatCard[] };
+export type ChatCapabilities = {
+	application?: 'gestion_magasin';
+	languages: string[];
+	companies: {
+		id: number;
+		name: string;
+		can_update: boolean;
+		can_delete: boolean;
+		can_create: boolean;
+		can_print: boolean;
+		suggestions: string[];
+		shortcuts?: ChatShortcut[];
+	}[];
+};

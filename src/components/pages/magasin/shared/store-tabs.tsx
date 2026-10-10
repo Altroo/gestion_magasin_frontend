@@ -1,10 +1,12 @@
 'use client';
 
 import { Alert, Box, Tab, Tabs } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useGetMyStoresQuery } from '@/store/services/magasin';
-import { useLanguage } from '@/utils/hooks';
+import { useLanguage, useAppSelector } from '@/utils/hooks';
+import { getProfilState } from '@/store/selectors';
+import { publishChatAIStore } from '@/utils/chatAIStoreScope';
 import type { StoreMembershipType } from '@/types/gestionMagasinTypes';
 
 type Props = {
@@ -66,6 +68,12 @@ const StoreTabs = ({ selectedStoreId, onChange, token, includeMbrSouth = false, 
 		.filter((membership) => isStoreTabVisible(membership, includeMbrSouth))
 		.map((membership) => membership.store);
 	const visibleActiveStoreId = selectedStoreId ?? stores[0]?.id;
+	const profile = useAppSelector(getProfilState);
+	const validStoreId = stores.some(store => store.id === visibleActiveStoreId) ? visibleActiveStoreId : undefined;
+	useEffect(() => {
+		if (!profile.id || !validStoreId) return;
+		return publishChatAIStore({pathname, owner: profile.id, storeId: validStoreId});
+	}, [pathname, profile.id, validStoreId]);
 
 	if (!stores.length) {
 		return <Alert severity="warning">{t.errors.accessDeniedText}</Alert>;

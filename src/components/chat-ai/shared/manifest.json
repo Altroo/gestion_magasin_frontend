@@ -1,0 +1,11 @@
+{
+  "component": "Chat AI Assistant",
+  "version": "1.0.0",
+  "files": {
+    "ChatAIInterface.tsx": "000a15034720dd53fbf54e41fc0d09c42bea5575ecc220a0faafc0ce82208ffa",
+    "ChatAIComposer.tsx": "612766f6e1592b69770a773516c5cac85dee47f80e338cb3b55e766cd8da0bbc",
+    "ChatAIShortcuts.tsx": "2fabfad73d114d575ff1ac90170701151ece664f0c6d9d4d7d6e9179491e17a0",
+    "ChatAIIcons.tsx": "bfc96bce2b6f499c4369bacf3d5713c7e7aa52b50e9effd3a0cad40729b7fbb5",
+    "chat-ai.module.css": "74ef3ad350822a05c2195a2eb697bf516506de79522f7818d5f2c38d13355453"
+  }
+}
