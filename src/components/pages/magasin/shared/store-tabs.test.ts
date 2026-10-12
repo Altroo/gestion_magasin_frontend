@@ -96,11 +96,13 @@ describe('store context on list return', () => {
 		window.history.replaceState({}, '', '/dashboard/article?store_id=2&page=3&ordering=name#items');
 		const pagination = renderHook(() => useDataGridPagination());
 		mockReplace.mockImplementation((href: string) => {
-			mockSearchParams.set('store_id', new URL(href, 'http://localhost').searchParams.get('store_id')!);
+			for (const key of [...mockSearchParams.keys()]) mockSearchParams.delete(key);
+			new URL(href, 'http://localhost').searchParams.forEach((value, key) => mockSearchParams.set(key, value));
 		});
 		const onChange = jest.fn(() => pagination.result.current[1]((current) => ({ ...current, page: 0 })));
 		const view = render(createElement(StoreTabs, { selectedStoreId: 2, onChange }));
 		fireEvent.click(screen.getByRole('tab', { name: 'first' }));
+		pagination.rerender();
 		expect(onChange).toHaveBeenCalledWith(1);
 		expect(mockReplace).toHaveBeenCalledWith('/dashboard/article?store_id=1&page=1&ordering=name&page_size=10#items', {
 			scroll: false,

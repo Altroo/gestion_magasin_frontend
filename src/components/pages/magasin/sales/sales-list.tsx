@@ -45,7 +45,7 @@ const SalesClient = ({ session }: SessionProps) => {
 	const storeId = selectedStoreId ?? defaultStore?.id;
 	const selectedMembership = memberships.find((membership) => membership.store.id === storeId);
 	const canCreateSale = roleCanCreateSale(selectedMembership?.role.code);
-	const [paginationModel, setPaginationModel, sorting] = useDataGridPagination();
+	const [paginationModel, setPaginationModel, sorting] = useDataGridPagination(10, '', { store_id: storeId });
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});

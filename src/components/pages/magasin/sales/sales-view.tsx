@@ -1,5 +1,6 @@
 'use client';
 
+import { listReturnUrl } from '@/utils/listReturn';
 import { runWithCleanup } from '@/utils/runWithCleanup';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -102,7 +103,7 @@ const SalesViewClient = ({ session, id }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(withStore(SALES_LIST, sale?.store))}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(listReturnUrl(withStore(SALES_LIST, sale?.store)))}>
 									{t.magasin.backToSales}
 								</Button>
 								<Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>

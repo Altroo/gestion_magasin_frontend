@@ -1,5 +1,6 @@
 'use client';
 
+import { listReturnUrl } from '@/utils/listReturn';
 import { EMPTY_PROMOTION_LINE as emptyLine } from '@/utils/rawData';
 import { runAsyncWithErrorHandler } from '@/utils/runWithCleanup';
 import { runWithCleanup } from '@/utils/runWithCleanup';
@@ -176,7 +177,7 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 										? t.magasin.promotionCreatedForStores(response.count)
 										: t.magasin.promotionCreated,
 								);
-								router.push(createdPromotion ? PROMOTIONS_VIEW(createdPromotion.id) : PROMOTIONS_LIST);
+								router.push(createdPromotion ? PROMOTIONS_VIEW(createdPromotion.id) : listReturnUrl(PROMOTIONS_LIST));
 							}
 						},
 						async (e) => {
@@ -450,7 +451,7 @@ const PromotionsFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(PROMOTIONS_LIST)}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(listReturnUrl(PROMOTIONS_LIST))}>
 									{t.magasin.backToPromotions}
 								</Button>
 							</Stack>

@@ -1,5 +1,6 @@
 'use client';
 
+import { listReturnUrl } from '@/utils/listReturn';
 import { runWithCleanup } from '@/utils/runWithCleanup';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -57,7 +58,7 @@ const PromotionsViewClient = ({ session, id }: Props) => {
 				try {
 					await deletePromotion({ id }).unwrap();
 					onSuccess(t.magasin.promotionDeleted);
-					router.push(PROMOTIONS_LIST);
+					router.push(listReturnUrl(PROMOTIONS_LIST));
 				} catch (deleteError) {
 					onError(extractApiErrorMessage(deleteError, t.magasin.promotionDeleteError));
 				}
@@ -81,7 +82,7 @@ const PromotionsViewClient = ({ session, id }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(PROMOTIONS_LIST)}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(listReturnUrl(PROMOTIONS_LIST))}>
 									{t.magasin.backToPromotions}
 								</Button>
 								{promotion && (

@@ -5,6 +5,7 @@ import '@testing-library/jest-dom';
 // Mock next/navigation
 const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({
+	useSearchParams: () => new URLSearchParams(window.location.search),
 	useRouter: () => ({
 		push: mockPush,
 		back: jest.fn(),

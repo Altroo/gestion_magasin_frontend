@@ -1,5 +1,6 @@
 'use client';
 
+import { listReturnUrl } from '@/utils/listReturn';
 import { runWithCleanup } from '@/utils/runWithCleanup';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -63,7 +64,7 @@ const InventoryViewClient = ({ session, id }: Props) => {
 				try {
 					await deleteInventory({ id }).unwrap();
 					onSuccess(t.magasin.inventoryDeleted);
-					router.push(withStore(INVENTORY_LIST, inventory?.store));
+					router.push(listReturnUrl(withStore(INVENTORY_LIST, inventory?.store)));
 				} catch (deleteError) {
 					onError(extractApiErrorMessage(deleteError, t.magasin.inventoryDeleteError));
 				}
@@ -104,7 +105,7 @@ const InventoryViewClient = ({ session, id }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(withStore(INVENTORY_LIST, inventory?.store))}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(listReturnUrl(withStore(INVENTORY_LIST, inventory?.store)))}>
 									{t.magasin.backToInventory}
 								</Button>
 								{inventory && (

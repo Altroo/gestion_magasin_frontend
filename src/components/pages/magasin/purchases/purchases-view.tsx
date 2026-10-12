@@ -1,5 +1,6 @@
 'use client';
 
+import { listReturnUrl } from '@/utils/listReturn';
 import { runWithCleanup } from '@/utils/runWithCleanup';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -61,7 +62,7 @@ const PurchasesViewClient = ({ session, id }: Props) => {
 				try {
 					await deletePurchase({ id }).unwrap();
 					onSuccess(t.magasin.purchaseDeleted);
-					router.push(PURCHASES_LIST);
+					router.push(listReturnUrl(PURCHASES_LIST));
 				} catch (deleteError) {
 					onError(extractApiErrorMessage(deleteError, t.magasin.purchaseDeleteError));
 				}
@@ -102,7 +103,7 @@ const PurchasesViewClient = ({ session, id }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(PURCHASES_LIST)}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(listReturnUrl(PURCHASES_LIST))}>
 									{t.magasin.backToPurchases}
 								</Button>
 								{purchase && (

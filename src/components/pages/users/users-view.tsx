@@ -1,5 +1,6 @@
 'use client';
 
+import { listReturnUrl } from '@/utils/listReturn';
 import { runWithCleanup } from '@/utils/runWithCleanup';
 import { isValidElement, useState, type FC, Fragment, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
@@ -141,7 +142,7 @@ const UsersViewClient: FC<Props> = ({ session, id }) => {
 				try {
 					await deleteRecord({ id }).unwrap();
 					onSuccess(t.users.userDeletedSuccess);
-					router.push(USERS_LIST);
+					router.push(listReturnUrl(USERS_LIST));
 				} catch (err) {
 					onError(extractApiErrorMessage(err, t.users.userDeleteError));
 				}
@@ -186,7 +187,7 @@ const UsersViewClient: FC<Props> = ({ session, id }) => {
 								<Button
 									variant="outlined"
 									startIcon={<ArrowBackIcon />}
-									onClick={() => router.push(USERS_LIST)}
+									onClick={() => router.push(listReturnUrl(USERS_LIST))}
 									sx={{ width: isMobile ? '100%' : 'auto' }}
 								>
 									{t.navigation.usersList}

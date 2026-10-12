@@ -1,5 +1,6 @@
 'use client';
 
+import { listReturnUrl } from '@/utils/listReturn';
 import { runWithCleanup } from '@/utils/runWithCleanup';
 import { isValidElement, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -116,7 +117,7 @@ const AttendanceViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 				try {
 					await deleteAttendance({ id }).unwrap();
 					onSuccess(t.magasin.attendanceDeleted);
-					router.push(withStore(ATTENDANCE_LIST, attendance?.store ?? storeId));
+					router.push(listReturnUrl(withStore(ATTENDANCE_LIST, attendance?.store ?? storeId)));
 				} catch (deleteError) {
 					onError(extractApiErrorMessage(deleteError, t.magasin.attendanceDeleteError));
 				}
@@ -140,7 +141,7 @@ const AttendanceViewClient = ({ session, id, storeId: initialStoreId }: Props) =
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(withStore(ATTENDANCE_LIST, attendance?.store ?? storeId))}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(listReturnUrl(withStore(ATTENDANCE_LIST, attendance?.store ?? storeId)))}>
 									{t.magasin.backToAttendance}
 								</Button>
 								{attendance && (

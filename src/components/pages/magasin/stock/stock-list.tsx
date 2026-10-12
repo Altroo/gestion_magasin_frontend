@@ -62,13 +62,13 @@ const StockClient = ({ session }: SessionProps) => {
 	const canManageStore = roleCanManage(selectedMembership?.role.code);
 	const canApproveRequests = permissions.is_staff || roleCanApproveRequests(selectedMembership?.role.code);
 
-	const [paginationModel, setPaginationModel, sorting] = useDataGridPagination();
+	const [paginationModel, setPaginationModel, sorting] = useDataGridPagination(10, '', { store_id: storeId });
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});
 	const [chipFilterParams, setChipFilterParams] = useState<Record<string, string>>({});
 	const [selectedIds, setSelectedIds] = useState<number[]>([]);
-	const [requestPaginationModel, setRequestPaginationModel, requestSorting] = useDataGridPagination(5, 'requests');
+	const [requestPaginationModel, setRequestPaginationModel, requestSorting] = useDataGridPagination(5, 'requests', { store_id: storeId });
 	const [requestSearchTerm, setRequestSearchTerm] = useState('');
 	const [requestFilterModel, setRequestFilterModel] = useState<GridFilterModel>({
 		items: [],

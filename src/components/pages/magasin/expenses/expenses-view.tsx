@@ -1,5 +1,6 @@
 'use client';
 
+import { listReturnUrl } from '@/utils/listReturn';
 import { runWithCleanup } from '@/utils/runWithCleanup';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -52,7 +53,7 @@ const ExpensesViewClient = ({ session, id }: Props) => {
 				try {
 					await deleteExpense({ id }).unwrap();
 					onSuccess(t.magasin.expenseDeleted);
-					router.push(withStore(EXPENSES_LIST, expense?.store));
+					router.push(listReturnUrl(withStore(EXPENSES_LIST, expense?.store)));
 				} catch (deleteError) {
 					onError(extractApiErrorMessage(deleteError, t.magasin.expenseDeleteError));
 				}
@@ -76,7 +77,7 @@ const ExpensesViewClient = ({ session, id }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(withStore(EXPENSES_LIST, expense?.store))}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(listReturnUrl(withStore(EXPENSES_LIST, expense?.store)))}>
 									{t.magasin.backToExpenses}
 								</Button>
 								{expense && (

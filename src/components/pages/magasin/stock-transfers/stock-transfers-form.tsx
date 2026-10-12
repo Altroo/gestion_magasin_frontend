@@ -1,5 +1,6 @@
 'use client';
 
+import { listReturnUrl } from '@/utils/listReturn';
 import { EMPTY_STOCK_TRANSFER_LINE as emptyLine } from '@/utils/rawData';
 import { useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
@@ -342,7 +343,7 @@ const StockTransfersFormClient = ({ session, id }: Props) => {
 							<Button
 								variant="outlined"
 								startIcon={<ArrowBackIcon />}
-								onClick={() => router.push(STOCK_TRANSFERS_LIST)}
+								onClick={() => router.push(listReturnUrl(STOCK_TRANSFERS_LIST))}
 								sx={{ width: 'fit-content' }}
 							>
 								{t.magasin.backToTransfers}

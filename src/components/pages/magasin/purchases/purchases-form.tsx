@@ -1,5 +1,6 @@
 'use client';
 
+import { listReturnUrl } from '@/utils/listReturn';
 import { EMPTY_PURCHASE_LINE as emptyLine } from '@/utils/rawData';
 import { useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
@@ -395,7 +396,7 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 							<Button
 								variant="outlined"
 								startIcon={<ArrowBackIcon />}
-								onClick={() => router.push(PURCHASES_LIST)}
+								onClick={() => router.push(listReturnUrl(PURCHASES_LIST))}
 								sx={{ width: 'fit-content' }}
 							>
 								{t.magasin.backToPurchases}

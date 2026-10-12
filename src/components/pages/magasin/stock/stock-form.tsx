@@ -1,5 +1,6 @@
 'use client';
 
+import { listReturnUrl } from '@/utils/listReturn';
 import { runAsyncWithErrorHandler } from '@/utils/runWithCleanup';
 import { runWithCleanup } from '@/utils/runWithCleanup';
 import { useState, type MouseEvent } from 'react';
@@ -157,7 +158,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 									}).unwrap();
 								}
 								onSuccess(canAdjustDirectly ? t.magasin.stockAdjusted : t.magasin.stockRequestSent);
-								router.push(withStore(STOCK_LIST, stockBalance?.store ?? storeId));
+								router.push(listReturnUrl(withStore(STOCK_LIST, stockBalance?.store ?? storeId)));
 							}
 						},
 						async (e) => {
@@ -241,7 +242,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(withStore(STOCK_LIST, stockBalance?.store ?? storeId))}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(listReturnUrl(withStore(STOCK_LIST, stockBalance?.store ?? storeId)))}>
 									{t.magasin.backToStock}
 								</Button>
 							</Stack>

@@ -1,5 +1,6 @@
 'use client';
 
+import { listReturnUrl } from '@/utils/listReturn';
 import { runWithCleanup } from '@/utils/runWithCleanup';
 import { isValidElement, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
@@ -176,7 +177,7 @@ const CatalogViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
 				try {
 					await deleteProduct({ id, store: storeId }).unwrap();
 					onSuccess(t.magasin.productDeleted);
-					router.push(withStore(CATALOG_LIST, storeId));
+					router.push(listReturnUrl(withStore(CATALOG_LIST, storeId)));
 				} catch (deleteError) {
 					onError(extractApiErrorMessage(deleteError, t.magasin.productDeleteError));
 				}
@@ -201,7 +202,7 @@ const CatalogViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
 									alignItems: { xs: 'stretch', sm: 'center' },
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(withStore(CATALOG_LIST, storeId))}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(listReturnUrl(withStore(CATALOG_LIST, storeId)))}>
 									{t.magasin.backToCatalog}
 								</Button>
 								{!isLoading && !error && product && (

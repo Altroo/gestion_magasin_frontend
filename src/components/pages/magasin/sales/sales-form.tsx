@@ -1,5 +1,6 @@
 'use client';
 
+import { listReturnUrl } from '@/utils/listReturn';
 import { EMPTY_SALE_LINE as emptyLine } from '@/utils/rawData';
 import { runWithCleanup } from '@/utils/runWithCleanup';
 import { useState, type MouseEvent } from 'react';
@@ -536,7 +537,7 @@ const SalesFormClient = ({ session, storeId: initialStoreId }: Props) => {
 							<Button
 								variant="outlined"
 								startIcon={<ArrowBackIcon />}
-								onClick={() => router.push(withStore(SALES_LIST, Number(formik.values.store)))}
+								onClick={() => router.push(listReturnUrl(withStore(SALES_LIST, Number(formik.values.store))))}
 								sx={{ alignSelf: 'flex-start' }}
 							>
 								{t.magasin.backToSales}

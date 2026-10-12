@@ -1,5 +1,6 @@
 'use client';
 
+import { listReturnUrl } from '@/utils/listReturn';
 import { DEFAULT_ATTENDANCE_RESPONSIBLE, shiftStartMinutes } from '@/utils/rawData';
 import { runWithCleanup } from '@/utils/runWithCleanup';
 import { useEffect, useRef, useState } from 'react';
@@ -173,7 +174,7 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 						} else {
 							await addAttendance(toPayload(values, storeId)).unwrap();
 							onSuccess(t.magasin.attendanceCreated);
-							router.push(withStore(ATTENDANCE_LIST, attendance?.store ?? storeId));
+							router.push(listReturnUrl(withStore(ATTENDANCE_LIST, attendance?.store ?? storeId)));
 						}
 					} catch (e) {
 						onError(
@@ -286,7 +287,7 @@ const AttendanceFormClient = ({ session, id, storeId: initialStoreId }: Props) =
 							<Button
 								variant="outlined"
 								startIcon={<ArrowBackIcon />}
-								onClick={() => router.push(withStore(ATTENDANCE_LIST, attendance?.store ?? storeId))}
+								onClick={() => router.push(listReturnUrl(withStore(ATTENDANCE_LIST, attendance?.store ?? storeId)))}
 								sx={{ alignSelf: 'flex-start' }}
 							>
 								{t.magasin.backToAttendance}

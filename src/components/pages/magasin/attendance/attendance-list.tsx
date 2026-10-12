@@ -64,7 +64,7 @@ const AttendanceClient = ({ session }: SessionProps) => {
 	const selectedMembership = memberships.find((membership) => membership.store.id === storeId);
 	const isMbrSouth = selectedMembership?.store.code === 'mbr-south';
 	const canManageStore = roleCanManage(selectedMembership?.role.code);
-	const [paginationModel, setPaginationModel, sorting] = useDataGridPagination();
+	const [paginationModel, setPaginationModel, sorting] = useDataGridPagination(10, '', { store_id: storeId });
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});

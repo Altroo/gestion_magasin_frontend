@@ -1,5 +1,6 @@
 'use client';
 
+import { listReturnUrl } from '@/utils/listReturn';
 import { runWithCleanup } from '@/utils/runWithCleanup';
 import { isValidElement, useState, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -123,7 +124,7 @@ const StockViewClient = ({ session, id, storeId: initialStoreId, source }: Props
 				try {
 					await deleteStockBalance({ id }).unwrap();
 					onSuccess(t.magasin.stockDeleted);
-					router.push(backRoute);
+					router.push(listReturnUrl(backRoute));
 				} catch (deleteError) {
 					onError(extractApiErrorMessage(deleteError, t.magasin.stockDeleteError));
 				}
@@ -148,7 +149,7 @@ const StockViewClient = ({ session, id, storeId: initialStoreId, source }: Props
 									alignItems: { xs: 'stretch', sm: 'center' },
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(backRoute)}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(listReturnUrl(backRoute))}>
 									{backLabel}
 								</Button>
 								{!isStoreStockSource && !isLoading && !error && stockBalance && (

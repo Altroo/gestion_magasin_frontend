@@ -1,26 +1,14 @@
 'use client';
 
-import { useMemo, useSyncExternalStore } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { Dispatch, SetStateAction } from 'react';
+import { rememberListPagination, type ListScope } from '@/utils/listReturn';
 import type { GridPaginationModel, GridSortModel } from '@mui/x-data-grid';
 
-const DATA_GRID_PAGINATION_EVENT = 'data-grid-pagination-change';
 const DATA_GRID_PAGE_PARAM = 'page';
 const DATA_GRID_PAGE_SIZE_PARAM = 'page_size';
 const DATA_GRID_PAGE_SIZES = new Set([5, 10, 25, 50, 100]);
-
-const subscribeToDataGridPagination = (listener: () => void) => {
-	window.addEventListener('popstate', listener);
-	window.addEventListener(DATA_GRID_PAGINATION_EVENT, listener);
-
-	return () => {
-		window.removeEventListener('popstate', listener);
-		window.removeEventListener(DATA_GRID_PAGINATION_EVENT, listener);
-	};
-};
-
-const getDataGridPaginationSnapshot = () => window.location.search;
-const getDataGridPaginationServerSnapshot = () => '';
 
 export const parseDataGridPagination = (search: string, defaultPageSize = 10, gridKey = ''): GridPaginationModel => {
 	const searchParams = new URLSearchParams(search);
@@ -49,13 +37,15 @@ export const parseDataGridOrdering = (search: string, gridKey = '') => {
 export const useDataGridPagination = (
 	defaultPageSize = 10,
 	gridKey = '',
+	scope: ListScope = {},
 ): [GridPaginationModel, Dispatch<SetStateAction<GridPaginationModel>>, DataGridSorting] => {
-	const search = useSyncExternalStore(
-		subscribeToDataGridPagination,
-		getDataGridPaginationSnapshot,
-		getDataGridPaginationServerSnapshot,
-	);
+	const search = useSearchParams()?.toString() ?? '';
 	const paginationModel = parseDataGridPagination(search, defaultPageSize, gridKey);
+	const companyId = scope.company_id;
+	const storeId = scope.store_id;
+	useEffect(() => {
+		rememberListPagination(window.location.href, { company_id: companyId, store_id: storeId });
+	}, [search, companyId, storeId]);
 
 	const setPaginationModel: Dispatch<SetStateAction<GridPaginationModel>> = (value) => {
 		const currentPaginationModel = parseDataGridPagination(window.location.search, defaultPageSize, gridKey);
@@ -77,8 +67,7 @@ export const useDataGridPagination = (
 			gridKey ? `${gridKey}_${DATA_GRID_PAGE_SIZE_PARAM}` : DATA_GRID_PAGE_SIZE_PARAM,
 			String(nextPaginationModel.pageSize),
 		);
-		window.history.replaceState(window.history.state, '', url);
-		window.dispatchEvent(new Event(DATA_GRID_PAGINATION_EVENT));
+		window.history.replaceState(null, '', url);
 	};
 
 	const ordering = parseDataGridOrdering(search, gridKey);
@@ -96,8 +85,7 @@ export const useDataGridPagination = (
 		if (nextOrdering) url.searchParams.set(gridKey ? `${gridKey}_ordering` : 'ordering', nextOrdering);
 		else url.searchParams.delete(gridKey ? `${gridKey}_ordering` : 'ordering');
 		url.searchParams.set(gridKey ? `${gridKey}_page` : 'page', '1');
-		window.history.replaceState(window.history.state, '', url);
-		window.dispatchEvent(new Event(DATA_GRID_PAGINATION_EVENT));
+		window.history.replaceState(null, '', url);
 	};
 	return [paginationModel, setPaginationModel, { ordering, sortModel, onSortModelChange }];
 };

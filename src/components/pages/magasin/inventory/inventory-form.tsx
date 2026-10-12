@@ -1,5 +1,6 @@
 'use client';
 
+import { listReturnUrl } from '@/utils/listReturn';
 import { EMPTY_INVENTORY_LINE as emptyLine } from '@/utils/rawData';
 import { useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
@@ -379,7 +380,7 @@ const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) =>
 							<Button
 								variant="outlined"
 								startIcon={<ArrowBackIcon />}
-								onClick={() => router.push(withStore(INVENTORY_LIST, inventory?.store ?? storeId))}
+								onClick={() => router.push(listReturnUrl(withStore(INVENTORY_LIST, inventory?.store ?? storeId)))}
 								sx={{ width: 'fit-content' }}
 							>
 								{t.magasin.backToInventory}

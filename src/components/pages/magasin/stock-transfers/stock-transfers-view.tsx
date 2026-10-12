@@ -1,5 +1,6 @@
 'use client';
 
+import { listReturnUrl } from '@/utils/listReturn';
 import { runWithCleanup } from '@/utils/runWithCleanup';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -63,7 +64,7 @@ const StockTransfersViewClient = ({ session, id }: Props) => {
 				try {
 					await deleteTransfer({ id }).unwrap();
 					onSuccess(t.magasin.transferDeleted);
-					router.push(STOCK_TRANSFERS_LIST);
+					router.push(listReturnUrl(STOCK_TRANSFERS_LIST));
 				} catch (deleteError) {
 					onError(extractApiErrorMessage(deleteError, t.magasin.transferDeleteError));
 				}
@@ -104,7 +105,7 @@ const StockTransfersViewClient = ({ session, id }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(STOCK_TRANSFERS_LIST)}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(listReturnUrl(STOCK_TRANSFERS_LIST))}>
 									{t.magasin.backToTransfers}
 								</Button>
 								{transfer && (

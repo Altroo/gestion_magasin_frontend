@@ -1,5 +1,6 @@
 'use client';
 
+import { listReturnUrl } from '@/utils/listReturn';
 import { EMPTY_STOCK_TRACKING_ITEM as emptyStockTrackingItem } from '@/utils/rawData';
 import { runWithCleanup } from '@/utils/runWithCleanup';
 import { useState, type MouseEvent } from 'react';
@@ -187,7 +188,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 						} else {
 							await addProduct({ store: storeId, data: toPayload(values) }).unwrap();
 							onSuccess(t.magasin.productCreated);
-							router.push(withStore(CATALOG_LIST, storeId));
+							router.push(listReturnUrl(withStore(CATALOG_LIST, storeId)));
 						}
 					} catch (e) {
 						onError(
@@ -434,7 +435,7 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(withStore(CATALOG_LIST, storeId))}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(listReturnUrl(withStore(CATALOG_LIST, storeId)))}>
 									{t.magasin.backToCatalog}
 								</Button>
 							</Stack>

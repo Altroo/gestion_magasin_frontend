@@ -1,5 +1,6 @@
 'use client';
 
+import { listReturnUrl } from '@/utils/listReturn';
 import { useState, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -202,7 +203,7 @@ const ExpensesFormClient = ({ session, id, storeId: initialStoreId }: Props) => 
 							<Button
 								variant="outlined"
 								startIcon={<ArrowBackIcon />}
-								onClick={() => router.push(withStore(EXPENSES_LIST, expense?.store ?? storeId))}
+								onClick={() => router.push(listReturnUrl(withStore(EXPENSES_LIST, expense?.store ?? storeId)))}
 								sx={{ width: 'fit-content' }}
 							>
 								{t.magasin.backToExpenses}

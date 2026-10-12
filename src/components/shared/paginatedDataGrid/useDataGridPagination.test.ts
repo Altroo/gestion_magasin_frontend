@@ -1,3 +1,32 @@
+// Model Next's canonical query independently from the browser history commit.
+let mockCanonicalSearch: string | null = null;
+jest.mock('next/navigation', () => ({
+	useSearchParams: () => {
+		const React = jest.requireActual<typeof import('react')>('react');
+		const search = React.useSyncExternalStore(
+			(listener) => {
+				window.addEventListener('popstate', listener);
+				window.addEventListener('test-next-query', listener);
+				return () => {
+					window.removeEventListener('popstate', listener);
+					window.removeEventListener('test-next-query', listener);
+				};
+			},
+			() => mockCanonicalSearch ?? window.location.search,
+			() => '',
+		);
+		return new URLSearchParams(search);
+	},
+}));
+const replaceState = window.history.replaceState.bind(window.history);
+beforeAll(() => jest.spyOn(window.history, 'replaceState').mockImplementation((...args) => {
+	replaceState(...args);
+	window.dispatchEvent(new Event('test-next-query'));
+}));
+afterAll(() => jest.restoreAllMocks());
+afterEach(() => { mockCanonicalSearch = null; });
+
+import { listReturnUrl } from '@/utils/listReturn';
 import { act, renderHook } from '@testing-library/react';
 import { parseDataGridPagination, useDataGridPagination } from './useDataGridPagination';
 
@@ -64,4 +93,35 @@ it('preserves the sort model identity when only the page changes', () => {
 	const sortModel = result.current[2].sortModel;
 	act(() => result.current[1]({ page: 2, pageSize: 10 }));
 	expect(result.current[2].sortModel).toBe(sortModel);
+});
+
+
+it('records list pagination for an explicit return after unmount, without restoring fresh navigation', () => {
+	window.sessionStorage.clear();
+	window.history.replaceState({}, '', '/dashboard/users?page=3&page_size=10');
+	const first = renderHook(() => useDataGridPagination());
+	first.unmount();
+	window.history.replaceState({}, '', '/dashboard/users/42');
+	expect(listReturnUrl('/dashboard/users')).toBe('/dashboard/users?page=3&page_size=10');
+	window.history.replaceState({}, '', '/dashboard/users');
+	const fresh = renderHook(() => useDataGridPagination());
+	expect(fresh.result.current[0].page).toBe(0);
+	expect(listReturnUrl('/dashboard/users')).toBe('/dashboard/users');
+});
+
+it('reads the destination query before Next commits browser history', () => {
+	window.history.replaceState({}, '', '/dashboard/items/42');
+	mockCanonicalSearch = '?page=3&page_size=25&ordering=-name';
+	const { result } = renderHook(() => useDataGridPagination());
+	expect(result.current[0]).toEqual({ page: 2, pageSize: 25 });
+	expect(result.current[2].ordering).toBe('-name');
+	expect(window.location.pathname).toBe('/dashboard/items/42');
+});
+
+it('does not pass Next internal history markers when changing pagination', () => {
+	window.history.replaceState({ __NA: true }, '', '/dashboard/items?page=3&page_size=25');
+	const { result } = renderHook(() => useDataGridPagination());
+	act(() => result.current[1]({ page: 3, pageSize: 25 }));
+	expect(window.history.replaceState).toHaveBeenLastCalledWith(null, '', expect.any(URL));
+	expect(result.current[0]).toEqual({ page: 3, pageSize: 25 });
 });
