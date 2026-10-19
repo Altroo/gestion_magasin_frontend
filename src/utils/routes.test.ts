@@ -59,4 +59,18 @@ describe('routes', () => {
 		expect(routes.ATTENDANCE_VIEW(7, 1)).toBe('http://localhost:3006/dashboard/pointage/7?store_id=1');
 		expect(routes.ATTENDANCE_EDIT(7, 1)).toBe('http://localhost:3006/dashboard/pointage/7/edit?store_id=1');
 	});
+	it.each(['https://store.example.com/', 'https://store.example.com///'])('normalizes trailing slashes in %s', (prefix) => {
+		process.env.NEXT_PUBLIC_DOMAIN_URL_PREFIX = prefix;
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		const routes = require('./routes');
+		expect(routes.AUTH_LOGIN).toBe('https://store.example.com/login');
+	});
+
+	it('keeps store routes relative when the domain prefix is missing', () => {
+		Reflect.deleteProperty(process.env, 'NEXT_PUBLIC_DOMAIN_URL_PREFIX');
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		const routes = require('./routes');
+		expect(routes.SITE_ROOT).toBe('/');
+		expect(routes.DASHBOARD_STOCK).toBe('/dashboard/stock');
+	});
 });

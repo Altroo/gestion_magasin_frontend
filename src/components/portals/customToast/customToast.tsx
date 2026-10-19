@@ -1,5 +1,5 @@
 import { type Dispatch, type FC, type ReactNode, type SetStateAction, type SyntheticEvent, type Ref } from 'react';
-import { Stack, Snackbar, Slide } from '@mui/material';
+import { Stack, Snackbar, Slide, type SnackbarCloseReason } from '@mui/material';
 import { ThemeProvider } from '@/providers/scopedThemeProvider';
 import type { SlideProps } from '@mui/material/Slide';
 import Styles from './customToast.module.sass';
@@ -29,7 +29,7 @@ const TransitionUp = (props: SlideProps) => <Slide {...props} direction="up" />;
 const CustomToast: FC<Props> = (props) => {
 	const { type } = props;
 
-	const handleClose = (_event?: SyntheticEvent | Event, reason?: string) => {
+	const handleClose = (_event?: SyntheticEvent | Event | null, reason?: SnackbarCloseReason) => {
 		if (reason === 'clickaway') return;
 		props.setShow(false);
 	};
