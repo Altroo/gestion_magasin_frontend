@@ -164,11 +164,11 @@ export const ChatAIInterface = ({
   offset?: boolean;
 }) => (
   <div data-chat-ai-shell style={{ display: suppressed ? "none" : "contents" }}>
-    <ChatAIFloatingButton
+    {/* <ChatAIFloatingButton
       open={open}
       toggle={() => onOpenChange(!open)}
       offset={offset}
-    />
+    /> */}
     <ChatAIPanel
       minimized={!open || suppressed}
       close={() => onOpenChange(false)}
