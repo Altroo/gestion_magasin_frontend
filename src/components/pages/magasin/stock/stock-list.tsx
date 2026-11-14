@@ -49,18 +49,18 @@ import type { StockAddRequestType, StockBalanceType } from '@/types/gestionMagas
 const roleCanManage = (role?: string) => role === 'direction' || role === 'responsable';
 const roleCanApproveRequests = (role?: string) => role === 'direction';
 
-const StockClient = ({ session }: SessionProps) => {
+const StockClient = ({ session, central = true }: SessionProps & { central?: boolean }) => {
 	const token = useInitAccessToken(session);
 	const { t } = useLanguage();
 	const permissions = usePermission();
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
-	const { defaultStore, memberships } = useSelectedStore(token);
+	const { defaultStore, globalStore, globalMembership, memberships } = useSelectedStore(token);
 	const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
-	const storeId = selectedStoreId ?? defaultStore?.id;
+	const storeId = central ? globalStore?.id : selectedStoreId ?? defaultStore?.id;
 	const selectedMembership = memberships.find((membership) => membership.store.id === storeId);
-	const canManageStore = roleCanManage(selectedMembership?.role.code);
-	const canApproveRequests = permissions.is_staff || roleCanApproveRequests(selectedMembership?.role.code);
+	const canManageStore = central && (permissions.is_staff || roleCanManage(globalMembership?.role.code));
+	const canApproveRequests = central && (permissions.is_staff || roleCanApproveRequests(globalMembership?.role.code));
 
 	const [paginationModel, setPaginationModel, sorting] = useDataGridPagination(10, '', { store_id: storeId });
 	const [searchTerm, setSearchTerm] = useState('');
@@ -68,7 +68,7 @@ const StockClient = ({ session }: SessionProps) => {
 	const [customFilterParams, setCustomFilterParams] = useState<Record<string, string>>({});
 	const [chipFilterParams, setChipFilterParams] = useState<Record<string, string>>({});
 	const [selectedIds, setSelectedIds] = useState<number[]>([]);
-	const [requestPaginationModel, setRequestPaginationModel, requestSorting] = useDataGridPagination(5, 'requests', { store_id: storeId });
+	const [requestPaginationModel, setRequestPaginationModel, requestSorting] = useDataGridPagination(5, 'requests', central ? {} : { store_id: storeId });
 	const [requestSearchTerm, setRequestSearchTerm] = useState('');
 	const [requestFilterModel, setRequestFilterModel] = useState<GridFilterModel>({
 		items: [],
@@ -101,7 +101,7 @@ const StockClient = ({ session }: SessionProps) => {
 		refetch: refetchRequests,
 	} = useGetStockAddRequestsQuery(
 		{
-			store: storeId,
+			store: central ? undefined : storeId,
 			status: 'pending',
 			search: requestSearchTerm,
 			page: requestPaginationModel.page + 1,
@@ -373,21 +373,21 @@ const StockClient = ({ session }: SessionProps) => {
 			),
 		},
 		{
+			field: 'store_name',
+			headerName: t.magasin.store,
+			flex: 1,
+			minWidth: 150,
+			renderCell: (params: GridRenderCellParams<StockAddRequestType>) => (
+				<TooltipTextCell>{params.value ?? '-'}</TooltipTextCell>
+			),
+		},
+		{
 			field: 'quantity',
 			headerName: t.magasin.quantity,
 			flex: 0.8,
 			minWidth: 120,
 			renderCell: (params: GridRenderCellParams<StockAddRequestType>) => (
 				<TooltipTextCell fontWeight={600}>{formatNumber(params.value as string)}</TooltipTextCell>
-			),
-		},
-		{
-			field: 'unit_cost',
-			headerName: t.magasin.purchasePrice,
-			flex: 0.8,
-			minWidth: 130,
-			renderCell: (params: GridRenderCellParams<StockAddRequestType>) => (
-				<TooltipTextCell>{formatNumber(params.value as string)} Dhs</TooltipTextCell>
 			),
 		},
 		{
@@ -439,7 +439,7 @@ const StockClient = ({ session }: SessionProps) => {
 		<NavigationBar title={t.magasin.stock}>
 			<Protected permission="can_view">
 				<Box sx={magasinPageContainerSx}>
-					<StoreTabs
+					{!central && <StoreTabs
 						selectedStoreId={storeId}
 						onChange={(nextStoreId) => {
 							setSelectedStoreId(nextStoreId);
@@ -447,7 +447,7 @@ const StockClient = ({ session }: SessionProps) => {
 							resetSelection();
 						}}
 						token={token}
-					/>
+					/>}
 					<Box sx={magasinPageContentSx}>
 						<Stack
 							direction="row"
@@ -456,13 +456,13 @@ const StockClient = ({ session }: SessionProps) => {
 								flexWrap: 'wrap',
 							}}
 						>
-							{permissions.can_create && (canManageStore || selectedMembership) && (
+							{permissions.can_create && (central ? canManageStore : !!selectedMembership) && (
 								<Button
 									variant="contained"
 									startIcon={<AddIcon fontSize="small" />}
 									onClick={() => router.push(STOCK_ADD(storeId))}
 								>
-									{canApproveRequests ? t.magasin.newStock : t.magasin.newStockRequest}
+									{central ? t.magasin.newStock : t.magasin.newStockRequest}
 								</Button>
 							)}
 							{selectedIds.length > 0 && permissions.can_delete && canManageStore && (

@@ -17,7 +17,7 @@ import ActionModals from '@/components/htmlElements/modals/actionModal/actionMod
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
-import StoreTabs, { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
+import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { stockWorkflowStatusOptions } from '@/components/pages/magasin/shared/status-labels';
 import WorkflowStatusChip from '@/components/pages/magasin/shared/workflow-status-chip';
 import ChipSelectFilterBar from '@/components/shared/chipSelectFilter/chipSelectFilterBar';
@@ -44,9 +44,8 @@ const InventoryListClient = ({ session }: SessionProps) => {
 	const permissions = usePermission();
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
-	const { defaultStore } = useSelectedStore(token);
-	const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
-	const storeId = selectedStoreId ?? defaultStore?.id;
+	const { globalStore } = useSelectedStore(token);
+	const storeId = globalStore?.id;
 	const [paginationModel, setPaginationModel, sorting] = useDataGridPagination(10, '', { store_id: storeId });
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
@@ -228,7 +227,6 @@ const InventoryListClient = ({ session }: SessionProps) => {
 		<NavigationBar title={t.magasin.inventory}>
 			<Protected permission="can_view">
 				<Box sx={magasinPageContainerSx}>
-					<StoreTabs selectedStoreId={storeId} onChange={setSelectedStoreId} token={token} />
 					<Box sx={magasinPageContentSx}>
 						<Stack
 							direction="row"

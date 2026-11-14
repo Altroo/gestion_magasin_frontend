@@ -21,7 +21,7 @@ import DarkTooltip from '@/components/htmlElements/tooltip/darkTooltip/darkToolt
 import NavigationBar from '@/components/layouts/navigationBar/navigationBar';
 import { Protected } from '@/components/layouts/protected/protected';
 import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages/magasin/shared/page-layout';
-import StoreTabs, { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
+import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import TooltipTextCell from '@/components/shared/dataGridCells/tooltipTextCell';
 import MobileActionsMenu from '@/components/shared/mobileActionsMenu/mobileActionsMenu';
 import PaginatedDataGrid from '@/components/shared/paginatedDataGrid/paginatedDataGrid';
@@ -53,11 +53,9 @@ const CatalogClient = ({ session }: SessionProps) => {
 	const permissions = usePermission();
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
-	const { defaultStore, memberships } = useSelectedStore(token);
-	const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
-	const storeId = selectedStoreId ?? defaultStore?.id;
-	const selectedMembership = memberships.find((membership) => membership.store.id === storeId);
-	const canManageStore = roleCanManage(selectedMembership?.role.code);
+	const { globalStore, globalMembership } = useSelectedStore(token);
+	const storeId = globalStore?.id;
+	const canManageStore = permissions.is_staff || roleCanManage(globalMembership?.role.code);
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
 
 	const [paginationModel, setPaginationModel, sorting] = useDataGridPagination(10, '', { store_id: storeId });
@@ -344,15 +342,6 @@ const CatalogClient = ({ session }: SessionProps) => {
 		<NavigationBar title={t.magasin.catalog}>
 			<Protected permission="can_view">
 				<Box sx={magasinPageContainerSx}>
-					<StoreTabs
-						selectedStoreId={storeId}
-						onChange={(nextStoreId) => {
-							setSelectedStoreId(nextStoreId);
-							setPaginationModel((current) => ({ ...current, page: 0 }));
-							resetSelection();
-						}}
-						token={token}
-					/>
 					<Box sx={magasinPageContentSx}>
 						<Stack
 							direction="row"

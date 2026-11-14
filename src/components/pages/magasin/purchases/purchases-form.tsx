@@ -93,14 +93,9 @@ const PurchasesFormClient = ({ session, id }: Props) => {
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
 	const isEditMode = id !== undefined;
-	const { defaultStore, globalStore, memberships } = useSelectedStore(token);
-	const storeOptions = (() => {
-		const options = [globalStore, ...memberships.map((membership) => membership.store)].filter(Boolean);
-		return options.filter(
-			(store, index, stores) => stores.findIndex((candidate) => candidate?.id === store?.id) === index,
-		);
-	})();
-	const defaultPurchaseStore = globalStore ?? defaultStore;
+	const { globalStore } = useSelectedStore(token);
+	const storeOptions = globalStore ? [globalStore] : [];
+	const defaultPurchaseStore = globalStore;
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [linePaginationModel, setLinePaginationModel] = useDataGridPagination(5, 'lines');
 	const [addPurchase, addState] = useAddPurchaseMutation();

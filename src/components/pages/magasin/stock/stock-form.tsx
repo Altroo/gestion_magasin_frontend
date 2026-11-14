@@ -45,7 +45,7 @@ import {
 	useGetStockBalanceQuery,
 	useUpdateStockThresholdMutation,
 } from '@/store/services/magasin';
-import { withStore, STOCK_LIST, STOCK_VIEW } from '@/utils/routes';
+import { withStore, STOCK_LIST, STOCK_VIEW, DASHBOARD_STOCK_REQUESTS } from '@/utils/routes';
 import { customDropdownTheme, textInputTheme } from '@/utils/themes';
 import { extractApiErrorMessage, getLabelForKey, setFormikAutoErrors } from '@/utils/helpers';
 import { stockAdjustmentSchema, stockThresholdSchema } from '@/utils/formValidationSchemas';
@@ -72,10 +72,10 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 	const theme = useTheme();
 	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 	const isEditMode = id !== undefined;
-	const { defaultStore, memberships } = useSelectedStore(token);
-	const storeId = initialStoreId ?? defaultStore?.id;
-	const selectedMembership = memberships.find((membership) => membership.store.id === storeId);
-	const canAdjustDirectly = permissions.is_staff || roleCanAdjustDirectly(selectedMembership?.role.code);
+	const { defaultStore, globalStore, globalMembership } = useSelectedStore(token);
+	const storeId = initialStoreId ?? globalStore?.id ?? defaultStore?.id;
+	const canAdjustDirectly = storeId === globalStore?.id && (permissions.is_staff || roleCanAdjustDirectly(globalMembership?.role.code));
+	const returnRoute = storeId === globalStore?.id ? withStore(STOCK_LIST, storeId) : withStore(DASHBOARD_STOCK_REQUESTS, storeId);
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [isPending, setIsPending] = useState(false);
 
@@ -115,7 +115,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 					await runAsyncWithErrorHandler(
 						async () => {
 							if (isEditMode) {
-								await updateThreshold({ id: id!, min_stock: values.min_stock ?? '0' }).unwrap();
+								if (canAdjustDirectly) await updateThreshold({ id: id!, min_stock: values.min_stock ?? '0' }).unwrap();
 								if (values.quantity && Number(values.quantity) !== 0) {
 									if (canAdjustDirectly) {
 										await adjustStock({
@@ -123,7 +123,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 											product: Number(values.product),
 											quantity: values.quantity,
 											movement_type: 'adjustment',
-											unit_cost: values.unit_cost,
+											...(values.unit_cost ? { unit_cost: values.unit_cost } : {}),
 											note: values.note,
 										}).unwrap();
 									} else {
@@ -131,7 +131,6 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 											store: stockBalance?.store ?? storeId!,
 											product: Number(values.product),
 											quantity: values.quantity,
-											unit_cost: values.unit_cost,
 											note: values.note,
 										}).unwrap();
 									}
@@ -145,7 +144,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 										product: Number(values.product),
 										quantity: values.quantity,
 										movement_type: 'adjustment',
-										unit_cost: values.unit_cost,
+										...(values.unit_cost ? { unit_cost: values.unit_cost } : {}),
 										note: values.note,
 									}).unwrap();
 								} else {
@@ -153,12 +152,11 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 										store: storeId!,
 										product: Number(values.product),
 										quantity: values.quantity,
-										unit_cost: values.unit_cost,
 										note: values.note,
 									}).unwrap();
 								}
 								onSuccess(canAdjustDirectly ? t.magasin.stockAdjusted : t.magasin.stockRequestSent);
-								router.push(listReturnUrl(withStore(STOCK_LIST, stockBalance?.store ?? storeId)));
+								router.push(listReturnUrl(returnRoute));
 							}
 						},
 						async (e) => {
@@ -242,7 +240,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(listReturnUrl(withStore(STOCK_LIST, stockBalance?.store ?? storeId)))}>
+								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(listReturnUrl(returnRoute))}>
 									{t.magasin.backToStock}
 								</Button>
 							</Stack>
@@ -334,7 +332,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														theme={inputTheme}
 														startIcon={<NumbersIcon fontSize="small" />}
 													/>
-													<CustomTextInput
+											{canAdjustDirectly && <CustomTextInput
 														id="unit_cost"
 														type="number"
 														label={t.magasin.purchasePrice}
@@ -347,7 +345,7 @@ const StockFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 														size="small"
 														theme={inputTheme}
 														startIcon={<NumbersIcon fontSize="small" />}
-													/>
+															/>}
 												</Stack>
 											</CardContent>
 										</Card>

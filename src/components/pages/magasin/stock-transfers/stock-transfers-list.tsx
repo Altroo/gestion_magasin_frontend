@@ -32,6 +32,7 @@ import {
 	useDeleteStockTransferMutation,
 	useGetStockAddRequestsQuery,
 	useGetStockTransfersQuery,
+	useGetStoresQuery,
 	useValidateStockTransferMutation,
 } from '@/store/services/magasin';
 import type { SessionProps } from '@/types/_initTypes';
@@ -46,9 +47,10 @@ const StockTransfersListClient = ({ session }: SessionProps) => {
 	const permissions = usePermission();
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
-	const { memberships } = useSelectedStore(token);
+	const { globalMembership } = useSelectedStore(token);
 	const canApproveRequests =
-		permissions.is_staff || memberships.some((membership) => membership.role.code === 'direction');
+		permissions.is_staff || globalMembership?.role.code === 'direction';
+	const { data: stores } = useGetStoresQuery({ page: 1, pageSize: 200 }, { skip: !token });
 	const [paginationModel, setPaginationModel, sorting] = useDataGridPagination();
 	const [searchTerm, setSearchTerm] = useState('');
 	const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [], logicOperator: GridLogicOperator.And });
@@ -93,9 +95,7 @@ const StockTransfersListClient = ({ session }: SessionProps) => {
 		{ skip: !token || !canApproveRequests },
 	);
 
-	const targetStoreOptions = memberships
-		.map((membership) => membership.store)
-		.filter((store) => !store.is_global_stock)
+	const targetStoreOptions = (stores?.results ?? [])
 		.map((store) => ({ id: String(store.id), nom: store.name }));
 	const chipFilters = [
 		{ key: 'status', label: t.magasin.status, paramName: 'status', options: stockWorkflowStatusOptions(t) },

@@ -73,6 +73,7 @@ import {
 	DASHBOARD_PURCHASES,
 	DASHBOARD_SALES,
 	DASHBOARD_STOCK,
+	DASHBOARD_STOCK_REQUESTS,
 	DASHBOARD_STORE_STOCK,
 	DASHBOARD_STOCK_TRANSFERS,
 	DASHBOARD,
@@ -120,6 +121,7 @@ const getNavigationMenu = (
 	isStaff: boolean,
 	pointageOnly: boolean,
 	vendeurOnly: boolean,
+	canManageMbrSouth: boolean,
 	t: TranslationDictionary,
 ): NavigationMenu => {
 	if (pointageOnly) {
@@ -158,7 +160,7 @@ const getNavigationMenu = (
 	}
 
 	return {
-		...(isStaff && {
+		...(canManageMbrSouth && {
 			mbrSouth: {
 				title: t.navigation.mbrSouth,
 				icon: <DomainIcon />,
@@ -170,6 +172,9 @@ const getNavigationMenu = (
 						path: DASHBOARD_STORE_STOCK,
 					},
 					{ title: t.navigation.stockTransfers, label: t.navigation.stockTransfers, path: DASHBOARD_STOCK_TRANSFERS },
+					{ title: t.navigation.catalog, label: t.navigation.catalog, path: DASHBOARD_CATALOG },
+					{ title: t.navigation.stock, label: t.navigation.stock, path: DASHBOARD_STOCK },
+					{ title: t.navigation.inventory, label: t.navigation.inventory, path: DASHBOARD_INVENTORY },
 					{ title: t.navigation.purchases, label: t.navigation.purchases, path: DASHBOARD_PURCHASES },
 					{ title: t.navigation.promotions, label: t.navigation.promotions, path: DASHBOARD_PROMOTIONS },
 				],
@@ -180,9 +185,7 @@ const getNavigationMenu = (
 			icon: <PointOfSaleIcon />,
 			items: [
 				{ title: t.navigation.pos, label: t.navigation.pos, path: DASHBOARD_POS },
-				{ title: t.navigation.catalog, label: t.navigation.catalog, path: DASHBOARD_CATALOG },
-				{ title: t.navigation.stock, label: t.navigation.stock, path: DASHBOARD_STOCK },
-				{ title: t.navigation.inventory, label: t.navigation.inventory, path: DASHBOARD_INVENTORY },
+				{ title: t.magasin.newStockRequest, label: t.magasin.newStockRequest, path: DASHBOARD_STOCK_REQUESTS },
 				{ title: t.navigation.sales, label: t.navigation.sales, path: DASHBOARD_SALES },
 				{ title: t.navigation.expenses, label: t.navigation.expenses, path: DASHBOARD_EXPENSES },
 				{ title: t.navigation.attendance, label: t.navigation.attendance, path: DASHBOARD_ATTENDANCE },
@@ -291,7 +294,11 @@ const NavigationBar = (props: Props) => {
 	});
 	const vendeurOnly = !is_staff && !pointage_only && (!storeMembershipsLoaded || isVendeurOnly(storeMemberships));
 	const canInstallPrinter = is_staff || (storeMembershipsLoaded && vendeurOnly);
-	const navigationMenu = getNavigationMenu(is_staff, !!pointage_only, vendeurOnly, t);
+	const canManageMbrSouth = !!is_staff || storeMemberships.some(
+		(membership) => membership.is_active && membership.store.is_active && membership.store.code === 'mbr-south' &&
+			(membership.role.code === 'direction' || membership.role.code === 'responsable'),
+	);
+	const navigationMenu = getNavigationMenu(!!is_staff, !!pointage_only, vendeurOnly, canManageMbrSouth, t);
 	const dispatch = useAppDispatch();
 	const moreVertRef = useRef<HTMLButtonElement>(null);
 	const [mobileMenuAnchor, setMobileMenuAnchor] = useState<HTMLElement | null>(null);

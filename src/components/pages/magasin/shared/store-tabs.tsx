@@ -47,12 +47,16 @@ export const useSelectedStore = (token?: string, includeMbrSouth = false) => {
 	const requestedStore = visibleMemberships.find((membership) => membership.store.id === requestedStoreId)?.store;
 	const defaultStore = requestedStore ?? persistedStore ?? visibleMemberships[0]?.store;
 	const globalStore = data.find(
-		(membership) => membership.is_active && membership.store.is_active && membership.store.is_global_stock,
+		(membership) => membership.is_active && membership.store.is_active && membership.store.is_global_stock && membership.store.code === 'mbr-south',
 	)?.store;
+	const globalMembership = data.find(
+		(membership) => membership.is_active && membership.store.is_active && membership.store.code === 'mbr-south' && membership.store.is_global_stock,
+	);
 	return {
 		memberships: visibleMemberships,
 		defaultStore,
 		globalStore,
+		globalMembership,
 		isLoading,
 	};
 };

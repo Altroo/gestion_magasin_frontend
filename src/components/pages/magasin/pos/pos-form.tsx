@@ -190,7 +190,8 @@ const PosClient = ({ session }: SessionProps) => {
 	const selectedStoreMembership = memberships.find((membership) => membership.store.id === storeId);
 	const isSelectedStoreVendeur = selectedStoreMembership?.role.code === 'vendeur';
 	const canPrintReceipt = permissions.can_print || isSelectedStoreVendeur;
-	const canWholesaleSale = permissions.can_wholesale_sale && !isSelectedStoreVendeur;
+	const canWholesaleSale = permissions.can_wholesale_sale &&
+		(permissions.is_staff || selectedStoreMembership?.role.code === 'direction');
 	const effectiveSaleType = canWholesaleSale ? saleType : 'normal';
 	const currentStoreOfflineQueue = offlineQueue.filter((sale) => sale.store === storeId);
 
@@ -222,12 +223,8 @@ const PosClient = ({ session }: SessionProps) => {
 
 	const handleSaleTypeChange = (nextType: SaleMode) => {
 		setSaleType(nextType);
+		setCart([]);
 		setLastWholesaleSaleId(null);
-		setCart((current) =>
-			current.map((line) =>
-				line.type === 'product' ? { ...line, unitPrice: productSalePrice(line.product, nextType) } : line,
-			),
-		);
 	};
 
 	const scanByCode = async (code: string, setFieldError?: (field: string, message: string | undefined) => void) => {
@@ -241,7 +238,7 @@ const PosClient = ({ session }: SessionProps) => {
 		}
 		return await runAsyncWithErrorHandler(
 			async () => {
-				const product = await scanProduct({ store: storeId, code: normalizedCode }).unwrap();
+				const product = await scanProduct({ store: storeId, code: normalizedCode, sale_type: effectiveSaleType }).unwrap();
 				const availableStock = productAvailableStock(product);
 				const cartQuantity =
 					cart.find((line) => line.type === 'product' && line.product.id === product.id)?.quantity ?? 0;

@@ -417,8 +417,8 @@ export const fr: TranslationDictionary = {
 		newStockRequest: "Demande d'ajout de stock",
 		stockRequestQuantity: 'Quantité demandée',
 		stockRequestInfo:
-			'Cette demande sera envoyée à la direction pour validation. Le stock sera ajouté après approbation.',
-		stockRequestSent: 'Demande envoyée à la direction.',
+			'Cette demande sera envoyée à MBR SOUTH. La direction affectera le stock disponible après approbation.',
+		stockRequestSent: 'Demande envoyée à MBR SOUTH.',
 		stockRequestCreateError: "Erreur lors de l'envoi de la demande de stock.",
 		approveStockRequest: 'Approuver la demande',
 		approveStockRequests: 'Approuver les demandes',

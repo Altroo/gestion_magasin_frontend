@@ -83,14 +83,14 @@ type InventoryLineGridRow = typeof emptyLine & {
 
 type Props = SessionProps & { id?: number; storeId?: number };
 
-const InventoryFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
+const InventoryFormClient = ({ session, id }: Props) => {
 	const token = useInitAccessToken(session);
 	const { t } = useLanguage();
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
 	const isEditMode = id !== undefined;
-	const { defaultStore } = useSelectedStore(token);
-	const storeId = initialStoreId ?? defaultStore?.id;
+	const { globalStore } = useSelectedStore(token);
+	const storeId = globalStore?.id;
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [linePaginationModel, setLinePaginationModel] = useDataGridPagination(5, 'lines');
 	const [addInventory, addState] = useAddInventorySessionMutation();

@@ -13,6 +13,7 @@ export const AUTH_RESET_PASSWORD_COMPLETE = `${SITE_ROOT}reset-password/set-pass
 export const DASHBOARD = `${SITE_ROOT}dashboard`;
 export const DASHBOARD_POS = `${SITE_ROOT}dashboard/caise`;
 export const DASHBOARD_CATALOG = `${SITE_ROOT}dashboard/article`;
+export const DASHBOARD_STOCK_REQUESTS = `${SITE_ROOT}dashboard/stock-requests`;
 export const DASHBOARD_STOCK = `${SITE_ROOT}dashboard/stock`;
 export const DASHBOARD_STORE_STOCK = `${SITE_ROOT}dashboard/store-stock`;
 export const DASHBOARD_STOCK_TRANSFERS = `${SITE_ROOT}dashboard/stock-transfers`;

@@ -108,7 +108,7 @@ const toPayload = (values: ProductFormValues): ProductPayload => ({
 	is_active: values.is_active,
 });
 
-const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
+const CatalogFormClient = ({ session, id }: Props) => {
 	const token = useInitAccessToken(session);
 	const { t } = useLanguage();
 	const { onSuccess, onError } = useToast();
@@ -116,8 +116,8 @@ const CatalogFormClient = ({ session, id, storeId: initialStoreId }: Props) => {
 	const theme = useTheme();
 	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 	const isEditMode = id !== undefined;
-	const { defaultStore } = useSelectedStore(token);
-	const storeId = initialStoreId ?? defaultStore?.id;
+	const { globalStore } = useSelectedStore(token);
+	const storeId = globalStore?.id;
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [isPending, setIsPending] = useState(false);
 	const [stockPaginationModel, setStockPaginationModel] = useDataGridPagination(5, 'stock');

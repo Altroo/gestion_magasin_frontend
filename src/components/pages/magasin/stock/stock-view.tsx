@@ -37,7 +37,7 @@ import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages
 import { useSelectedStore } from '@/components/pages/magasin/shared/store-tabs';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useDeleteStockBalanceMutation, useGetStockBalanceQuery } from '@/store/services/magasin';
-import { withStore, DASHBOARD_STORE_STOCK, STOCK_EDIT, STOCK_LIST } from '@/utils/routes';
+import { withStore, DASHBOARD_STORE_STOCK, DASHBOARD_STOCK_REQUESTS, STOCK_EDIT, STOCK_LIST } from '@/utils/routes';
 import { extractApiErrorMessage, formatDateShort, formatNumber } from '@/utils/helpers';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
 import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '@/types/_initTypes';
@@ -108,13 +108,15 @@ const StockViewClient = ({ session, id, storeId: initialStoreId, source }: Props
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const { onSuccess, onError } = useToast();
-	const { defaultStore } = useSelectedStore(token);
+	const { defaultStore, globalStore } = useSelectedStore(token);
 	const storeId = initialStoreId ?? defaultStore?.id;
 	const isStoreStockSource = source === 'store-stock' || searchParams.get('source') === 'store-stock';
 	const backLabel = isStoreStockSource ? t.magasin.storeStockOverview : t.magasin.backToStock;
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const { data: stockBalance, isLoading, error } = useGetStockBalanceQuery({ id }, { skip: !token });
-	const backRoute = isStoreStockSource ? DASHBOARD_STORE_STOCK : withStore(STOCK_LIST, stockBalance?.store ?? storeId);
+	const isCentralBalance = stockBalance?.store === globalStore?.id;
+	const backRoute = isStoreStockSource ? DASHBOARD_STORE_STOCK :
+		withStore(isCentralBalance ? STOCK_LIST : DASHBOARD_STOCK_REQUESTS, stockBalance?.store ?? storeId);
 	const axiosError = error ? (error as ResponseDataInterface<ApiErrorResponseType>) : undefined;
 	const [deleteStockBalance] = useDeleteStockBalanceMutation();
 
@@ -152,7 +154,7 @@ const StockViewClient = ({ session, id, storeId: initialStoreId, source }: Props
 								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(listReturnUrl(backRoute))}>
 									{backLabel}
 								</Button>
-								{!isStoreStockSource && !isLoading && !error && stockBalance && (
+								{!isStoreStockSource && isCentralBalance && !isLoading && !error && stockBalance && (
 									<Stack
 										direction="row"
 										sx={{

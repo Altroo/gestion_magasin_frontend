@@ -293,11 +293,11 @@ export const magasinApi = createApi({
 			}),
 			invalidatesTags: ['Products', 'Stock'],
 		}),
-		scanProduct: builder.query<ProductType, { store: number; code: string }>({
-			query: ({ store, code }) => ({
+		scanProduct: builder.query<ProductType, { store: number; code: string; sale_type?: 'normal' | 'wholesale' }>({
+			query: ({ store, code, sale_type }) => ({
 				url: `${process.env.NEXT_PUBLIC_ARTICLE_PRODUCTS}scan/`,
 				method: 'GET',
-				params: { store, code },
+				params: { store, code, sale_type },
 			}),
 			providesTags: ['Products', 'Stock'],
 		}),

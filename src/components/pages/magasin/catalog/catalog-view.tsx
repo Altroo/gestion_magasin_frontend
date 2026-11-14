@@ -111,14 +111,14 @@ const InfoRow = ({ icon, label, value }: InfoRowProps) => {
 	);
 };
 
-const CatalogViewClient = ({ session, id, storeId: initialStoreId }: Props) => {
+const CatalogViewClient = ({ session, id }: Props) => {
 	const token = useInitAccessToken(session);
 	const { t } = useLanguage();
 	const permissions = usePermission();
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
-	const { defaultStore } = useSelectedStore(token);
-	const storeId = initialStoreId ?? defaultStore?.id;
+	const { globalStore } = useSelectedStore(token);
+	const storeId = globalStore?.id;
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [stockPaginationModel, setStockPaginationModel] = useDataGridPagination(5, 'stock');
 	const { data: product, isLoading, error } = useGetProductQuery({ id, store: storeId }, { skip: !token || !storeId });

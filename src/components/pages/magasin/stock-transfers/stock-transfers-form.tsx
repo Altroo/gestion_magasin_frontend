@@ -52,6 +52,7 @@ import {
 	useAddStockTransferMutation,
 	useEditStockTransferMutation,
 	useGetProductsQuery,
+	useGetStoresQuery,
 	useGetStockTransferQuery,
 } from '@/store/services/magasin';
 import { stockTransferSchema } from '@/utils/formValidationSchemas';
@@ -90,9 +91,10 @@ const StockTransfersFormClient = ({ session, id }: Props) => {
 	const router = useRouter();
 	const { onSuccess, onError } = useToast();
 	const isEditMode = id !== undefined;
-	const { defaultStore, globalStore, memberships } = useSelectedStore(token);
-	const mbrStore = globalStore ?? defaultStore;
-	const targetStores = memberships.map((membership) => membership.store).filter((store) => !store.is_global_stock);
+	const { globalStore } = useSelectedStore(token);
+	const mbrStore = globalStore;
+	const { data: stores } = useGetStoresQuery({ page: 1, pageSize: 200 }, { skip: !token });
+	const targetStores = stores?.results ?? [];
 	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 	const [linePaginationModel, setLinePaginationModel] = useDataGridPagination(5, 'lines');
 	const [addTransfer, addState] = useAddStockTransferMutation();
