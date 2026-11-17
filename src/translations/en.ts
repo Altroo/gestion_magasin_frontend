@@ -694,6 +694,7 @@ export const en: TranslationDictionary = {
 		unexpectedError: 'An unexpected error occurred.',
 	},
 	pdf: {
+		translationPending: 'The document translation is being prepared. Please try again later.',
 		generatePdf: 'PDF Generation',
 		chooseLanguage: 'Choose the language in which you want to generate the PDF document.',
 		french: 'Français',

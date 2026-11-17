@@ -51,7 +51,8 @@ import {
 	useLazyScanProductQuery,
 	useSyncOfflineSalesMutation,
 } from '@/store/services/magasin';
-import { fetchFileBlob } from '@/utils/apiHelpers';
+import { showPdfError } from '@/utils/pdfErrors';
+import { fetchPdfBlob } from '@/utils/apiHelpers';
 import { openCashDrawer } from '@/utils/customerDisplay';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
 import { extractApiErrorMessage, setFormikAutoErrors } from '@/utils/helpers';
@@ -153,7 +154,7 @@ const PosClient = ({ session }: SessionProps) => {
 	const token = useInitAccessToken(session);
 	const { t, language } = useLanguage();
 	const permissions = usePermission();
-	const { onSuccess, onError } = useToast();
+	const { onSuccess, onError, onInfo } = useToast();
 	const { defaultStore, memberships, isLoading: areStoresLoading } = useSelectedStore(token);
 	const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>(undefined);
 	const storeId = selectedStoreId ?? defaultStore?.id;
@@ -190,8 +191,8 @@ const PosClient = ({ session }: SessionProps) => {
 	const selectedStoreMembership = memberships.find((membership) => membership.store.id === storeId);
 	const isSelectedStoreVendeur = selectedStoreMembership?.role.code === 'vendeur';
 	const canPrintReceipt = permissions.can_print || isSelectedStoreVendeur;
-	const canWholesaleSale = permissions.can_wholesale_sale &&
-		(permissions.is_staff || selectedStoreMembership?.role.code === 'direction');
+	const canWholesaleSale =
+		permissions.can_wholesale_sale && (permissions.is_staff || selectedStoreMembership?.role.code === 'direction');
 	const effectiveSaleType = canWholesaleSale ? saleType : 'normal';
 	const currentStoreOfflineQueue = offlineQueue.filter((sale) => sale.store === storeId);
 
@@ -238,7 +239,11 @@ const PosClient = ({ session }: SessionProps) => {
 		}
 		return await runAsyncWithErrorHandler(
 			async () => {
-				const product = await scanProduct({ store: storeId, code: normalizedCode, sale_type: effectiveSaleType }).unwrap();
+				const product = await scanProduct({
+					store: storeId,
+					code: normalizedCode,
+					sale_type: effectiveSaleType,
+				}).unwrap();
 				const availableStock = productAvailableStock(product);
 				const cartQuantity =
 					cart.find((line) => line.type === 'product' && line.product.id === product.id)?.quantity ?? 0;
@@ -453,7 +458,7 @@ const PosClient = ({ session }: SessionProps) => {
 			async () => {
 				await runAsyncWithErrorHandler(
 					async () => {
-						const blob = await fetchFileBlob(
+						const blob = await fetchPdfBlob(
 							`${process.env.NEXT_PUBLIC_SALES_ROOT}${lastWholesaleSaleId}/facture/?language=${language}`,
 							token,
 						);
@@ -461,8 +466,8 @@ const PosClient = ({ session }: SessionProps) => {
 						const blobUrl = window.URL.createObjectURL(pdfBlob);
 						window.open(blobUrl, '_blank');
 					},
-					async () => {
-						onError(t.magasin.saleFacturePrintError);
+					async (error) => {
+						showPdfError(error, onError, onInfo, t.pdf.translationPending, t.magasin.saleFacturePrintError);
 					},
 				);
 			},

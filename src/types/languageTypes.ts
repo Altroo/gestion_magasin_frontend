@@ -692,6 +692,7 @@ export type TranslationDictionary = {
 		unexpectedError: string;
 	};
 	pdf: {
+		translationPending: string;
 		generatePdf: string;
 		chooseLanguage: string;
 		french: string;

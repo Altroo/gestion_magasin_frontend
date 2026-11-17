@@ -33,7 +33,8 @@ import { magasinPageContainerSx, magasinPageContentSx } from '@/components/pages
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useGetDashboardReportQuery, useGetMyStoresQuery } from '@/store/services/magasin';
 import type { SessionProps } from '@/types/_initTypes';
-import { fetchFileBlob } from '@/utils/apiHelpers';
+import { showPdfError } from '@/utils/pdfErrors';
+import { fetchPdfBlob } from '@/utils/apiHelpers';
 import { formatNumber } from '@/utils/helpers';
 import { useLanguage, useToast } from '@/utils/hooks';
 import { customDropdownTheme } from '@/utils/themes';
@@ -183,7 +184,7 @@ const EmptyChart = () => {
 const DashboardClient = ({ session }: SessionProps) => {
 	const token = useInitAccessToken(session);
 	const { t, language } = useLanguage();
-	const { onError } = useToast();
+	const { onError, onInfo } = useToast();
 	const [storeFilter, setStoreFilter] = useState<'all' | number>('all');
 	const { data: memberships = [] } = useGetMyStoresQuery(undefined, { skip: !token });
 	const { data, isLoading, isFetching } = useGetDashboardReportQuery(
@@ -351,14 +352,14 @@ const DashboardClient = ({ session }: SessionProps) => {
 				if (storeFilter !== 'all') {
 					url.searchParams.set('store', String(storeFilter));
 				}
-				const blob = await fetchFileBlob(url.toString(), token);
+				const blob = await fetchPdfBlob(url.toString(), token);
 				const pdfBlob = blob.type === 'application/pdf' ? blob : new Blob([blob], { type: 'application/pdf' });
 				const blobUrl = window.URL.createObjectURL(pdfBlob);
 				window.open(blobUrl, '_blank');
 				setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60_000);
 			},
-			async () => {
-				onError(t.errors.genericError);
+			async (error) => {
+				showPdfError(error, onError, onInfo, t.pdf.translationPending, t.errors.genericError);
 			},
 		);
 	};

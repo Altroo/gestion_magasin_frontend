@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+trap 'printf "Gestion Magasin frontend deployment failed at line %s.\n" "$LINENO" >&2' ERR
+target_path=/var/www/gestion_magasin_frontend
+repo_path=/var/repo/gestion_magasin_frontend.git
+exec 9>"$repo_path/deploy.lock"
+flock 9
+while read -r oldrev newrev ref; do
+  [[ "$ref" == refs/heads/main ]] || continue
+  [[ "$newrev" == "$(git --git-dir="$repo_path" rev-parse refs/heads/main)" ]] || continue
+  git --work-tree="$target_path" --git-dir="$repo_path" checkout -f main
+  unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
+  cd "$target_path"
+  compose=(docker compose --project-directory "$target_path" -f "$target_path/docker-compose.yml")
+  "${compose[@]}" config --quiet
+  "${compose[@]}" build web
+  "${compose[@]}" up --no-deps --no-build --wait --wait-timeout 180 web
+  docker exec nginx nginx -t
+  docker exec nginx nginx -s reload
+  curl --retry 6 --retry-delay 2 --retry-connrefused --fail --silent --show-error "https://gestion-magasin.elbouazzatiholding.ma/api/app-version?deploy=$newrev" | python3 -c 'import json,sys; expected=json.load(open("package.json"))["version"]; actual=json.load(sys.stdin)["version"]; assert actual==expected,(actual,expected)'
+  printf 'Gestion Magasin frontend deployment verified: %s\n' "$newrev"
+done

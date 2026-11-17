@@ -8,6 +8,7 @@ import CustomToast from '@/components/portals/customToast/customToast';
 export type ToastContextType = {
 	onSuccess: (msg: string) => void;
 	onError: (msg: string) => void;
+	onInfo?: (msg: string) => void;
 };
 
 export const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -29,8 +30,14 @@ export const ToastContextProvider: FC<{ children: ReactNode }> = ({ children }) 
 		setShow(true);
 	};
 
+	const onInfo = (msg: string) => {
+		setType('info');
+		setMessage(msg);
+		setShow(true);
+	};
+
 	return (
-		<ToastContext.Provider value={{ onSuccess, onError }}>
+		<ToastContext.Provider value={{ onSuccess, onError, onInfo }}>
 			{children}
 			<Portal id="snackbar_portal">
 				<CustomToast type={type} message={message} setShow={setShow} show={show} />

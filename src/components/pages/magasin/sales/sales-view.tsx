@@ -37,7 +37,8 @@ import {
 import { magasinStatusLabel } from '@/components/pages/magasin/shared/status-labels';
 import { useInitAccessToken } from '@/contexts/InitContext';
 import { useGetSaleQuery, useVoidSaleMutation } from '@/store/services/magasin';
-import { fetchFileBlob } from '@/utils/apiHelpers';
+import { showPdfError } from '@/utils/pdfErrors';
+import { fetchPdfBlob } from '@/utils/apiHelpers';
 import { extractApiErrorMessage, formatDate, formatNumber } from '@/utils/helpers';
 import { useLanguage, usePermission, useToast } from '@/utils/hooks';
 import type { ApiErrorResponseType, ResponseDataInterface, SessionProps } from '@/types/_initTypes';
@@ -51,7 +52,7 @@ const SalesViewClient = ({ session, id }: Props) => {
 	const { t, language } = useLanguage();
 	const permissions = usePermission();
 	const router = useRouter();
-	const { onSuccess, onError } = useToast();
+	const { onSuccess, onError, onInfo } = useToast();
 	const [showVoidModal, setShowVoidModal] = useState(false);
 	const { data: sale, isLoading, error } = useGetSaleQuery({ id }, { skip: !token });
 	const [voidSale] = useVoidSaleMutation();
@@ -78,15 +79,15 @@ const SalesViewClient = ({ session, id }: Props) => {
 			return;
 		}
 		try {
-			const blob = await fetchFileBlob(
+			const blob = await fetchPdfBlob(
 				`${process.env.NEXT_PUBLIC_SALES_ROOT}${sale.id}/facture/?language=${language}`,
 				token,
 			);
 			const pdfBlob = new Blob([blob], { type: 'application/pdf' });
 			const blobUrl = window.URL.createObjectURL(pdfBlob);
 			window.open(blobUrl, '_blank');
-		} catch {
-			onError(t.magasin.saleFacturePrintError);
+		} catch (error) {
+			showPdfError(error, onError, onInfo, t.pdf.translationPending, t.magasin.saleFacturePrintError);
 		}
 	};
 
@@ -103,7 +104,11 @@ const SalesViewClient = ({ session, id }: Props) => {
 									justifyContent: 'space-between',
 								}}
 							>
-								<Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => router.push(listReturnUrl(withStore(SALES_LIST, sale?.store)))}>
+								<Button
+									variant="outlined"
+									startIcon={<ArrowBackIcon />}
+									onClick={() => router.push(listReturnUrl(withStore(SALES_LIST, sale?.store)))}
+								>
 									{t.magasin.backToSales}
 								</Button>
 								<Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>

@@ -698,6 +698,7 @@ export const fr: TranslationDictionary = {
 		unexpectedError: "Une erreur inattendue s'est produite.",
 	},
 	pdf: {
+		translationPending: 'La traduction du document est en préparation. Veuillez réessayer plus tard.',
 		generatePdf: 'Génération du PDF',
 		chooseLanguage: 'Choisissez la langue dans laquelle vous souhaitez générer le document PDF.',
 		french: 'Français',
