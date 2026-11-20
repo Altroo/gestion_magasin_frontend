@@ -88,7 +88,7 @@ describe('PDF preparation and loading', () => {
 		waiting.response = { status: 409, data: { code: 'pdf_translation_pending' } } as AxiosError['response'];
 		mockedAxios.create.mockReturnValue({ get: jest.fn().mockRejectedValue(waiting) } as unknown as AxiosInstance);
 		const request = expect(fetchPdfBlob('/one', 'token')).rejects.toBeInstanceOf(PdfTranslationDeferredError);
-		await jest.advanceTimersByTimeAsync(180_000);
+		await jest.advanceTimersByTimeAsync(45_000);
 		await request;
 		expect(getPendingPdfRequests()).toBe(0);
 	});

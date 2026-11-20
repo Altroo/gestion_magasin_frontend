@@ -66,7 +66,7 @@ export const fetchPdfBlob = async (url: string, accessToken: string): Promise<Bl
 	notifyPdfRequests(1);
 	try {
 		const instance = axios.create();
-		const deadline = Date.now() + 180_000;
+		const deadline = Date.now() + 45_000;
 		for (;;) {
 			try {
 				const response = await instance.get<Blob>(url, {
